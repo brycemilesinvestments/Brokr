@@ -16,7 +16,7 @@ type SecEdgarCompanyRow = { cik: string; entityName: string };
  * Parse company rows from SEC EDGAR company-list HTML (SIC search).
  * Used by fetchCompaniesBySicFromSec; separated for testability.
  */
-export function parseSecEdgarCompanyList(html: string): SecEdgarCompanyRow[] {
+function parseSecEdgarCompanyList(html: string): SecEdgarCompanyRow[] {
   const rows: SecEdgarCompanyRow[] = [];
   const tablePattern = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
   const cellPattern = /<td[^>]*>([\s\S]*?)<\/td>/gi;

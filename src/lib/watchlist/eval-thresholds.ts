@@ -34,7 +34,7 @@ function evaluateTrigger(
 ): EvalResult {
   if (series.length === 0) return null;
 
-  const sorted = [...series].sort((a, b) =>
+  const sorted = series.toSorted((a, b) =>
     a.periodEnd.localeCompare(b.periodEnd),
   );
   const latest = sorted[sorted.length - 1];

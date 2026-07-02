@@ -20,7 +20,7 @@ export function resolveBenchmarkSymbol(sector?: string, sic?: string): string {
   return SECTOR_BENCHMARKS.default;
 }
 
-export function cumulativeReturn(
+function cumulativeReturn(
   bars: PriceBar[],
   startIndex: number,
   endIndex: number,

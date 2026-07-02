@@ -39,7 +39,7 @@ function parseIsoDate(value: string): Date | null {
  * Derive fiscal year and quarter from a period-end report date and the
  * company's fiscal year end (MMDD, e.g. "0926" for Apple).
  */
-export function deriveFiscalPeriod(
+function deriveFiscalPeriod(
   reportDate: string,
   formCategory: CoreFormCategory,
   fiscalYearEnd?: string,
@@ -105,7 +105,7 @@ function resolveFiscalYear(reportDate: Date, fiscalYearEnd?: string): number {
  * - 8-K         → event date (report date), falling back to filing date
  * - DEF 14A     → annual meeting date (report date), falling back to filing date
  */
-export function getTimelineDate(
+function getTimelineDate(
   category: CoreFormCategory,
   filingDate: string,
   reportDate: string | null,
@@ -121,7 +121,7 @@ export function getTimelineDate(
   return filingDate;
 }
 
-export function enrichFilingForTimeline(
+function enrichFilingForTimeline(
   filing: Filing,
   options: {
     reportDate?: string | null;
@@ -162,7 +162,7 @@ export function enrichFilingForTimeline(
  * Tertiary sort:  amendments after originals
  * Final sort:     filing date descending as tiebreaker
  */
-export function compareTimelineFilings(a: TimelineFiling, b: TimelineFiling): number {
+function compareTimelineFilings(a: TimelineFiling, b: TimelineFiling): number {
   const dateCmp = b.timelineDate.localeCompare(a.timelineDate);
   if (dateCmp !== 0) return dateCmp;
 
@@ -180,7 +180,7 @@ export function compareTimelineFilings(a: TimelineFiling, b: TimelineFiling): nu
  * Compare filings for within-fiscal-year order (oldest period first).
  * Used when grouping: Q1 → Q2 → Q3 → 10-K, with 8-K and DEF 14A by date.
  */
-export function compareWithinFiscalYear(a: TimelineFiling, b: TimelineFiling): number {
+function compareWithinFiscalYear(a: TimelineFiling, b: TimelineFiling): number {
   const quarterOrder: Record<string, number> = { Q1: 1, Q2: 2, Q3: 3, FY: 4 };
   const aQ = a.fiscalPeriod?.quarter;
   const bQ = b.fiscalPeriod?.quarter;
@@ -237,7 +237,7 @@ export function groupTimelineByFiscalYear(timeline: TimelineFiling[]): FiscalYea
     }));
 }
 
-export function partitionTimelineByCategory(
+function partitionTimelineByCategory(
   timeline: TimelineFiling[],
 ): Record<CoreFormCategory, TimelineFiling[]> {
   const result: Record<CoreFormCategory, TimelineFiling[]> = {

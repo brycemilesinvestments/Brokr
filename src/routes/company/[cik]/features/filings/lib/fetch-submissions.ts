@@ -14,7 +14,7 @@ type SecSubmissionsResponse = {
   };
 };
 
-export { submissionsUrl };
+{ submissionsUrl };
 
 export async function fetchSubmissionMetadata(
   cik: string | number,

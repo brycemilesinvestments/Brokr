@@ -21,15 +21,20 @@ async function filterActiveSicCandidates(
   excludeCiks: Set<string>,
   limit: number,
 ): Promise<PeerEntry[]> {
-  const active: PeerEntry[] = [];
-
-  for (const candidate of candidates) {
-    if (active.length >= limit) break;
-
+  const eligible = candidates.filter((candidate) => {
     const cik = formatCik(candidate.cik);
-    if (excludeCiks.has(cik)) continue;
+    return !excludeCiks.has(cik);
+  });
 
-    const lastFiling = await deps.fetchLastFilingDate(cik);
+  const filingDates = await Promise.all(
+    eligible.map((candidate) => deps.fetchLastFilingDate(formatCik(candidate.cik))),
+  );
+
+  const active: PeerEntry[] = [];
+  for (let index = 0; index < eligible.length && active.length < limit; index += 1) {
+    const candidate = eligible[index];
+    const cik = formatCik(candidate.cik);
+    const lastFiling = filingDates[index];
     if (!lastFiling || !isFilingWithinMonths(lastFiling, RECENT_FILING_MONTHS)) {
       continue;
     }

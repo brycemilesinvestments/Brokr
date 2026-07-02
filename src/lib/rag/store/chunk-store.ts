@@ -19,6 +19,7 @@ export type ChunkStore = {
     queryEmbedding: number[];
     topK: number;
     periodEnd?: string | null;
+    audited?: boolean | null;
   }): Promise<RetrievedChunk[]>;
   deleteMetricsForCompany(companyId: string): Promise<void>;
   upsertMetrics(metrics: StructuredMetric[]): Promise<void>;
@@ -73,10 +74,12 @@ export class MemoryChunkStore implements ChunkStore {
     queryEmbedding,
     topK,
     periodEnd,
+    audited,
   }: Parameters<ChunkStore["searchChunks"]>[0]) {
     const scoped = this.chunks.filter((chunk) => {
       if (chunk.companyId !== companyId) return false;
       if (periodEnd && chunk.periodEnd !== periodEnd) return false;
+      if (audited != null && chunk.audited !== audited) return false;
       return Array.isArray(chunk.embedding);
     });
 
@@ -175,6 +178,8 @@ export function createSupabaseChunkStore(client: SupabaseClient): ChunkStore {
           embedding: chunk.embedding,
           token_count: chunk.tokenCount,
           document_id: chunk.documentId ?? null,
+          audited: chunk.audited ?? false,
+          source: chunk.source ?? "ixbrl_textblock",
         })),
       );
     },
@@ -188,12 +193,13 @@ export function createSupabaseChunkStore(client: SupabaseClient): ChunkStore {
       return (count ?? 0) > 0;
     },
 
-    async searchChunks({ companyId, queryEmbedding, topK, periodEnd }) {
+    async searchChunks({ companyId, queryEmbedding, topK, periodEnd, audited }) {
       const { data, error } = await client.rpc("match_filing_chunks", {
         query_embedding: queryEmbedding,
         match_company_id: companyId,
         match_count: topK,
         match_period_end: periodEnd ?? null,
+        match_audited: audited ?? null,
       });
 
       if (error) throw new Error(error.message);
@@ -207,6 +213,8 @@ export function createSupabaseChunkStore(client: SupabaseClient): ChunkStore {
         chunkIndex: Number(row.chunk_index),
         text: String(row.text),
         tokenCount: 0,
+        audited: row.audited === true,
+        source: (row.source as RetrievedChunk["source"]) ?? "ixbrl_textblock",
         similarity: Number(row.similarity),
       }));
     },
@@ -228,6 +236,7 @@ export function createSupabaseChunkStore(client: SupabaseClient): ChunkStore {
           value: row.value,
           unit: row.unit ?? null,
           accession: row.accession ?? null,
+          audited: row.audited ?? false,
         })),
         { onConflict: "company_id,metric_name,period_end,fp" },
       );
@@ -253,6 +262,7 @@ export function createSupabaseChunkStore(client: SupabaseClient): ChunkStore {
         value: Number(row.value),
         unit: row.unit ?? undefined,
         accession: row.accession ?? undefined,
+        audited: row.audited === true,
       }));
     },
   };
@@ -305,12 +315,14 @@ export async function embedAndStore(
   }));
 
   await store.deleteChunksForAccession(input.companyId, input.accession);
-  await store.insertChunks(withEmbeddings);
-  await store.upsertIngestStatus({
-    companyId: input.companyId,
-    accession: input.accession,
-    embeddedDone: true,
-  });
+  await Promise.all([
+    store.insertChunks(withEmbeddings),
+    store.upsertIngestStatus({
+      companyId: input.companyId,
+      accession: input.accession,
+      embeddedDone: true,
+    }),
+  ]);
 
   return {
     stored: withEmbeddings.length,

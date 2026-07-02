@@ -25,7 +25,7 @@ export function buildActivitySeries(
     buckets.set(key, bucket);
   }
 
-  const sortedKeys = [...buckets.keys()].sort();
+  const sortedKeys = [...buckets.keys()].toSorted();
   const bucketPoints = sortedKeys.map((key) => ({
     key,
     ...bucketMidpoint(key, bucketSize),

@@ -27,7 +27,7 @@ export function validateForm10kContract(state: Form10kState): string[] {
   return missing;
 }
 
-export function isForm10kComplete(state: Form10kState): boolean {
+function isForm10kComplete(state: Form10kState): boolean {
   return validateForm10kContract(state).length === 0;
 }
 

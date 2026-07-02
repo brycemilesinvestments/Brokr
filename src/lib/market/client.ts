@@ -12,7 +12,7 @@ function defaultNow(): string {
   return new Date().toISOString();
 }
 
-export function yahooChartUrl(symbol: string, period1: number, period2: number): string {
+function yahooChartUrl(symbol: string, period1: number, period2: number): string {
   const params = new URLSearchParams({
     period1: String(period1),
     period2: String(period2),

@@ -17,7 +17,7 @@ export const ACTION_ORDER: AgentAction[] = [
   "complete",
 ];
 
-export function isValidTransition(from: AgentAction, to: AgentAction): boolean {
+function isValidTransition(from: AgentAction, to: AgentAction): boolean {
   const fromIdx = ACTION_ORDER.indexOf(from);
   const toIdx = ACTION_ORDER.indexOf(to);
   return toIdx >= fromIdx;

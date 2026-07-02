@@ -9,7 +9,7 @@ export type CuratedPeer = {
  * Curated peer overrides for targets where SIC-only matching pulls defunct shells.
  * Used before SIC discovery; SIC fill is fallback only when curated list is absent.
  */
-export const CURATED_PEER_OVERRIDES: Record<string, CuratedPeer[]> = {
+const CURATED_PEER_OVERRIDES: Record<string, CuratedPeer[]> = {
   /** Sandisk Corporation — storage / memory semiconductors */
   [formatCik("2023554")]: [
     { cik: formatCik("723125"), entityName: "Micron Technology, Inc." },

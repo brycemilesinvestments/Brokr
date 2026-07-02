@@ -65,9 +65,14 @@ function initialState(input: FilingDiffRouterInput): FilingDiffState {
 /** End-to-end filing diff workflow (F1→F7) with cache-before-AI behavior. */
 export async function runFilingDiffRouter(input: FilingDiffRouterInput): Promise<FilingDiffOutput> {
   const maxIterations = input.maxIterations ?? 12;
-  let state = initialState(input);
+  const metricsByAccession = input.metricsByAccession;
+  const proseByAccession = input.proseByAccession;
 
-  while (!state.completed && state.iteration < maxIterations) {
+  async function advance(state: FilingDiffState): Promise<FilingDiffState> {
+    if (state.completed || state.iteration >= maxIterations) {
+      return state;
+    }
+
     const action = routeFilingDiffAction(state);
     state.actionsTaken.push(action);
     state.iteration += 1;
@@ -85,8 +90,8 @@ export async function runFilingDiffRouter(input: FilingDiffRouterInput): Promise
       case "numeric_diff": {
         const pair = state.pair;
         if (!pair) break;
-        const currentMetrics = input.metricsByAccession[pair.current.accessionNumber] ?? {};
-        const previousMetrics = input.metricsByAccession[pair.previous.accessionNumber] ?? {};
+        const currentMetrics = metricsByAccession[pair.current.accessionNumber] ?? {};
+        const previousMetrics = metricsByAccession[pair.previous.accessionNumber] ?? {};
         state.numeric = computeNumericDiff(currentMetrics, previousMetrics);
         break;
       }
@@ -95,9 +100,9 @@ export async function runFilingDiffRouter(input: FilingDiffRouterInput): Promise
         const pair = state.pair;
         if (!pair) break;
         const currentProse =
-          input.proseByAccession[pair.current.accessionNumber] ?? emptyProseSectionsForDiff();
+          proseByAccession[pair.current.accessionNumber] ?? emptyProseSectionsForDiff();
         const previousProse =
-          input.proseByAccession[pair.previous.accessionNumber] ?? emptyProseSectionsForDiff();
+          proseByAccession[pair.previous.accessionNumber] ?? emptyProseSectionsForDiff();
         state.structural = computeStructuralDiff(
           buildStructuralSnapshot({
             proseSections: currentProse,
@@ -128,9 +133,9 @@ export async function runFilingDiffRouter(input: FilingDiffRouterInput): Promise
         const pair = state.pair;
         if (!pair) break;
         const currentProse =
-          input.proseByAccession[pair.current.accessionNumber] ?? emptyProseSectionsForDiff();
+          proseByAccession[pair.current.accessionNumber] ?? emptyProseSectionsForDiff();
         const previousProse =
-          input.proseByAccession[pair.previous.accessionNumber] ?? emptyProseSectionsForDiff();
+          proseByAccession[pair.previous.accessionNumber] ?? emptyProseSectionsForDiff();
         if (!input.aiDiff) {
           state.prose = { ...DEFAULT_NO_CHANGE_PROSE, refusal: true };
           break;
@@ -174,7 +179,11 @@ export async function runFilingDiffRouter(input: FilingDiffRouterInput): Promise
         state.completed = true;
         break;
     }
+
+    return advance(state);
   }
+
+  const state = await advance(initialState(input));
 
   if (!state.pair || !state.numeric || !state.structural || !state.prose || !state.severity) {
     throw new Error(

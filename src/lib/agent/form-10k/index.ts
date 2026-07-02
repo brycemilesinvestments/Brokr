@@ -1,9 +1,5 @@
 export { routeForm10kAction } from "@/lib/agent/form-10k/router";
-export {
-  isForm10kComplete,
-  toForm10kOutput,
-  validateForm10kContract,
-} from "@/lib/agent/form-10k/contract";
+export { toForm10kOutput, validateForm10kContract } from "@/lib/agent/form-10k/contract";
 
 export type {
   Form10kAction,

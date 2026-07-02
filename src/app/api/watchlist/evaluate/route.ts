@@ -44,7 +44,7 @@ export async function POST() {
   }
 
   const edgar = createEdgarClient({ supabaseClient: createAdminClient() ?? undefined });
-  const ciks = [...new Set(entries.map((e) => e.cik))].sort();
+  const ciks = [...new Set(entries.map((e) => e.cik))].toSorted();
   const firedEventKeys = await loadFiredEventKeys(ciks);
 
   const filingsByCik: Record<string, Awaited<ReturnType<typeof edgar.getSubmissions>>["filings"]> = {};
@@ -52,16 +52,39 @@ export async function POST() {
   const transactionsByCik: Record<string, Awaited<ReturnType<typeof fetchInsiderTransactions>>["transactions"]> = {};
   const seenAccessionsByCik: Record<string, Set<string>> = {};
 
-  for (const cik of ciks) {
-    const [submissions, insider] = await Promise.all([
-      edgar.getSubmissions(cik),
-      fetchInsiderTransactions(cik).catch(() => null),
-    ]);
+  const cikResults = await Promise.all(
+    ciks.map(async (cik) => {
+      const [submissions, insider] = await Promise.all([
+        edgar.getSubmissions(cik),
+        fetchInsiderTransactions(cik).catch(() => null),
+      ]);
 
+      let metricSeries: Record<string, MetricPoint[]> = {};
+      try {
+        const facts = await edgar.getCompanyFacts(cik);
+        const timeSeries = buildTimeSeriesBundle(facts);
+        const metrics = buildExtendedMetricsBundle(timeSeries, facts);
+        metricSeries = {
+          net_margin: seriesFromRatios(timeSeries, "net_margin"),
+          operating_margin: seriesFromRatios(timeSeries, "operating_margin"),
+          debt_to_equity: seriesFromRatios(timeSeries, "debt_to_equity"),
+          fcf: fcfSeries(metrics),
+          health_score: healthScoreSeries(cik, facts.entityName, metrics, timeSeries),
+        };
+      } catch {
+        metricSeries = {};
+      }
+
+      return { cik, submissions, insider, metricSeries };
+    }),
+  );
+
+  for (const { cik, submissions, insider, metricSeries } of cikResults) {
     filingsByCik[cik] = submissions.filings;
     seenAccessionsByCik[cik] = new Set(
       submissions.filings.slice(0, 5).map((f) => f.accessionNumber),
     );
+    metricSeriesByCik[cik] = metricSeries;
 
     if (insider) {
       transactionsByCik[cik] = insider.transactions.map((t) => ({
@@ -72,21 +95,6 @@ export async function POST() {
         sharesTransacted: t.sharesTransacted,
         accessionNumber: t.accessionNumber,
       }));
-    }
-
-    try {
-      const facts = await edgar.getCompanyFacts(cik);
-      const timeSeries = buildTimeSeriesBundle(facts);
-      const metrics = buildExtendedMetricsBundle(timeSeries, facts);
-      metricSeriesByCik[cik] = {
-        net_margin: seriesFromRatios(timeSeries, "net_margin"),
-        operating_margin: seriesFromRatios(timeSeries, "operating_margin"),
-        debt_to_equity: seriesFromRatios(timeSeries, "debt_to_equity"),
-        fcf: fcfSeries(metrics),
-        health_score: healthScoreSeries(cik, facts.entityName, metrics, timeSeries),
-      };
-    } catch {
-      metricSeriesByCik[cik] = {};
     }
   }
 

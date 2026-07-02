@@ -3,7 +3,6 @@ export { extract_tagged_numbers } from "@/lib/guidance/extract_tagged_numbers";
 export { check_cache } from "@/lib/guidance/check_cache";
 export {
   extract_guidance,
-  make_noop_guidance_extractor,
   latest_actual_by_metric,
 } from "@/lib/guidance/extract_guidance";
 export { write_cache } from "@/lib/guidance/write_cache";

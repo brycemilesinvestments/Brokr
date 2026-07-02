@@ -169,8 +169,9 @@ async function explainAnomaliesInLoop(input: {
     return { explanations, costUsd, iterations, terminatedReason: "complete" };
   }
 
-  for (const anomaly of input.anomalies) {
-    if (explainedIds.has(anomaly.id)) continue;
+  const pending = input.anomalies.filter((anomaly) => !explainedIds.has(anomaly.id));
+
+  while (pending.length > 0) {
     if (iterations >= input.config.maxIterations) {
       return { explanations, costUsd, iterations, terminatedReason: "max_iterations" };
     }
@@ -178,22 +179,40 @@ async function explainAnomaliesInLoop(input: {
       return { explanations, costUsd, iterations, terminatedReason: "budget_exceeded" };
     }
 
-    iterations += 1;
-    const excerpt = buildAnomalyExcerpt(anomaly, input.timeSeries);
-    const explanation = await explainFinancials(input.ai, {
-      entityName: input.timeSeries.entityName,
-      cik: input.timeSeries.cik,
-      metrics: {
-        anomalyType: anomaly.type,
-        magnitude: anomaly.magnitude,
-        periodEnd: anomaly.periodEnd ?? anomaly.date,
-      },
-      context: excerpt,
-    });
+    const remainingIterations = input.config.maxIterations - iterations;
+    const remainingBudgetSlots = Math.floor(
+      (input.config.maxCostUsd - costUsd) / EXPLAIN_COST_USD,
+    );
+    if (remainingBudgetSlots <= 0) {
+      return { explanations, costUsd, iterations, terminatedReason: "budget_exceeded" };
+    }
 
-    costUsd += EXPLAIN_COST_USD;
-    explanations.push({ anomalyId: anomaly.id, excerpt, explanation });
-    explainedIds.add(anomaly.id);
+    const batchSize = Math.min(pending.length, remainingIterations, remainingBudgetSlots);
+    const batch = pending.splice(0, batchSize);
+
+    const batchResults = await Promise.all(
+      batch.map(async (anomaly) => {
+        const excerpt = buildAnomalyExcerpt(anomaly, input.timeSeries);
+        const explanation = await explainFinancials(input.ai!, {
+          entityName: input.timeSeries.entityName,
+          cik: input.timeSeries.cik,
+          metrics: {
+            anomalyType: anomaly.type,
+            magnitude: anomaly.magnitude,
+            periodEnd: anomaly.periodEnd ?? anomaly.date,
+          },
+          context: excerpt,
+        });
+        return { anomalyId: anomaly.id, excerpt, explanation };
+      }),
+    );
+
+    iterations += batch.length;
+    costUsd += batch.length * EXPLAIN_COST_USD;
+    for (const result of batchResults) {
+      explanations.push(result);
+      explainedIds.add(result.anomalyId);
+    }
   }
 
   return { explanations, costUsd, iterations, terminatedReason: "complete" };

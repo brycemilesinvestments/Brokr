@@ -29,14 +29,15 @@ export interface ParsedFinancialMetrics {
  * Group XBRL facts by reporting period.
  * Combines instant and duration contexts for a single period.
  */
-export function groupFactsByPeriod(
+function groupFactsByPeriod(
   facts: XbrlFact[],
   contexts: XbrlContext[],
 ): Map<string, XbrlFact[]> {
   const periods = new Map<string, XbrlFact[]>();
+  const contextById = new Map(contexts.map((context) => [context.id, context]));
 
   for (const fact of facts) {
-    const context = contexts.find((c) => c.id === fact.contextRef);
+    const context = contextById.get(fact.contextRef);
     if (!context) continue;
 
     const periodKey = context.instant || context.endDate || "unknown";
@@ -52,7 +53,7 @@ export function groupFactsByPeriod(
  * Build a parsed financial statement for a single period.
  * Maps concept names to facts for easy lookup.
  */
-export function buildStatement(facts: XbrlFact[]): ParsedFinancialStatement {
+function buildStatement(facts: XbrlFact[]): ParsedFinancialStatement {
   const firstFact = facts[0];
   if (!firstFact?.context) {
     throw new Error("No facts with context available");
@@ -78,7 +79,7 @@ export function buildStatement(facts: XbrlFact[]): ParsedFinancialStatement {
  * Extract common financial metrics from a parsed statement.
  * Returns computed metrics (ratios, margins, etc.).
  */
-export function extractMetrics(statement: ParsedFinancialStatement): ParsedFinancialMetrics {
+function extractMetrics(statement: ParsedFinancialStatement): ParsedFinancialMetrics {
   const fact = (concept: string) => statement.facts.get(concept);
   const value = (concept: string) => fact(concept)?.numericValue;
 
@@ -117,7 +118,7 @@ export interface MetricChange {
   changePercent: number | undefined;
 }
 
-export function compareMetrics(
+function compareMetrics(
   current: ParsedFinancialMetrics,
   prior: ParsedFinancialMetrics,
 ): Record<keyof ParsedFinancialMetrics, MetricChange> {

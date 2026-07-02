@@ -15,7 +15,7 @@ export function parseTransactionCode(
   return match[1].toUpperCase() as InsiderTransactionCode;
 }
 
-export function classifyTransactionCode(
+function classifyTransactionCode(
   code: InsiderTransactionCode,
   acquiredOrDisposed?: "A" | "D",
 ): InsiderSignalClass {

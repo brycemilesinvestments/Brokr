@@ -21,7 +21,7 @@ import { fetchFilingXbrl } from "@/lib/edgar/xbrl/fetch-filing-xbrl";
 import type { FilingXbrlExtraction } from "@/lib/edgar/xbrl/types";
 
 export const MIN_REQUEST_INTERVAL_MS = 110;
-export const MAX_429_RETRIES = 5;
+const MAX_429_RETRIES = 5;
 export const EDGAR_BUCKET = "edgar";
 
 type SecSubmissionsResponse = {

@@ -6,6 +6,8 @@ import type { MetricSeriesBundle, MetricSeriesPoint } from "@/lib/edgar/time-ser
 import type { ChunkStore } from "@/lib/rag/store/chunk-store";
 import type { StructuredMetric } from "@/lib/rag/types";
 
+const QUARTER_FP_SET = new Set<string>(QUARTER_FPS);
+
 function humanizeConcept(concept: string): string {
   return concept
     .replace(/([a-z])([A-Z])/g, "$1 $2")
@@ -63,7 +65,7 @@ function metricsFromCompanyFacts(companyId: string, response: CompanyFactsRespon
     }) === "annual");
     const quarterly = pickRepresentativeQuarterly(
       points.filter((point) =>
-        point.fp ? (QUARTER_FPS as readonly string[]).includes(point.fp) : false,
+        point.fp ? QUARTER_FP_SET.has(point.fp) : false,
       ),
     );
 

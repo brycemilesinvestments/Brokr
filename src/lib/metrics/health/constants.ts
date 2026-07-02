@@ -18,7 +18,7 @@ export const DEFAULT_WEIGHTS: CompositeWeights = {
 
 // ── Profitability breakpoints (decimal ratios) ────────────────────────────────
 
-export const NET_MARGIN_BREAKPOINTS: readonly Breakpoint[] = [
+const NET_MARGIN_BREAKPOINTS: readonly Breakpoint[] = [
   [-0.20, 0],
   [-0.05, 20],
   [0.0, 30],
@@ -28,7 +28,7 @@ export const NET_MARGIN_BREAKPOINTS: readonly Breakpoint[] = [
   [0.30, 100],
 ];
 
-export const GROSS_MARGIN_BREAKPOINTS: readonly Breakpoint[] = [
+const GROSS_MARGIN_BREAKPOINTS: readonly Breakpoint[] = [
   [0.0, 0],
   [0.20, 30],
   [0.40, 55],
@@ -36,7 +36,7 @@ export const GROSS_MARGIN_BREAKPOINTS: readonly Breakpoint[] = [
   [0.80, 100],
 ];
 
-export const OPERATING_MARGIN_BREAKPOINTS: readonly Breakpoint[] = [
+const OPERATING_MARGIN_BREAKPOINTS: readonly Breakpoint[] = [
   [-0.10, 0],
   [0.0, 28],
   [0.05, 50],
@@ -44,7 +44,7 @@ export const OPERATING_MARGIN_BREAKPOINTS: readonly Breakpoint[] = [
   [0.25, 100],
 ];
 
-export const RETURN_ON_EQUITY_BREAKPOINTS: readonly Breakpoint[] = [
+const RETURN_ON_EQUITY_BREAKPOINTS: readonly Breakpoint[] = [
   [-0.20, 0],
   [0.0, 28],
   [0.10, 50],
@@ -77,7 +77,7 @@ export const GROWTH_OPERATING_MARGIN_BREAKPOINTS: readonly Breakpoint[] = [
 
 // ── Balance sheet breakpoints ─────────────────────────────────────────────────
 
-export const CURRENT_RATIO_BREAKPOINTS: readonly Breakpoint[] = [
+const CURRENT_RATIO_BREAKPOINTS: readonly Breakpoint[] = [
   [0.5, 0],
   [1.0, 40],
   [1.5, 65],
@@ -86,7 +86,7 @@ export const CURRENT_RATIO_BREAKPOINTS: readonly Breakpoint[] = [
   [5.0, 75],
 ];
 
-export const DEBT_TO_EQUITY_BREAKPOINTS: readonly Breakpoint[] = [
+const DEBT_TO_EQUITY_BREAKPOINTS: readonly Breakpoint[] = [
   [0.0, 100],
   [0.5, 85],
   [1.0, 65],
@@ -97,7 +97,7 @@ export const DEBT_TO_EQUITY_BREAKPOINTS: readonly Breakpoint[] = [
 
 // ── Cash generation breakpoints ───────────────────────────────────────────────
 
-export const FCF_MARGIN_BREAKPOINTS: readonly Breakpoint[] = [
+const FCF_MARGIN_BREAKPOINTS: readonly Breakpoint[] = [
   [-0.20, 0],
   [-0.05, 15],
   [0.0, 30],
@@ -108,7 +108,7 @@ export const FCF_MARGIN_BREAKPOINTS: readonly Breakpoint[] = [
 ];
 
 /** Capex intensity (|Capex|/Revenue). Lower = better for asset-light. */
-export const CAPEX_INTENSITY_BREAKPOINTS: readonly Breakpoint[] = [
+const CAPEX_INTENSITY_BREAKPOINTS: readonly Breakpoint[] = [
   [0.0, 100],
   [0.05, 85],
   [0.10, 70],
@@ -121,7 +121,7 @@ export const CAPEX_INTENSITY_BREAKPOINTS: readonly Breakpoint[] = [
 // ── Dilution breakpoints ──────────────────────────────────────────────────────
 
 /** SBC as % of revenue (decimal). Lower = less dilutive. */
-export const SBC_PCT_REVENUE_BREAKPOINTS: readonly Breakpoint[] = [
+const SBC_PCT_REVENUE_BREAKPOINTS: readonly Breakpoint[] = [
   [0.0, 100],
   [0.02, 90],
   [0.05, 70],
@@ -131,7 +131,7 @@ export const SBC_PCT_REVENUE_BREAKPOINTS: readonly Breakpoint[] = [
 ];
 
 /** Share count YoY trend (decimal change). Negative = buybacks (good). */
-export const SHARE_COUNT_TREND_BREAKPOINTS: readonly Breakpoint[] = [
+const SHARE_COUNT_TREND_BREAKPOINTS: readonly Breakpoint[] = [
   [-0.05, 100],
   [0.0, 80],
   [0.02, 65],

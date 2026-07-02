@@ -18,18 +18,11 @@ import {
 import {
   axisValueToPercentFormatter,
   type ChartConfig,
-  ChartContainer,
   getColorsCount,
   getLoadingData,
-  LoadingIndicator,
-} from "@/components/evilcharts/ui/chart";
-import {
-  Area as RechartsArea,
-  AreaChart as RechartsAreaChart,
-  CartesianGrid,
-  XAxis as RechartsXAxis,
-  YAxis as RechartsYAxis,
-} from "recharts";
+} from "@/components/evilcharts/lib/chart-helpers";
+import { ChartLoadingIndicator as LoadingIndicator } from "@/components/evilcharts/ui/chart-loading-indicator";
+import { ChartContainer } from "@/components/evilcharts/ui/chart";
 import {
   ChartTooltip,
   ChartTooltipContent,
@@ -39,7 +32,16 @@ import {
 import { ChartLegend, ChartLegendContent, type ChartLegendVariant } from "@/components/evilcharts/ui/legend";
 import { EvilBrush, useEvilBrush, type EvilBrushRange } from "@/components/evilcharts/ui/evil-brush";
 import { ChartDot, type DotVariant } from "@/components/evilcharts/ui/dot";
-import { motion, useReducedMotion } from "motion/react";
+import { useRecharts } from "@/components/evilcharts/ui/use-recharts";
+import { LazyMotion, domAnimation, m, useReducedMotion } from "motion/react";
+import type {
+  Area as RechartsArea,
+  AreaChart as RechartsAreaChart,
+  CartesianGrid,
+  ReferenceDot as RechartsReferenceDot,
+  XAxis as RechartsXAxis,
+  YAxis as RechartsYAxis,
+} from "recharts";
 
 // Constants
 const STROKE_WIDTH = 0.8;
@@ -48,6 +50,11 @@ const LOADING_ANIMATION_DURATION = 2000; // in milliseconds
 const STACK_ID = "evil-stacked";
 const REVEAL_DURATION = 1; // intro wipe length, in seconds
 const REVEAL_EASE: [number, number, number, number] = [0, 0.7, 0.5, 1]; // intro wipe easing
+const REVEAL_MOTION = {
+  initial: { scaleX: 0 },
+  animate: { scaleX: 1 },
+  transition: { duration: REVEAL_DURATION, ease: REVEAL_EASE },
+};
 
 type CurveType = ComponentProps<typeof RechartsArea>["type"];
 type AreaDotProp = ComponentProps<typeof RechartsArea>["dot"];
@@ -168,6 +175,7 @@ export function EvilAreaChart<
   brushFormatLabel,
   onBrushChange,
 }: EvilAreaChartProps<TData, TConfig>) {
+  const { AreaChart: RechartsAreaChart } = useRecharts();
   const chartId = useId().replace(/:/g, ""); // colon-free id keeps CSS/SVG selectors valid
   const [selectedDataKey, setSelectedDataKey] = useState<string | null>(defaultSelectedDataKey);
   const { loadingData, onShimmerExit } = useLoadingData(isLoading, loadingPoints);
@@ -210,8 +218,9 @@ export function EvilAreaChart<
   );
 
   return (
-    <AreaChartContext value={contextValue}>
-      <ChartContainer
+    <LazyMotion features={domAnimation}>
+      <AreaChartContext value={contextValue}>
+        <ChartContainer
         className={className}
         config={config}
         footer={
@@ -250,8 +259,9 @@ export function EvilAreaChart<
             <LoadingArea chartId={chartId} curveType={curveType} onShimmerExit={onShimmerExit} />
           )}
         </RechartsAreaChart>
-      </ChartContainer>
-    </AreaChartContext>
+        </ChartContainer>
+      </AreaChartContext>
+    </LazyMotion>
   );
 }
 
@@ -289,6 +299,7 @@ export function Area({
   children,
   areaProps,
 }: AreaProps) {
+  const { Area: RechartsArea } = useRecharts();
   const {
     config,
     curveType: defaultCurve,
@@ -403,6 +414,7 @@ export function XAxis({
   minTickGap = 8,
   ...props
 }: XAxisProps) {
+  const { XAxis: RechartsXAxis } = useRecharts();
   const { isLoading } = useAreaChart();
 
   if (isLoading) return null;
@@ -434,6 +446,7 @@ export function YAxis({
   tickFormatter,
   ...props
 }: YAxisProps) {
+  const { YAxis: RechartsYAxis } = useRecharts();
   const { isLoading, isExpanded } = useAreaChart();
 
   if (isLoading) return null;
@@ -458,7 +471,15 @@ type GridProps = ComponentProps<typeof CartesianGrid>;
  * forwards every Recharts CartesianGrid prop for full control.
  */
 export function Grid({ vertical = false, strokeDasharray = "3 3", ...props }: GridProps) {
+  const { CartesianGrid } = useRecharts();
+
   return <CartesianGrid vertical={vertical} strokeDasharray={strokeDasharray} {...props} />;
+}
+
+export function ReferenceDot(props: ComponentProps<typeof RechartsReferenceDot>) {
+  const { ReferenceDot: RechartsReferenceDotComponent } = useRecharts();
+
+  return <RechartsReferenceDotComponent {...props} />;
 }
 
 type TooltipProps = {
@@ -499,7 +520,7 @@ type LegendProps = {
  * The series legend. When `isClickable` is set, each entry toggles selection of
  * its series, driving the shared selection state read by every <Area />.
  */
-export function Legend({
+function Legend({
   variant,
   align = "right",
   verticalAlign = "top",
@@ -639,12 +660,6 @@ const SINGLE_REVEAL_ORIGIN: Record<Exclude<RevealAnimationType, "edges-in">, num
  * "edges-in" needs two rects — each half grows inward from an opposite edge.
  */
 const RevealMask = ({ id, type }: { id: string; type: RevealAnimationType }) => {
-  const reveal = {
-    initial: { scaleX: 0 },
-    animate: { scaleX: 1 },
-    transition: { duration: REVEAL_DURATION, ease: REVEAL_EASE },
-  };
-
   return (
     <mask
       id={`${id}-reveal-mask`}
@@ -658,8 +673,8 @@ const RevealMask = ({ id, type }: { id: string; type: RevealAnimationType }) => 
       {type === "edges-in" ? (
         <>
           {/* left half wipes inward from the left edge toward the centre */}
-          <motion.rect
-            {...reveal}
+          <m.rect
+            {...REVEAL_MOTION}
             x="0"
             y="0"
             width="50%"
@@ -668,8 +683,8 @@ const RevealMask = ({ id, type }: { id: string; type: RevealAnimationType }) => 
             style={{ originX: 0 }}
           />
           {/* right half wipes inward from the right edge toward the centre */}
-          <motion.rect
-            {...reveal}
+          <m.rect
+            {...REVEAL_MOTION}
             x="50%"
             y="0"
             width="50%"
@@ -679,8 +694,8 @@ const RevealMask = ({ id, type }: { id: string; type: RevealAnimationType }) => 
           />
         </>
       ) : (
-        <motion.rect
-          {...reveal}
+        <m.rect
+          {...REVEAL_MOTION}
           x="0"
           y="0"
           width="100%"
@@ -960,7 +975,7 @@ const generateEasedGradientStops = (
  * when the shimmer has completely exited the visible area. This eliminates
  * timing drift issues from setTimeout/setInterval.
  */
-export function useLoadingData(isLoading: boolean, loadingPoints: number = 14) {
+function useLoadingData(isLoading: boolean, loadingPoints: number = 14) {
   const [loadingDataKey, setLoadingDataKey] = useState(false);
 
   // Callback fired by motion.dev when the shimmer exits the visible area
@@ -993,6 +1008,8 @@ const LoadingArea = ({
   curveType: CurveType;
   onShimmerExit: () => void;
 }) => {
+  const { Area: RechartsArea } = useRecharts();
+
   return (
     <>
       <RechartsArea
@@ -1058,7 +1075,7 @@ const LoadingPattern = ({
         x="0"
         y="0"
       >
-        <motion.rect
+        <m.rect
           y="0"
           width="1"
           height="1"

@@ -21,15 +21,17 @@ export function detectNewFilings(
   );
   if (!trigger) return [];
 
-  const hasFormFilter =
-    trigger.formTypes !== undefined && trigger.formTypes.length > 0;
+  const formTypeFilter =
+    trigger.formTypes !== undefined && trigger.formTypes.length > 0
+      ? new Set(trigger.formTypes)
+      : null;
 
   const alerts: NewFilingAlert[] = [];
 
   for (const filing of filings) {
     if (seenAccessions.has(filing.accessionNumber)) continue;
 
-    if (hasFormFilter && !trigger.formTypes!.includes(filing.form)) {
+    if (formTypeFilter && !formTypeFilter.has(filing.form)) {
       continue;
     }
 

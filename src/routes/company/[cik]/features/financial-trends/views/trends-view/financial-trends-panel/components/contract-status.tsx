@@ -1,10 +1,15 @@
-import type { ContractValidation, SeriesAnomaly } from "@/lib/analysis";
+import type { ContractValidation, SeriesAnomaly, ContractCheck } from "@/lib/analysis";
 
 type ContractStatusProps = {
   contract: ContractValidation;
 };
 
 export function ContractStatus({ contract }: ContractStatusProps) {
+  const failedChecks: ContractCheck[] = [];
+  for (const c of contract.checks) {
+    if (!c.passed && c.id !== "C11") failedChecks.push(c);
+  }
+
   return (
     <div
       className={`rounded-xl border px-4 py-3 ${
@@ -25,13 +30,11 @@ export function ContractStatus({ contract }: ContractStatusProps) {
       </div>
       {!contract.passed ? (
         <ul className="mt-2 space-y-1 text-xs text-amber-900">
-          {contract.checks
-            .filter((c) => !c.passed && c.id !== "C11")
-            .map((c) => (
-              <li key={c.id}>
-                <span className="font-mono font-medium">{c.id}</span>: {c.message}
-              </li>
-            ))}
+          {failedChecks.map((c) => (
+            <li key={c.id}>
+              <span className="font-mono font-medium">{c.id}</span>: {c.message}
+            </li>
+          ))}
         </ul>
       ) : null}
     </div>

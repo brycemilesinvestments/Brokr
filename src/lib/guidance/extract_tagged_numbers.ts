@@ -50,7 +50,7 @@ export function extract_tagged_numbers(
     if (!dedup.has(key)) dedup.set(key, row);
   }
 
-  return [...dedup.values()].sort((a, b) => {
+  return [...dedup.values()].toSorted((a, b) => {
     const metricCmp = a.metric.localeCompare(b.metric);
     if (metricCmp !== 0) return metricCmp;
 

@@ -19,16 +19,16 @@ create policy "Allow public read access on companies"
   for select
   using (true);
 
-create policy "Allow public insert on companies"
+create policy "Authenticated users can insert on companies"
   on public.companies
   for insert
-  with check (true);
+  with check (auth.uid() is not null);
 
-create policy "Allow public update on companies"
+create policy "Authenticated users can update on companies"
   on public.companies
   for update
-  using (true)
-  with check (true);
+  using (auth.uid() is not null)
+  with check (auth.uid() is not null);
 
 create index if not exists companies_last_viewed_at_idx
   on public.companies (last_viewed_at desc);

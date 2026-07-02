@@ -113,17 +113,17 @@ export async function fetchText(
   return response.text();
 }
 
-export async function fetchCompanyFacts(cik: string | number): Promise<Record<string, unknown>> {
+async function fetchCompanyFacts(cik: string | number): Promise<Record<string, unknown>> {
   return fetchJson<Record<string, unknown>>(companyFactsUrl(cik));
 }
 
-export async function fetchFilingSummary(
+async function fetchFilingSummary(
   cik: string | number,
   accessionNumber: string,
 ): Promise<Record<string, unknown>> {
   return fetchJson<Record<string, unknown>>(filingIndexJsonUrl(cik, accessionNumber));
 }
 
-export async function fetchSubmissions(cik: string | number): Promise<Record<string, unknown>> {
+async function fetchSubmissions(cik: string | number): Promise<Record<string, unknown>> {
   return fetchJson<Record<string, unknown>>(submissionsUrl(cik));
 }

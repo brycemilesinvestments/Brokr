@@ -9,7 +9,7 @@ const RATIO_METRICS = new Set([
 
 const EPS_METRICS = new Set(["EarningsPerShareBasic", "EarningsPerShareDiluted"]);
 
-export function isRatioMetric(metric: string): boolean {
+function isRatioMetric(metric: string): boolean {
   return RATIO_METRICS.has(metric);
 }
 

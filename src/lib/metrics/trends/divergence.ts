@@ -121,6 +121,7 @@ function detectReceivablesOutpacingRevenue(
 
   if (arPts.length < 2 || revPts.length < 2) return [];
 
+  const revByPeriod = new Map(revPts.map((point) => [point.periodEnd, point]));
   const flagged: { periodEnd: string; outpacing: number }[] = [];
 
   for (let i = 1; i < arPts.length; i++) {
@@ -131,9 +132,8 @@ function detectReceivablesOutpacingRevenue(
     const arGrowth = (arCurr - arPrev) / Math.abs(arPrev);
     if (arGrowth <= 0) continue;
 
-    // Find corresponding revenue period pair
-    const revPrevPt = revPts.find((p) => p.periodEnd === arPts[i - 1].periodEnd);
-    const revCurrPt = revPts.find((p) => p.periodEnd === arPts[i].periodEnd);
+    const revPrevPt = revByPeriod.get(arPts[i - 1].periodEnd);
+    const revCurrPt = revByPeriod.get(arPts[i].periodEnd);
     if (!revPrevPt || !revCurrPt) continue;
 
     const revPrev = revPrevPt.value;
@@ -189,22 +189,27 @@ function detectRevenueGrowthMarginCompression(
   if (revPts.length < DIVERGENCE_MIN_CONSECUTIVE + 1) return [];
   if (gmPts.length < DIVERGENCE_MIN_CONSECUTIVE + 1) return [];
 
+  const revByPeriod = new Map(revPts.map((point) => [point.periodEnd, point]));
+  const gmByPeriod = new Map(gmPts.map((point) => [point.periodEnd, point]));
+  const gmPeriods = new Set(gmPts.map((point) => point.periodEnd));
+
   // Align periods present in both series
-  const commonPeriods = revPts
-    .map((r) => r.periodEnd)
-    .filter((d) => gmPts.some((g) => g.periodEnd === d));
+  const commonPeriods: string[] = [];
+  for (const r of revPts) {
+    if (gmPeriods.has(r.periodEnd)) commonPeriods.push(r.periodEnd);
+  }
 
   if (commonPeriods.length < DIVERGENCE_MIN_CONSECUTIVE + 1) return [];
 
   const getRevGrowth = (a: string, b: string) => {
-    const prev = revPts.find((p) => p.periodEnd === a)!.value;
-    const curr = revPts.find((p) => p.periodEnd === b)!.value;
+    const prev = revByPeriod.get(a)!.value;
+    const curr = revByPeriod.get(b)!.value;
     return prev !== 0 ? (curr - prev) / Math.abs(prev) : 0;
   };
 
   const getGmChange = (a: string, b: string) => {
-    const prev = gmPts.find((p) => p.periodEnd === a)!.value!;
-    const curr = gmPts.find((p) => p.periodEnd === b)!.value!;
+    const prev = gmByPeriod.get(a)!.value!;
+    const curr = gmByPeriod.get(b)!.value!;
     return curr - prev;
   };
 
@@ -253,19 +258,24 @@ function detectEarningsQualityGap(
   if (niPts.length < DIVERGENCE_MIN_CONSECUTIVE + 1) return [];
   if (fcfPts.length < DIVERGENCE_MIN_CONSECUTIVE + 1) return [];
 
-  const commonPeriods = niPts
-    .map((p) => p.periodEnd)
-    .filter((d) => fcfPts.some((f) => f.periodEnd === d));
+  const niByPeriod = new Map(niPts.map((point) => [point.periodEnd, point]));
+  const fcfByPeriod = new Map(fcfPts.map((point) => [point.periodEnd, point]));
+  const fcfPeriods = new Set(fcfPts.map((point) => point.periodEnd));
+
+  const commonPeriods: string[] = [];
+  for (const p of niPts) {
+    if (fcfPeriods.has(p.periodEnd)) commonPeriods.push(p.periodEnd);
+  }
 
   if (commonPeriods.length < DIVERGENCE_MIN_CONSECUTIVE + 1) return [];
 
   const runs = findConsecutiveRuns(
     commonPeriods,
     (i) => {
-      const niPrev = niPts.find((p) => p.periodEnd === commonPeriods[i])!.value;
-      const niCurr = niPts.find((p) => p.periodEnd === commonPeriods[i + 1])!.value;
-      const fcfPrev = fcfPts.find((p) => p.periodEnd === commonPeriods[i])!.value;
-      const fcfCurr = fcfPts.find((p) => p.periodEnd === commonPeriods[i + 1])!.value;
+      const niPrev = niByPeriod.get(commonPeriods[i])!.value;
+      const niCurr = niByPeriod.get(commonPeriods[i + 1])!.value;
+      const fcfPrev = fcfByPeriod.get(commonPeriods[i])!.value;
+      const fcfCurr = fcfByPeriod.get(commonPeriods[i + 1])!.value;
 
       const niUp = niCurr > niPrev;
       const fcfFlatOrDown = fcfCurr <= fcfPrev;

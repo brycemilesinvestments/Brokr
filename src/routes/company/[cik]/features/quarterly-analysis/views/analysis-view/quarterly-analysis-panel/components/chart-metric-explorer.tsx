@@ -2,10 +2,8 @@
 
 import { useMemo, useState } from "react";
 import type { ChartBundle } from "@/lib/analysis";
-import {
-  filterChartPoints,
-  MetricLineChart,
-} from "@/routes/company/[cik]/features/financial-trends/views/trends-view/financial-trends-panel/components/metric-line-chart";
+import { MetricLineChart } from "@/routes/company/[cik]/features/financial-trends/views/trends-view/financial-trends-panel/components/metric-line-chart";
+import { filterChartPoints } from "@/routes/company/[cik]/features/financial-trends/views/trends-view/financial-trends-panel/utils/filter-chart-points";
 import { buildMetricChartData } from "@/routes/company/[cik]/features/financial-trends/views/trends-view/financial-trends-panel/lib/build-metric-chart-geometry";
 import type { MetricChartRow } from "@/routes/company/[cik]/features/financial-trends/views/trends-view/financial-trends-panel/lib/build-metric-chart-geometry";
 import { formatMetricValue } from "@/routes/company/[cik]/features/financial-trends/views/trends-view/financial-trends-panel/utils/format-metric";

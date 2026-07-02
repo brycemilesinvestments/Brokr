@@ -112,27 +112,35 @@ export function RagChatPanel({ cik, companyName }: RagChatPanelProps) {
           {error ? <p className="text-sm text-red-700">{error}</p> : null}
         </div>
 
-        <form
-          className="border-t border-zinc-100 px-6 py-4"
-          onSubmit={(event) => {
-            event.preventDefault();
-            void send();
-          }}
-        >
+        <div className="border-t border-zinc-100 px-6 py-4">
           <div className="flex gap-2">
+            <label htmlFor="rag-chat-input" className="sr-only">
+              Ask about this company&apos;s filings
+            </label>
             <input
+              id="rag-chat-input"
               type="text"
               value={input}
               onChange={(event) => setInput(event.target.value)}
               placeholder="Ask about this company's filings…"
               className="flex-1 rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-emerald-500"
               disabled={loading}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  void send();
+                }
+              }}
             />
-            <Button type="submit" disabled={loading || !input.trim()}>
+            <Button
+              type="button"
+              disabled={loading || !input.trim()}
+              onClick={() => void send()}
+            >
               Send
             </Button>
           </div>
-        </form>
+        </div>
       </div>
     </section>
   );

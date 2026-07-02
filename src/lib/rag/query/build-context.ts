@@ -23,7 +23,7 @@ export function buildContext(input: {
   const metricsBlock = input.metrics.map(formatMetricForContext).join("\n");
   used += estimateTokens(metricsBlock);
 
-  const sortedChunks = [...input.chunks].sort((a, b) => b.similarity - a.similarity);
+  const sortedChunks = input.chunks.toSorted((a, b) => b.similarity - a.similarity);
   const keptChunks: RagContext["chunks"] = [];
 
   for (const chunk of sortedChunks) {

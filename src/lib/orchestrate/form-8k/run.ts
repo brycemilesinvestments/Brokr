@@ -117,15 +117,20 @@ export async function runForm8kSync(
   const processed: Form8kSyncResult["processed"] = [];
   const errors: Form8kSyncResult["errors"] = [];
 
-  for (const filing of filings) {
-    try {
-      processed.push(await processFiling(company, filing));
-    } catch (error) {
-      errors.push({
-        accessionNumber: filing.accessionNumber,
-        message: error instanceof Error ? error.message : "Unknown error",
-      });
+  const results = await Promise.allSettled(
+    filings.map((filing) => processFiling(company, filing)),
+  );
+
+  for (let i = 0; i < results.length; i++) {
+    const result = results[i];
+    if (result.status === "fulfilled") {
+      processed.push(result.value);
+      continue;
     }
+    errors.push({
+      accessionNumber: filings[i].accessionNumber,
+      message: result.reason instanceof Error ? result.reason.message : "Unknown error",
+    });
   }
 
   return { company, processed, errors };

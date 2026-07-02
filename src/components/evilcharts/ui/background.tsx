@@ -1,6 +1,6 @@
 "use client";
 
-import { ZIndexLayer } from "recharts";
+import { useRecharts } from "@/components/evilcharts/ui/use-recharts";
 import { useId } from "react";
 
 // ── Background Variant Types ─────────────────────────────────────────────────
@@ -204,6 +204,7 @@ interface ChartBackgroundProps {
 }
 
 export function ChartBackground({ variant }: ChartBackgroundProps) {
+  const { ZIndexLayer } = useRecharts();
   const baseId = useId().replace(/:/g, "");
   const patternId = `${baseId}-bg-${variant}`;
   const maskId = `${baseId}-bg-edge-fade`;

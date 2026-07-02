@@ -40,7 +40,7 @@ export function pick8kDocumentsFromItems(items: FilingIndexItem[]): FilingIndexD
   return { form8k, exhibit991 };
 }
 
-export function pick8kDocuments(indexJson: Record<string, unknown>): FilingIndexDocuments {
+function pick8kDocuments(indexJson: Record<string, unknown>): FilingIndexDocuments {
   return pick8kDocumentsFromItems(normalizeIndexItems(indexJson));
 }
 

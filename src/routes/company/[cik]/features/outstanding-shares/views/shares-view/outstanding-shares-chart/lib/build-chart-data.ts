@@ -6,8 +6,8 @@ export type SharesChartRow = OutstandingSharePoint & {
 };
 
 export function buildSharesChartData(points: OutstandingSharePoint[]): SharesChartRow[] {
-  return [...points]
-    .sort((a, b) => a.asOfDate.localeCompare(b.asOfDate))
+  return points
+    .toSorted((a, b) => a.asOfDate.localeCompare(b.asOfDate))
     .map((point) => ({
       ...point,
       date: point.asOfDate,

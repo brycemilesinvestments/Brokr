@@ -23,6 +23,6 @@ export function isXbrlTaxonomyDocument(document: FilingDocument): boolean {
   return XBRL_FILENAME_PATTERN.test(document.documentName) && !isXbrlFactDocument(document);
 }
 
-export function isXbrlRelatedDocument(document: FilingDocument): boolean {
+function isXbrlRelatedDocument(document: FilingDocument): boolean {
   return isXbrlFactDocument(document) || isXbrlTaxonomyDocument(document);
 }

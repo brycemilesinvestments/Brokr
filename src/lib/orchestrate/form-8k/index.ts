@@ -3,7 +3,6 @@ export type { Stored8kDocument } from "@/lib/orchestrate/form-8k/fetch-and-store
 
 export {
   ingest8kDocument,
-  loadStored8kHtml,
   combinedDocumentText,
 } from "@/lib/orchestrate/form-8k/ingest-document";
 export type { Ingest8kResult } from "@/lib/orchestrate/form-8k/ingest-document";

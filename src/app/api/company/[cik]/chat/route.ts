@@ -55,11 +55,19 @@ export async function POST(
 
     const metricBundle = buildMetricSeriesBundle(facts);
     const latestFiling = facts.facts
-      ? Object.values(facts.facts)
-          .flatMap((taxonomy) => Object.values(taxonomy))
-          .flatMap((concept) => Object.values(concept.units ?? {}))
-          .flat()
-          .sort((a, b) => Date.parse(String(b.filed)) - Date.parse(String(a.filed)))[0]
+      ? (() => {
+          const allFacts = [];
+          for (const taxonomy of Object.values(facts.facts)) {
+            for (const concept of Object.values(taxonomy)) {
+              for (const unitFacts of Object.values(concept.units ?? {})) {
+                allFacts.push(...unitFacts);
+              }
+            }
+          }
+          return allFacts.sort(
+            (a, b) => Date.parse(String(b.filed)) - Date.parse(String(a.filed)),
+          )[0];
+        })()
       : undefined;
 
     const accession = latestFiling?.accn;

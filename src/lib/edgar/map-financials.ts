@@ -46,7 +46,7 @@ function findSeries(response: CompanyFactsResponse, concepts: string[], taxonomy
 }
 
 function sortByEnd(points: CompanyFactUnit[]): CompanyFactUnit[] {
-  return [...points].sort((a, b) => (b.end ?? b.filed).localeCompare(a.end ?? a.filed));
+  return points.toSorted((a, b) => (b.end ?? b.filed).localeCompare(a.end ?? a.filed));
 }
 
 function latestAnnualPoint(series: ConceptSeries): CompanyFactUnit | undefined {
@@ -103,7 +103,7 @@ export function toFinancials(response: CompanyFactsResponse): EdgarFinancials {
   };
 }
 
-export function extractConceptSeries(
+function extractConceptSeries(
   response: CompanyFactsResponse,
   taxonomy: string,
   concept: string,

@@ -149,6 +149,6 @@ export function isChartMarkable(anomaly: CrossLayerAnomaly): boolean {
   return Boolean(anomaly.date && anomaly.chartKeys.length > 0);
 }
 
-export function chartMarkableAnomalies(anomalies: SeriesAnomaly[]): boolean {
+function chartMarkableAnomalies(anomalies: SeriesAnomaly[]): boolean {
   return anomalies.every((a) => Boolean(a.periodEnd && a.metric));
 }

@@ -15,7 +15,7 @@ function collectFrequencies(
     }
   }
 
-  return [...frequencies].sort();
+  return [...frequencies].toSorted();
 }
 
 function countDataPoints(

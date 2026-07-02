@@ -31,7 +31,7 @@ function priorFiscalYear(
   return points.find((p) => p.fy === current.fy! - 1 && p.fp === "FY");
 }
 
-export function enrichQuarterlyDeltas(
+function enrichQuarterlyDeltas(
   points: MetricSeriesPoint[],
 ): MetricSeriesPoint[] {
   return points.map((point, index) => {
@@ -45,7 +45,7 @@ export function enrichQuarterlyDeltas(
   });
 }
 
-export function enrichAnnualDeltas(
+function enrichAnnualDeltas(
   points: MetricSeriesPoint[],
 ): MetricSeriesPoint[] {
   return points.map((point) => {

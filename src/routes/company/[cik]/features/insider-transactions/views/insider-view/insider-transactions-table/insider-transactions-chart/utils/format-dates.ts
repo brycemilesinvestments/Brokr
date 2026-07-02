@@ -15,7 +15,7 @@ export function formatAxisDateForRange(value: string, range: TimeRange): string 
   return date.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
 }
 
-export function formatTableDate(value: string): string {
+function formatTableDate(value: string): string {
   const time = parseTransactionDate(value);
   if (!time) return value;
   return new Date(time).toLocaleDateString("en-US", {

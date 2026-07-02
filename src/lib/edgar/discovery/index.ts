@@ -11,6 +11,8 @@ export type {
   ProseSectionKey,
   ProseSection,
   ProseSections,
+  ProseSectionSource,
+  SectionCoverage,
 } from "@/lib/edgar/discovery/types";
 
 export {
@@ -26,7 +28,13 @@ export { computeCoverageDelta } from "@/lib/edgar/discovery/coverage-delta";
 export { classifyConcepts } from "@/lib/edgar/discovery/classify-concepts";
 export { locateProseSections } from "@/lib/edgar/discovery/locate-prose-sections";
 export {
+  extractHtmlHeadingSections,
+  IXBRL_SECTION_THRESHOLD,
+  countNarrativeIxbrlSections,
+} from "@/lib/edgar/discovery/extract-html-heading-sections";
+export {
   locateForm10kSections,
+  buildSectionCoverage,
   extractAuditorName,
 } from "@/lib/edgar/discovery/locate-form10k-sections";
 export { emptyProseSections } from "@/lib/edgar/discovery/empty-prose-sections";

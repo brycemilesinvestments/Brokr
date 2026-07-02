@@ -26,7 +26,6 @@ export {
 
 export {
   parseTransactionCode,
-  classifyTransactionCode,
   classifyTransaction,
   buildInsiderEvent,
   validateFilingDateAlignment,
@@ -35,7 +34,6 @@ export {
 
 export {
   resolveBenchmarkSymbol,
-  cumulativeReturn,
   computeBenchmarkReturn,
   benchmarkExpectedReturnDates,
 } from "@/lib/insider/benchmark";
@@ -43,8 +41,6 @@ export {
 export {
   toPriceBars,
   sortedUniqueDates,
-  findEventIndex,
-  getTradingDayOffsets,
   computeWindowReturn,
   computeAbnormalReturn,
   assertNoLookAheadAtT0,

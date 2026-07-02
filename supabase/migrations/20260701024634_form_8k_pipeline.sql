@@ -45,17 +45,21 @@ alter table public.company_document_analyses enable row level security;
 create policy "Allow public read on company_documents"
   on public.company_documents for select using (true);
 
-create policy "Allow public insert on company_documents"
-  on public.company_documents for insert with check (true);
+create policy "Authenticated users can insert on company_documents"
+  on public.company_documents for insert with check (auth.uid() is not null);
 
-create policy "Allow public update on company_documents"
-  on public.company_documents for update using (true) with check (true);
+create policy "Authenticated users can update on company_documents"
+  on public.company_documents for update
+  using (auth.uid() is not null)
+  with check (auth.uid() is not null);
 
 create policy "Allow public read on company_document_analyses"
   on public.company_document_analyses for select using (true);
 
-create policy "Allow public insert on company_document_analyses"
-  on public.company_document_analyses for insert with check (true);
+create policy "Authenticated users can insert on company_document_analyses"
+  on public.company_document_analyses for insert with check (auth.uid() is not null);
 
-create policy "Allow public update on company_document_analyses"
-  on public.company_document_analyses for update using (true) with check (true);
+create policy "Authenticated users can update on company_document_analyses"
+  on public.company_document_analyses for update
+  using (auth.uid() is not null)
+  with check (auth.uid() is not null);

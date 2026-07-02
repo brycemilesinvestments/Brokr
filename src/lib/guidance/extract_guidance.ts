@@ -139,7 +139,7 @@ export async function extract_guidance(args: {
   };
 }
 
-export function make_noop_guidance_extractor(
+function make_noop_guidance_extractor(
   guidance: GuidanceExtraction = { found: false, hasGuidance: false, ranges: [] },
 ): GuidanceAiExtractor {
   return async () => ({ guidance, costUsd: 0 });

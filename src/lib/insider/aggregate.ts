@@ -46,7 +46,7 @@ function assignClusterIds(events: InsiderEvent[]): InsiderEvent[] {
   const purchases = events.filter(
     (event) => event.classification === "signal" && event.transactionCode === "P",
   );
-  const sorted = [...purchases].sort((a, b) => a.filingDate.localeCompare(b.filingDate));
+  const sorted = purchases.toSorted((a, b) => a.filingDate.localeCompare(b.filingDate));
   const clusterIdByKey = new Map<string, string>();
   let clusterCounter = 0;
 
@@ -168,9 +168,10 @@ export function computeSignalDecay(
       longCar: 0,
     };
 
-    if (aggregation.window.label === "short") existing.shortCar = aggregation.meanCar;
-    if (aggregation.window.label === "medium") existing.mediumCar = aggregation.meanCar;
-    if (aggregation.window.label === "long") existing.longCar = aggregation.meanCar;
+    const windowLabel = aggregation.window.label;
+    if (windowLabel === "short") existing.shortCar = aggregation.meanCar;
+    if (windowLabel === "medium") existing.mediumCar = aggregation.meanCar;
+    if (windowLabel === "long") existing.longCar = aggregation.meanCar;
 
     byType.set(aggregation.signalType, existing);
   }

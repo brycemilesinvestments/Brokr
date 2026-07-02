@@ -1,5 +1,5 @@
 /** SEC Form 8-K item code labels (Items 1.01–9.01). */
-export const FORM_8K_ITEM_LABELS: Record<string, string> = {
+const FORM_8K_ITEM_LABELS: Record<string, string> = {
   "1.01": "Entry into a Material Definitive Agreement",
   "1.02": "Termination of a Material Definitive Agreement",
   "1.03": "Bankruptcy or Receivership",
@@ -36,7 +36,7 @@ export const FORM_8K_ITEM_LABELS: Record<string, string> = {
 };
 
 /** Map primary item codes to coarse event types for routing. */
-export const FORM_8K_EVENT_TYPES: Record<string, string> = {
+const FORM_8K_EVENT_TYPES: Record<string, string> = {
   "1.01": "material_agreement",
   "1.02": "agreement_termination",
   "1.03": "bankruptcy",
@@ -63,10 +63,10 @@ export const FORM_8K_EVENT_TYPES: Record<string, string> = {
 
 export function parseItemCodes(items: string | undefined | null): string[] {
   if (!items) return [];
-  return items
-    .split(",")
-    .map((item) => item.trim())
-    .filter(Boolean);
+  return items.split(",").flatMap((item) => {
+    const trimmed = item.trim();
+    return trimmed ? [trimmed] : [];
+  });
 }
 
 export function labelItemCode(code: string): string {

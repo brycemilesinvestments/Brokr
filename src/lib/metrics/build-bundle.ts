@@ -71,7 +71,7 @@ export function buildExtendedMetricsBundle(
   };
 }
 
-export function buildExtendedMetricsState(
+function buildExtendedMetricsState(
   timeSeries: TimeSeriesBundle,
   rawFacts: CompanyFactsResponse,
   ixbrlFacts: XbrlFact[] = [],

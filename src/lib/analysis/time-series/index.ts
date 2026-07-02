@@ -11,11 +11,7 @@ export type {
   ContractValidation,
 } from "@/lib/analysis/time-series/types";
 
-export {
-  enrichQuarterlyDeltas,
-  enrichAnnualDeltas,
-  enrichMetricSeriesDeltas,
-} from "@/lib/analysis/time-series/deltas";
+export { enrichMetricSeriesDeltas } from "@/lib/analysis/time-series/deltas";
 
 export {
   computeRatioSeries,

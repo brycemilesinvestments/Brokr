@@ -38,6 +38,7 @@ function splitSection(
       chunkIndex,
       text: trimmed,
       tokenCount: estimateTokens(trimmed),
+      source: section.source ?? "ixbrl_textblock",
     });
     chunkIndex += 1;
     buffer = "";

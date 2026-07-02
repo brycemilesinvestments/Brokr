@@ -14,6 +14,6 @@ export function filterChartToAnnual(chart: ChartBundle): ChartBundle {
   return filtered;
 }
 
-export function latestPoint(points: ChartPoint[] | undefined): ChartPoint | undefined {
+function latestPoint(points: ChartPoint[] | undefined): ChartPoint | undefined {
   return points?.at(-1);
 }

@@ -12,7 +12,7 @@ import type { PeerEntry, PeerExtractDeps, PeerExtraction } from "@/lib/peers/typ
  *   - time-series chart (ratio series: gross_margin, etc.)
  *   - extended metrics chart (derived: fcf, working_capital, dilution, etc.)
  */
-export async function extractPeerMetrics(
+async function extractPeerMetrics(
   peer: PeerEntry,
   deps: PeerExtractDeps,
 ): Promise<PeerExtraction> {

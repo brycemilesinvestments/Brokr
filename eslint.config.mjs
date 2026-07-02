@@ -13,7 +13,7 @@ const eslintConfig = defineConfig([
   ...nextTs,
   {
     files: ["**"],
-    ignores: ["projectStructure.cache.json"],
+    ignores: ["projectStructure.cache.json", "**/.DS_Store"],
     languageOptions: { parser: projectStructureParser },
     plugins: {
       "project-structure": projectStructurePlugin,
@@ -38,6 +38,7 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    "**/.DS_Store",
   ]),
 ]);
 

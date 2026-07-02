@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { ProseSections } from "@/lib/edgar/discovery";
+import { emptyProseSections } from "@/lib/edgar/discovery";
 import type { FilingRef } from "@/lib/edgar/types";
 import {
   buildFilingDiffCacheKey,
@@ -57,12 +58,14 @@ const PAIRED_FILINGS: FilingRef[] = [
 
 function prose(text: string): ProseSections {
   return {
+    ...emptyProseSections(),
     mda: {
       key: "mda",
       concept: "ManagementDiscussionAndAnalysisTextBlock",
       taxonomy: "us-gaap",
       text,
       charCount: text.length,
+      source: "ixbrl_textblock",
     },
     risk_factors: {
       key: "risk_factors",
@@ -70,6 +73,7 @@ function prose(text: string): ProseSections {
       taxonomy: "us-gaap",
       text,
       charCount: text.length,
+      source: "ixbrl_textblock",
     },
     revenue_concentration: null,
     subsequent_events: null,
@@ -117,6 +121,7 @@ describe("computeStructuralDiff (F3)", () => {
           taxonomy: "us-gaap",
           text: "Top customer represented 18%.",
           charCount: 31,
+          source: "ixbrl_textblock",
         },
         subsequent_events: {
           key: "subsequent_events",
@@ -124,6 +129,7 @@ describe("computeStructuralDiff (F3)", () => {
           taxonomy: "us-gaap",
           text: "We issued guidance.",
           charCount: 19,
+          source: "ixbrl_textblock",
         },
       },
       riskTags: ["pricing", "competition"],

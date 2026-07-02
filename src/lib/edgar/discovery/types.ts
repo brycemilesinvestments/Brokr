@@ -81,13 +81,24 @@ export type ProseSectionKey =
   | "form_8k_body"
   | "exhibit_99_1";
 
-/** D5 — Raw prose extracted from XBRL text-block tags. */
+/** How a prose section was extracted (K1 two-path contract). */
+export type ProseSectionSource = "ixbrl_textblock" | "html_heading_fallback";
+
+/** D5 — Raw prose extracted from XBRL text blocks or HTML Item headings. */
 export type ProseSection = {
   key: ProseSectionKey;
   concept: string;
   taxonomy: string;
   text: string;
   charCount: number;
+  /** Present for 10-K K1 sections; optional for 8-K HTML prose. */
+  source?: ProseSectionSource;
 };
 
 export type ProseSections = Record<ProseSectionKey, ProseSection | null>;
+
+/** K1 coverage — which sections were found and how. */
+export type SectionCoverage = {
+  sectionsPresent: ProseSectionKey[];
+  sectionSources: Partial<Record<ProseSectionKey, ProseSectionSource>>;
+};

@@ -11,7 +11,7 @@ export type TimeSeriesAgentState = {
   errors: string[];
 };
 
-export function createTimeSeriesAgentState(cik: string): TimeSeriesAgentState {
+function createTimeSeriesAgentState(cik: string): TimeSeriesAgentState {
   return {
     cik,
     rawFacts: null,
@@ -22,7 +22,7 @@ export function createTimeSeriesAgentState(cik: string): TimeSeriesAgentState {
   };
 }
 
-export function applyCompanyFacts(
+function applyCompanyFacts(
   state: TimeSeriesAgentState,
   rawFacts: CompanyFactsResponse,
 ): TimeSeriesAgentState {
@@ -37,11 +37,17 @@ export function applyCompanyFacts(
     completed: isTimeSeriesComplete(timeSeries),
     errors: contract.passed
       ? state.errors
-      : [...state.errors, ...contract.checks.filter((c) => !c.passed).map((c) => `${c.id}: ${c.message}`)],
+      : [
+          ...state.errors,
+          ...contract.checks.reduce<string[]>((errors, c) => {
+            if (!c.passed) errors.push(`${c.id}: ${c.message}`);
+            return errors;
+          }, []),
+        ],
   };
 }
 
-export function guardTimeSeriesComplete(state: TimeSeriesAgentState): boolean {
+function guardTimeSeriesComplete(state: TimeSeriesAgentState): boolean {
   if (!state.rawFacts || !state.timeSeries) return false;
   return isTimeSeriesComplete(state.timeSeries);
 }

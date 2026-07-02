@@ -55,10 +55,13 @@ export async function fetchPeerComparison(cik: string): Promise<PeerComparisonPa
   const annualChart = filterChartToAnnual(fullChart);
 
   const filteredChart = Object.fromEntries(
-    PEER_DISPLAY_METRICS.filter((key) => annualChart[key]?.length).map((key) => [
-      key,
-      annualChart[key],
-    ]),
+    PEER_DISPLAY_METRICS.reduce<[string, NonNullable<(typeof annualChart)[string]>][]>(
+      (entries, key) => {
+        if (annualChart[key]?.length) entries.push([key, annualChart[key]]);
+        return entries;
+      },
+      [],
+    ),
   );
 
   const relativeMetrics = computeRelativeMetrics(filteredChart, peerExtractions);

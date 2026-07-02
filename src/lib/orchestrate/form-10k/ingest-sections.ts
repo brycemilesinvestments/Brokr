@@ -1,4 +1,5 @@
-import { locateForm10kSections } from "@/lib/edgar/discovery";
+import { buildSectionCoverage, locateForm10kSections } from "@/lib/edgar/discovery";
+import type { SectionCoverage } from "@/lib/edgar/discovery";
 import type { XbrlFact } from "@/lib/edgar/xbrl/types";
 import { createEmbeddingClient } from "@/lib/rag/embed/client";
 import { chunkSections } from "@/lib/rag/ingest/chunk-sections";
@@ -17,6 +18,7 @@ import type { ProseSections } from "@/lib/edgar/discovery";
 
 export type Ingest10kSectionsResult = {
   sections: ProseSections;
+  sectionCoverage: SectionCoverage;
   chunks: FilingChunk[];
   chunksStored: number;
   embedCalls: number;
@@ -28,10 +30,12 @@ export async function ingest10kSections(input: {
   company: CompanyRow;
   document: CompanyDocumentRow;
   ixbrlFacts: XbrlFact[];
+  html?: string | null;
   form: string;
   store?: ChunkStore;
 }): Promise<Ingest10kSectionsResult> {
-  const sections = locateForm10kSections(input.ixbrlFacts);
+  const sections = locateForm10kSections(input.ixbrlFacts, input.html);
+  const sectionCoverage = buildSectionCoverage(sections);
   const audited = tagFilingAuditStatus(input.form);
   const periodEnd = input.document.report_date ?? input.document.filing_date;
 
@@ -74,6 +78,7 @@ export async function ingest10kSections(input: {
 
   return {
     sections,
+    sectionCoverage,
     chunks,
     chunksStored,
     embedCalls,

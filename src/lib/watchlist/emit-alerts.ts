@@ -14,15 +14,10 @@ export async function emitAlerts(
   alerts: StructuredAlert[],
   emitter: AlertEmitter,
 ): Promise<void> {
-  const errors: unknown[] = [];
-
-  for (const alert of alerts) {
-    try {
-      await emitter(alert);
-    } catch (err) {
-      errors.push(err);
-    }
-  }
+  const outcomes = await Promise.allSettled(alerts.map((alert) => emitter(alert)));
+  const errors = outcomes
+    .filter((outcome): outcome is PromiseRejectedResult => outcome.status === "rejected")
+    .map((outcome) => outcome.reason);
 
   if (errors.length > 0) {
     throw new AggregateError(

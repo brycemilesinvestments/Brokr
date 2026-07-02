@@ -108,15 +108,13 @@ export function ColumnFilter({
             </div>
 
             <ul
-              role="listbox"
-              aria-multiselectable="true"
               aria-label={`${label} filter options`}
               className="max-h-56 overflow-y-auto py-1"
             >
               {filterOptions.map((option) => {
                 const checked = selected.has(option);
                 return (
-                  <li key={option} role="option" aria-selected={checked}>
+                  <li key={option}>
                     <label className="flex cursor-pointer items-start gap-2 px-3 py-1.5 text-xs text-zinc-700 hover:bg-zinc-50">
                       <input
                         type="checkbox"

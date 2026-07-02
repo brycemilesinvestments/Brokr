@@ -18,6 +18,14 @@ const SECTION_SEARCH_ORDER: Array<{ key: keyof ProseSections; label: string }> =
   { key: "business", label: "business" },
 ];
 
+function buildTermPattern(terms: string[]): RegExp | null {
+  const escaped = terms
+    .filter(Boolean)
+    .map((term) => term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  if (escaped.length === 0) return null;
+  return new RegExp(escaped.join("|"), "i");
+}
+
 function findEventInSections(
   sections: ProseSections,
   event: Known8kEvent,
@@ -26,14 +34,15 @@ function findEventInSections(
     ...(event.searchTerms ?? []),
     event.eventType.replace(/_/g, " "),
     event.eventType,
-  ].filter(Boolean);
+  ];
+  const pattern = buildTermPattern(terms);
+  if (!pattern) return null;
 
   for (const { key, label } of SECTION_SEARCH_ORDER) {
     const text = sections[key]?.text;
     if (!text) continue;
 
-    const lower = text.toLowerCase();
-    if (terms.some((term) => lower.includes(term.toLowerCase()))) {
+    if (pattern.test(text)) {
       return label;
     }
   }

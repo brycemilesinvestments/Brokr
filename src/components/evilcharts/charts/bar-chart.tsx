@@ -2,11 +2,11 @@
 
 import {
   type ChartConfig,
-  ChartContainer,
   getColorsCount,
   getLoadingData,
-  LoadingIndicator,
-} from "@/components/evilcharts/ui/chart";
+} from "@/components/evilcharts/lib/chart-helpers";
+import { ChartLoadingIndicator as LoadingIndicator } from "@/components/evilcharts/ui/chart-loading-indicator";
+import { ChartContainer } from "@/components/evilcharts/ui/chart";
 import { EvilBrush, useEvilBrush, type EvilBrushRange } from "@/components/evilcharts/ui/evil-brush";
 import {
   ChartTooltip,
@@ -16,6 +16,7 @@ import {
 } from "@/components/evilcharts/ui/tooltip";
 import { ChartLegend, ChartLegendContent, type ChartLegendVariant } from "@/components/evilcharts/ui/legend";
 import { ChartBackground, type BackgroundVariant } from "@/components/evilcharts/ui/background";
+import { useRecharts } from "@/components/evilcharts/ui/use-recharts";
 import {
   createContext,
   use,
@@ -27,17 +28,16 @@ import {
   type ComponentProps,
   type ReactNode,
 } from "react";
-import {
+import type {
   Bar as RechartsBar,
   BarChart as RechartsBarChart,
   CartesianGrid,
-  Rectangle,
   ReferenceLine,
   XAxis as RechartsXAxis,
   YAxis as RechartsYAxis,
 } from "recharts";
 import { RectRadius } from "recharts/types/shape/Rectangle";
-import { motion, useReducedMotion } from "motion/react";
+import { LazyMotion, domAnimation, m, useReducedMotion } from "motion/react";
 
 // Constants
 const DEFAULT_BAR_RADIUS = 2;
@@ -174,6 +174,7 @@ export function EvilBarChart<
   brushFormatLabel,
   onBrushChange,
 }: EvilBarChartProps<TData, TConfig>) {
+  const { BarChart: RechartsBarChart, ReferenceLine } = useRecharts();
   const chartId = useId().replace(/:/g, ""); // colon-free id keeps CSS/SVG selectors valid
   // Anchors the grow-in to a fixed moment so it plays exactly once — re-renders
   // and Recharts' bar remounts read elapsed time from here instead of replaying.
@@ -227,8 +228,9 @@ export function EvilBarChart<
   );
 
   return (
-    <BarChartContext value={contextValue}>
-      <ChartContainer
+    <LazyMotion features={domAnimation}>
+      <BarChartContext value={contextValue}>
+        <ChartContainer
         className={className}
         config={config}
         footer={
@@ -272,8 +274,9 @@ export function EvilBarChart<
           {children}
           {isLoading && <LoadingBar chartId={chartId} onShimmerExit={onShimmerExit} />}
         </RechartsBarChart>
-      </ChartContainer>
-    </BarChartContext>
+        </ChartContainer>
+      </BarChartContext>
+    </LazyMotion>
   );
 }
 
@@ -310,6 +313,7 @@ export function Bar({
   bufferBar = false,
   barProps,
 }: BarProps) {
+  const { Bar: RechartsBar } = useRecharts();
   const {
     config,
     isStacked,
@@ -413,6 +417,7 @@ export function XAxis({
   type,
   ...props
 }: XAxisProps) {
+  const { XAxis: RechartsXAxis } = useRecharts();
   const { isLoading, isHorizontal } = useBarChart();
 
   if (isLoading) return null;
@@ -445,6 +450,7 @@ export function YAxis({
   type,
   ...props
 }: YAxisProps) {
+  const { YAxis: RechartsYAxis } = useRecharts();
   const { isLoading, isHorizontal } = useBarChart();
 
   if (isLoading) return null;
@@ -470,6 +476,7 @@ type GridProps = ComponentProps<typeof CartesianGrid>;
  * prop for full control.
  */
 export function Grid({ strokeDasharray = "3 3", vertical, horizontal, ...props }: GridProps) {
+  const { CartesianGrid } = useRecharts();
   const { isHorizontal } = useBarChart();
 
   return (
@@ -586,6 +593,7 @@ type CustomBarProps = {
  * the whole column hoverable and clickable.
  */
 const CustomBar = (props: CustomBarProps) => {
+  const { Rectangle } = useRecharts();
   const {
     x = 0,
     y = 0,
@@ -666,14 +674,14 @@ const CustomBar = (props: CustomBarProps) => {
       <Rectangle {...props} fill="transparent" />
       {/* The painted bar grows in from its baseline; the hit rect above stays put */}
       {grow ? (
-        <motion.g
+        <m.g
           initial={grow.initial}
           animate={grow.animate}
           transition={grow.transition}
           style={grow.style}
         >
           {visibleBar}
-        </motion.g>
+        </m.g>
       ) : (
         visibleBar
       )}
@@ -1160,7 +1168,7 @@ const generateEasedGradientStops = (
  * when the shimmer has completely exited the visible area. This eliminates
  * timing drift issues from setTimeout/setInterval.
  */
-export function useLoadingData(isLoading: boolean, loadingBars: number = 12) {
+function useLoadingData(isLoading: boolean, loadingBars: number = 12) {
   const [loadingDataKey, setLoadingDataKey] = useState(false);
 
   // Callback fired by motion.dev when the shimmer exits the visible area
@@ -1191,6 +1199,8 @@ const LoadingBar = ({
   chartId: string;
   onShimmerExit: () => void;
 }) => {
+  const { Bar: RechartsBar } = useRecharts();
+
   return (
     <>
       <RechartsBar
@@ -1251,7 +1261,7 @@ const LoadingBarPattern = ({
         x="0"
         y="0"
       >
-        <motion.rect
+        <m.rect
           y="0"
           width="1"
           height="1"

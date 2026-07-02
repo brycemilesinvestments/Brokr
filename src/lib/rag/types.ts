@@ -1,4 +1,4 @@
-import type { ProseSectionKey } from "@/lib/edgar/discovery";
+import type { ProseSectionKey, ProseSectionSource } from "@/lib/edgar/discovery";
 import type { MetricSeriesBundle } from "@/lib/edgar/time-series";
 
 export type QuestionRoute = "numeric" | "qualitative" | "mixed";
@@ -16,6 +16,8 @@ export type FilingChunk = {
   documentId?: number;
   /** K3 / K12 — sourced from filing form type. */
   audited?: boolean;
+  /** K1 — extraction path for chat provenance. */
+  source?: ProseSectionSource;
 };
 
 export type StructuredMetric = {

@@ -22,7 +22,7 @@ export function buildRevenueGrowthMap(revenueSeries: MetricSeries | undefined): 
   const map = new Map<string, number>();
   if (!revenueSeries || revenueSeries.status === "not_reported") return map;
 
-  const sorted = [...revenueSeries.annual].sort((a, b) =>
+  const sorted = revenueSeries.annual.toSorted((a, b) =>
     a.periodEnd.localeCompare(b.periodEnd),
   );
 
@@ -47,7 +47,7 @@ function ratioAt(
 }
 
 /** Compute the Growth Quality sub-score for a single period. */
-export function computeGrowthQualitySubScore(
+function computeGrowthQualitySubScore(
   ratioSeries: Record<RatioSeriesKey, RatioSeriesPoint[]>,
   periodEnd: string,
   frequency: SeriesFrequency,

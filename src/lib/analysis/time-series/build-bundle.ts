@@ -73,9 +73,14 @@ export function buildTimeSeriesState(
   rawFacts: CompanyFactsResponse,
 ): TimeSeriesState {
   const bundle = buildTimeSeriesBundle(rawFacts);
-  const notReported = ALL_WHITELISTED_CONCEPTS
-    .filter((concept) => bundle.metrics.series[concept]?.status === "not_reported")
-    .map((metric) => ({ metric, status: "not_reported" as const }));
+  const notReported = ALL_WHITELISTED_CONCEPTS.reduce<
+    Array<{ metric: string; status: "not_reported" }>
+  >((acc, concept) => {
+    if (bundle.metrics.series[concept]?.status === "not_reported") {
+      acc.push({ metric: concept, status: "not_reported" });
+    }
+    return acc;
+  }, []);
 
   return {
     cik: rawFacts.cik,
@@ -192,8 +197,9 @@ export function validateTimeSeriesContract(state: TimeSeriesState): ContractVali
     const series = bundle.metrics.series[concept];
     if (!series || series.status === "not_reported") continue;
 
-    for (const point of series.quarterly) {
-      if (!("deltaQoq" in point) && series.quarterly.indexOf(point) > 0) {
+    for (let index = 0; index < series.quarterly.length; index += 1) {
+      const point = series.quarterly[index];
+      if (!("deltaQoq" in point) && index > 0) {
         // first quarter may lack qoq — that's ok as undefined
       }
       if (!("deltaYoy" in point)) c7 = false;

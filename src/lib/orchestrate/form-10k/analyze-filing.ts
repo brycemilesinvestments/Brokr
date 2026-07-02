@@ -29,7 +29,7 @@ import { tagFilingAuditStatus } from "@/lib/orchestrate/form-10k/tag-audit-statu
 import type { ProseSections } from "@/lib/edgar/discovery";
 import type { FilingChunk } from "@/lib/rag/types";
 
-export const DEFAULT_FORM10K_MAX_ITERATIONS = 15;
+const DEFAULT_FORM10K_MAX_ITERATIONS = 15;
 
 export type RunForm10kAgentInput = {
   cik: string;
@@ -80,10 +80,13 @@ function initialState(input: RunForm10kAgentInput): Form10kState {
 /** Run the 10-K completion contract router (K1–K12). */
 export async function runForm10kAgent(input: RunForm10kAgentInput): Promise<Form10kOutput> {
   const maxIterations = input.maxIterations ?? DEFAULT_FORM10K_MAX_ITERATIONS;
-  let state = initialState(input);
   let storedChunks = input.chunks;
 
-  while (!state.completed && state.iteration < maxIterations) {
+  async function advance(state: Form10kState): Promise<Form10kState> {
+    if (state.completed || state.iteration >= maxIterations) {
+      return state;
+    }
+
     const action = routeForm10kAction(state);
     state.actionsTaken.push(action);
     state.iteration += 1;
@@ -115,7 +118,14 @@ export async function runForm10kAgent(input: RunForm10kAgentInput): Promise<Form
       }
 
       case "structural_diff": {
-        if (!state.pair || !input.previousSections) break;
+        if (!state.pair) break;
+        if (!input.previousSections) {
+          state.structural = computeStructuralDiff(
+            buildStructuralSnapshot({ proseSections: state.sections! }),
+            buildStructuralSnapshot({ proseSections: state.sections! }),
+          );
+          break;
+        }
         state.structural = computeStructuralDiff(
           buildStructuralSnapshot({ proseSections: state.sections! }),
           buildStructuralSnapshot({ proseSections: input.previousSections }),
@@ -123,7 +133,7 @@ export async function runForm10kAgent(input: RunForm10kAgentInput): Promise<Form
         break;
       }
 
-      case "check_diff_cache": {
+      case "check_prose_cache": {
         if (!state.pair || !input.diffCache) {
           state.cacheHit = false;
           break;
@@ -139,7 +149,11 @@ export async function runForm10kAgent(input: RunForm10kAgentInput): Promise<Form
       }
 
       case "prose_diff": {
-        if (!state.pair || !input.previousSections) break;
+        if (!state.pair) break;
+        if (!input.previousSections) {
+          state.prose = { changed: false, sections: [], refusal: true, costUsd: 0 };
+          break;
+        }
         if (!input.aiDiff) {
           state.prose = { changed: false, sections: [], refusal: true, costUsd: 0 };
           break;
@@ -193,7 +207,10 @@ export async function runForm10kAgent(input: RunForm10kAgentInput): Promise<Form
         state.pgvectorReady =
           storedChunks.length === 0 ||
           storedChunks.every(
-            (c) => typeof c.sectionType === "string" && typeof c.audited === "boolean",
+            (c) =>
+              typeof c.sectionType === "string" &&
+              typeof c.audited === "boolean" &&
+              (c.source === "ixbrl_textblock" || c.source === "html_heading_fallback"),
           );
         break;
 
@@ -201,7 +218,11 @@ export async function runForm10kAgent(input: RunForm10kAgentInput): Promise<Form
         state.completed = true;
         break;
     }
+
+    return advance(state);
   }
+
+  const state = await advance(initialState(input));
 
   if (!state.completed) {
     throw new Error(

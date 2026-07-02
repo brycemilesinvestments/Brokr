@@ -50,7 +50,7 @@ function computeSegmentGrowthRates(ixbrlFacts: XbrlFact[]): SegmentGrowthRate[] 
   for (const segment of [...breakout.endMarket, ...breakout.geography]) {
     if (segment.quarterly.length < 2) continue;
 
-    const sorted = [...segment.quarterly].sort((a, b) =>
+    const sorted = segment.quarterly.toSorted((a, b) =>
       a.periodEnd.localeCompare(b.periodEnd),
     );
     const prior = sorted[sorted.length - 2];

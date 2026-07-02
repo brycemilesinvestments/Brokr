@@ -63,29 +63,31 @@ alter table public.filing_ingest_status enable row level security;
 create policy "Allow public read on filing_chunks"
   on public.filing_chunks for select using (true);
 
-create policy "Allow public insert on filing_chunks"
-  on public.filing_chunks for insert with check (true);
+create policy "Authenticated users can insert on filing_chunks"
+  on public.filing_chunks for insert with check (auth.uid() is not null);
 
-create policy "Allow public delete on filing_chunks"
-  on public.filing_chunks for delete using (true);
+create policy "Authenticated users can delete on filing_chunks"
+  on public.filing_chunks for delete using (auth.uid() is not null);
 
 create policy "Allow public read on structured_metrics"
   on public.structured_metrics for select using (true);
 
-create policy "Allow public insert on structured_metrics"
-  on public.structured_metrics for insert with check (true);
+create policy "Authenticated users can insert on structured_metrics"
+  on public.structured_metrics for insert with check (auth.uid() is not null);
 
-create policy "Allow public delete on structured_metrics"
-  on public.structured_metrics for delete using (true);
+create policy "Authenticated users can delete on structured_metrics"
+  on public.structured_metrics for delete using (auth.uid() is not null);
 
 create policy "Allow public read on filing_ingest_status"
   on public.filing_ingest_status for select using (true);
 
-create policy "Allow public insert on filing_ingest_status"
-  on public.filing_ingest_status for insert with check (true);
+create policy "Authenticated users can insert on filing_ingest_status"
+  on public.filing_ingest_status for insert with check (auth.uid() is not null);
 
-create policy "Allow public update on filing_ingest_status"
-  on public.filing_ingest_status for update using (true) with check (true);
+create policy "Authenticated users can update on filing_ingest_status"
+  on public.filing_ingest_status for update
+  using (auth.uid() is not null)
+  with check (auth.uid() is not null);
 
 create or replace function public.match_filing_chunks(
   query_embedding extensions.vector(384),

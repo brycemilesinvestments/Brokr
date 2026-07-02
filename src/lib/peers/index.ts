@@ -29,14 +29,10 @@ export type {
 // P1: Peer resolution
 export { resolvePeers } from "@/lib/peers/resolve-peers";
 export type { ResolvePeersInput } from "@/lib/peers/resolve-peers";
-export { getCuratedPeers, CURATED_PEER_OVERRIDES } from "@/lib/peers/curated-peers";
+export { getCuratedPeers } from "@/lib/peers/curated-peers";
 export { isFilingWithinMonths, RECENT_FILING_MONTHS } from "@/lib/peers/recent-filing";
-export { filterChartToAnnual, latestPoint } from "@/lib/peers/filter-chart";
-export {
-  assessPeerDataSufficiency,
-  MIN_METRICS_WITH_PEER_DATA,
-  MIN_PEERS_WITH_DATA,
-} from "@/lib/peers/assess-data-sufficiency";
+export { filterChartToAnnual } from "@/lib/peers/filter-chart";
+export { assessPeerDataSufficiency } from "@/lib/peers/assess-data-sufficiency";
 export type { PeerDataSufficiency } from "@/lib/peers/assess-data-sufficiency";
 
 // P1: Production fetch adapters (inject into resolvePeers via PeerResolveDeps)
@@ -44,11 +40,10 @@ export {
   fetchSicFromSec,
   fetchCompaniesBySicFromSec,
   fetchLastFilingDateFromSec,
-  parseSecEdgarCompanyList,
 } from "@/lib/peers/adapters";
 
 // P2: Peer metric extraction
-export { extractPeerMetrics, extractAllPeerMetrics } from "@/lib/peers/extract-peers";
+export { extractAllPeerMetrics } from "@/lib/peers/extract-peers";
 
 // P3: Period alignment
 export {

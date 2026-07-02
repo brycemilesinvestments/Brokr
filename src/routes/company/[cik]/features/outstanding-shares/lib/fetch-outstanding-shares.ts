@@ -45,19 +45,23 @@ function extractFacts(
 ): OutstandingSharePoint[] {
   if (!units?.length) return [];
 
-  return units
-    .filter((item) => item.end && isPeriodicReport(item.form))
-    .map((item) => ({
-      asOfDate: item.end!,
-      shares: item.val,
-      form: item.form,
-      filedDate: item.filed,
-      fiscalYear: item.fy,
-      fiscalPeriod: item.fp,
-      accessionNumber: item.accn,
-      source,
-      filingUrl: filingPagePath(cik, item.accn),
-    }));
+  const points: OutstandingSharePoint[] = [];
+  for (const item of units) {
+    if (item.end && isPeriodicReport(item.form)) {
+      points.push({
+        asOfDate: item.end,
+        shares: item.val,
+        form: item.form,
+        filedDate: item.filed,
+        fiscalYear: item.fy,
+        fiscalPeriod: item.fp,
+        accessionNumber: item.accn,
+        source,
+        filingUrl: filingPagePath(cik, item.accn),
+      });
+    }
+  }
+  return points;
 }
 
 function dedupeByAsOfDate(points: OutstandingSharePoint[]): OutstandingSharePoint[] {
@@ -81,7 +85,7 @@ function dedupeByAsOfDate(points: OutstandingSharePoint[]): OutstandingSharePoin
     }
   }
 
-  return [...byDate.values()].sort(
+  return [...byDate.values()].toSorted(
     (a, b) => Date.parse(a.asOfDate) - Date.parse(b.asOfDate),
   );
 }
@@ -113,5 +117,3 @@ export async function fetchOutstandingShares(
 
   return dedupeByAsOfDate([...coverPage, ...balanceSheet]);
 }
-
-export { companyFactsUrl, submissionsUrl };

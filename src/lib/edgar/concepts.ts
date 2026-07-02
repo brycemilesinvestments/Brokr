@@ -27,7 +27,7 @@ export type FinancialConcept =
  * - us-gaap:GrossProfit → "GrossProfit"
  * - us-gaap:NetIncomeLoss → "NetIncome"
  */
-export const CONCEPT_MAPPINGS: Record<string, FinancialConcept> = {
+const CONCEPT_MAPPINGS: Record<string, FinancialConcept> = {
   // Revenue
   "us-gaap:Revenues": "Revenue",
   "us-gaap:ProductRevenues": "Revenue",
@@ -53,7 +53,7 @@ export const CONCEPT_MAPPINGS: Record<string, FinancialConcept> = {
  * Filter facts by concept, context period, and optionally context type.
  * Returns latest instant or duration fact for the period.
  */
-export function findFactsByContext(
+function findFactsByContext(
   facts: XbrlFact[],
   concept: string,
   options?: {
@@ -77,7 +77,7 @@ export function findFactsByContext(
  * Get the latest/most recent fact for a concept.
  * Sorts by context date (instant > endDate) and picks first numeric value.
  */
-export function getLatestFact(
+function getLatestFact(
   facts: XbrlFact[],
   concept: string,
 ): XbrlFact | undefined {
@@ -98,7 +98,7 @@ export function getLatestFact(
  * Get two facts for comparison (e.g., current vs prior period).
  * Useful for calculating margins and growth metrics.
  */
-export function getFactPair(
+function getFactPair(
   facts: XbrlFact[],
   concept: string,
   options?: { limit?: 2 | 4 },
@@ -117,7 +117,7 @@ export function getFactPair(
  * Parse financial metric from fact(s).
  * Returns numeric value or undefined.
  */
-export function getMetricValue(fact: XbrlFact | undefined): number | undefined {
+function getMetricValue(fact: XbrlFact | undefined): number | undefined {
   if (!fact) return undefined;
   return fact.numericValue ?? (fact.value ? parseFloat(fact.value) : undefined);
 }
@@ -125,7 +125,7 @@ export function getMetricValue(fact: XbrlFact | undefined): number | undefined {
 /**
  * Calculate ratio from two facts (e.g., gross margin = gross profit / revenue).
  */
-export function calculateRatio(
+function calculateRatio(
   numerator: XbrlFact | undefined,
   denominator: XbrlFact | undefined,
 ): number | undefined {
@@ -138,7 +138,7 @@ export function calculateRatio(
 /**
  * Calculate growth rate from two facts (e.g., YoY revenue growth).
  */
-export function calculateGrowth(
+function calculateGrowth(
   current: XbrlFact | undefined,
   prior: XbrlFact | undefined,
 ): number | undefined {

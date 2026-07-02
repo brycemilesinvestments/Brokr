@@ -31,6 +31,21 @@ export type CompanyFilingsPage = {
   totalShown: number;
 };
 
+export type Form10kSyncResponse = {
+  companyId: number;
+  edgarId: string;
+  processedCount: number;
+  errorCount: number;
+  processed: Array<{
+    accessionNumber: string;
+    skippedStore: boolean;
+    chunksStored: number;
+    analysis: Record<string, unknown>;
+    costUsd: number;
+  }>;
+  errors: Array<{ accessionNumber: string; message: string }>;
+};
+
 export type Form8kSyncResponse = {
   companyId: number;
   edgarId: string;

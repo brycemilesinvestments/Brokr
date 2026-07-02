@@ -35,7 +35,7 @@ function compareFiscalPeriod(
 
 function quarterlyPoints(series: MetricSeries | undefined): MetricSeriesPoint[] {
   if (!series || series.status === "not_reported") return [];
-  return [...series.quarterly].sort((a, b) => a.periodEnd.localeCompare(b.periodEnd));
+  return series.quarterly.toSorted((a, b) => a.periodEnd.localeCompare(b.periodEnd));
 }
 
 /** Convert quarterly flow points to single-quarter amounts (handles YTD filings). */
@@ -51,7 +51,7 @@ export function toSingleQuarterFlows(points: MetricSeriesPoint[]): Map<string, n
   }
 
   for (const fyPoints of byFy.values()) {
-    const ordered = [...fyPoints].sort((a, b) => compareFiscalPeriod(a, b));
+    const ordered = fyPoints.toSorted((a, b) => compareFiscalPeriod(a, b));
     let priorYtd = 0;
 
     for (const point of ordered) {
@@ -77,22 +77,22 @@ function derivedToFlowPoints(
 ): MetricSeriesPoint[] {
   const metaByEnd = new Map(metadata.map((p) => [p.periodEnd, p]));
 
-  return derived
-    .filter((p) => p.frequency === "quarterly" && p.value !== undefined)
-    .map((p) => {
-      const meta = metaByEnd.get(p.periodEnd);
-      return {
-        periodEnd: p.periodEnd,
-        value: p.value!,
-        filed: meta?.filed ?? "",
-        form: meta?.form ?? "10-Q",
-        accn: meta?.accn ?? "",
-        unit: "USD",
-        fy: p.fy ?? meta?.fy,
-        fp: p.fp ?? meta?.fp,
-        start: meta?.start,
-      };
+  return derived.reduce<MetricSeriesPoint[]>((acc, p) => {
+    if (p.frequency !== "quarterly" || p.value === undefined) return acc;
+    const meta = metaByEnd.get(p.periodEnd);
+    acc.push({
+      periodEnd: p.periodEnd,
+      value: p.value,
+      filed: meta?.filed ?? "",
+      form: meta?.form ?? "10-Q",
+      accn: meta?.accn ?? "",
+      unit: "USD",
+      fy: p.fy ?? meta?.fy,
+      fp: p.fp ?? meta?.fp,
+      start: meta?.start,
     });
+    return acc;
+  }, []);
 }
 
 function sumLastNQuarters(

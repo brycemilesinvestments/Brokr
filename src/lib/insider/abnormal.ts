@@ -16,7 +16,7 @@ export function sortedUniqueDates(bars: PriceBar[]): string[] {
 }
 
 /** Last trading day on or before the filing date (t=0). */
-export function findEventIndex(dates: string[], eventDate: string): number {
+function findEventIndex(dates: string[], eventDate: string): number {
   let index = -1;
   for (let i = 0; i < dates.length; i++) {
     if (dates[i] <= eventDate) {
@@ -28,7 +28,7 @@ export function findEventIndex(dates: string[], eventDate: string): number {
   return index;
 }
 
-export function getTradingDayOffsets(
+function getTradingDayOffsets(
   bars: PriceBar[],
   eventDate: string,
   window: EventWindow,

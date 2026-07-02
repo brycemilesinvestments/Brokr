@@ -11,13 +11,17 @@ export function computeCoverageDelta(universe: UniverseConcept[]): CoverageDelta
   );
 
   const unsurfaced = universe
-    .filter((u) => !whitelistSet.has(u.concept))
-    .map((u) => ({
-      concept: u.concept,
-      taxonomy: u.taxonomy,
-      dataPointCount: u.dataPointCount,
-      frequencies: u.frequencies,
-    }))
+    .reduce<NonNullable<CoverageDelta["unsurfaced"]>>((acc, u) => {
+      if (!whitelistSet.has(u.concept)) {
+        acc.push({
+          concept: u.concept,
+          taxonomy: u.taxonomy,
+          dataPointCount: u.dataPointCount,
+          frequencies: u.frequencies,
+        });
+      }
+      return acc;
+    }, [])
     .sort((a, b) => b.dataPointCount - a.dataPointCount);
 
   return {

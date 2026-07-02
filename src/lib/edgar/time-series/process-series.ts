@@ -20,7 +20,7 @@ export function dedupeSeries(
     }
   }
 
-  return [...best.values()].sort((a, b) => a.periodEnd.localeCompare(b.periodEnd));
+  return [...best.values()].toSorted((a, b) => a.periodEnd.localeCompare(b.periodEnd));
 }
 
 function comparePeriod(
@@ -84,6 +84,6 @@ export function detectGaps(points: RawTimeSeriesPoint[]): PeriodGap[] {
   return gaps;
 }
 
-export function sortAscending(points: RawTimeSeriesPoint[]): RawTimeSeriesPoint[] {
-  return [...points].sort((a, b) => a.periodEnd.localeCompare(b.periodEnd));
+function sortAscending(points: RawTimeSeriesPoint[]): RawTimeSeriesPoint[] {
+  return points.toSorted((a, b) => a.periodEnd.localeCompare(b.periodEnd));
 }

@@ -5,6 +5,8 @@ import {
 } from "@/lib/rag/constants";
 import type { QuestionRoute } from "@/lib/rag/types";
 
+const METRIC_ALIAS_MAP = new Map<string, string>(Object.entries(METRIC_ALIASES));
+
 /** Q1 — Classify question as numeric | qualitative | mixed (deterministic). */
 export function routeQuestion(question: string): QuestionRoute {
   const lower = question.toLowerCase();
@@ -22,9 +24,9 @@ export function extractMetricHints(question: string): string[] {
   const lower = question.toLowerCase();
   const hints = new Set<string>();
 
-  for (const [alias, concept] of Object.entries(METRIC_ALIASES)) {
+  METRIC_ALIAS_MAP.forEach((concept, alias) => {
     if (lower.includes(alias)) hints.add(concept);
-  }
+  });
 
   if (lower.includes("q1")) hints.add("fp:Q1");
   if (lower.includes("q2")) hints.add("fp:Q2");

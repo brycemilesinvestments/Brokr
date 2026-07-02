@@ -12,7 +12,14 @@ type BuildStructuralSnapshotInput = {
 };
 
 function uniqueSorted(values: string[]): string[] {
-  return Array.from(new Set(values.map((v) => v.trim()).filter(Boolean))).sort();
+  return Array.from(
+    new Set(
+      values.flatMap((value) => {
+        const trimmed = value.trim();
+        return trimmed ? [trimmed] : [];
+      }),
+    ),
+  ).sort();
 }
 
 /** F3 — Build deterministic structural snapshot from filing metadata/prose presence. */

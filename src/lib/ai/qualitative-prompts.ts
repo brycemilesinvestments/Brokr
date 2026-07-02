@@ -15,10 +15,16 @@ type SectionPromptConfig = {
 };
 
 const SECTION_PROMPTS: Record<ProseSectionKey, SectionPromptConfig> = {
-  mda: { outlook: true },
+  business: {},
   risk_factors: { outlook: true },
-  revenue_concentration: { customers: true },
+  mda: { outlook: true },
+  financials: {},
+  notes: {},
+  auditor: {},
+  controls: {},
+  legal: {},
   subsequent_events: { guidance: true },
+  revenue_concentration: { customers: true },
   form_8k_body: {},
   exhibit_99_1: {},
 };

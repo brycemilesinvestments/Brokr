@@ -1,14 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
-import { ReferenceLine } from "recharts";
+import { Suspense, useMemo } from "react";
 import {
   ActiveDot,
   Dot,
   EvilLineChart,
   Grid,
   Line,
+  ReferenceLine,
   Tooltip,
   XAxis,
   YAxis,
@@ -27,106 +27,93 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export function DocumentTimelineChart({
+function DocumentTimelineChartLoading() {
+  return (
+    <EvilLineChart
+      data={[]}
+      config={chartConfig}
+      curveType="monotone"
+      animationType="left-to-right"
+      isLoading
+      className="h-[320px] w-full"
+    >
+      <Grid />
+      <XAxis dataKey="date" />
+      <YAxis width={64} />
+    </EvilLineChart>
+  );
+}
+
+function DocumentTimelineChartContent({
   cik,
   timeline,
   ticker,
-  enabled,
-}: DocumentTimelineChartProps) {
-  const {
-    eightKFilings,
-    data,
-    loading,
-    error,
-    chartData,
-    markers,
-    latestPrice,
-    hasChartData,
-  } = useDocumentTimelineChart({ cik, timeline, enabled });
+}: Pick<DocumentTimelineChartProps, "cik" | "timeline" | "ticker">) {
+  const { eightKFilings, data, chartData, markers, latestPrice, hasChartData } =
+    useDocumentTimelineChart({ cik, timeline });
 
-  const displayTicker = data?.ticker ?? ticker;
-  const showChart = Boolean(displayTicker) && (loading || hasChartData);
-
+  const displayTicker = data.ticker ?? ticker;
   const markerDates = useMemo(
     () => new Set(markers.map((marker) => marker.snappedDate)),
     [markers],
   );
 
+  if (!hasChartData) {
+    return (
+      <p className="py-8 text-center text-sm text-zinc-500">
+        No daily price data available for this range.
+      </p>
+    );
+  }
+
   return (
-    <div className="border-b border-zinc-100 px-6 py-5">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <h3 className="text-base font-semibold text-zinc-900">Stock price &amp; 8-K filings</h3>
-          <p className="mt-1 max-w-2xl text-sm text-zinc-500">
-            Daily close from Yahoo Finance
-            {displayTicker ? ` (${displayTicker})` : ""} with dashed lines on each 8-K filing date.
-          </p>
-        </div>
-        {latestPrice != null ? (
+    <>
+      {latestPrice != null ? (
+        <div className="mb-4 flex justify-end lg:absolute lg:right-0 lg:top-0">
           <div>
             <p className="text-xs uppercase tracking-wide text-zinc-500">Latest close</p>
             <p className="mt-1 font-mono text-xl font-semibold text-zinc-900">
               ${formatPrice(latestPrice)}
             </p>
           </div>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
 
-      <div className="mt-4">
-        {error ? (
-          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-            {error}
-          </div>
-        ) : !displayTicker ? (
-          <p className="py-8 text-center text-sm text-zinc-500">
-            Stock price chart requires a ticker symbol for this company.
-          </p>
-        ) : !showChart ? (
-          <p className="py-8 text-center text-sm text-zinc-500">
-            No daily price data available for this range.
-          </p>
-        ) : (
-          <EvilLineChart
-            data={chartData}
-            config={chartConfig}
-            curveType="monotone"
-            animationType="left-to-right"
-            isLoading={loading}
-            className="h-[320px] w-full"
-          >
-            <Grid />
-            <XAxis
-              dataKey="date"
-              tickFormatter={(value) => formatAxisDate(String(value))}
-              minTickGap={48}
-            />
-            <YAxis
-              tickFormatter={(value) => `$${formatPrice(Number(value))}`}
-              width={64}
-            />
-            <Tooltip />
-            <Line dataKey="close">
-              <Dot variant="default" />
-              <ActiveDot variant="colored-border" />
-            </Line>
-            {markers.map((marker) => (
-              <ReferenceLine
-                key={marker.filing.accessionNumber ?? `${marker.filingDate}-${marker.filing.type}`}
-                x={marker.snappedDate}
-                stroke={MARKER_COLOR}
-                strokeWidth={1.5}
-                strokeDasharray="5 4"
-                label={{
-                  value: `8-K · ${formatMarkerDate(marker.filingDate)}`,
-                  position: "insideBottomLeft",
-                  fill: MARKER_COLOR,
-                  fontSize: 10,
-                }}
-              />
-            ))}
-          </EvilLineChart>
-        )}
-      </div>
+      <EvilLineChart
+        data={chartData}
+        config={chartConfig}
+        curveType="monotone"
+        animationType="left-to-right"
+        className="h-[320px] w-full"
+      >
+        <Grid />
+        <XAxis
+          dataKey="date"
+          tickFormatter={(value) => formatAxisDate(String(value))}
+          minTickGap={48}
+        />
+        <YAxis tickFormatter={(value) => `$${formatPrice(Number(value))}`} width={64} />
+        <Tooltip />
+        <Line dataKey="close">
+          <Dot variant="default" />
+          <ActiveDot variant="colored-border" />
+        </Line>
+        {markers.map((marker) => (
+          <ReferenceLine
+            key={marker.filing.accessionNumber ?? `${marker.filingDate}-${marker.filing.type}`}
+            x={marker.snappedDate}
+            stroke={MARKER_COLOR}
+            strokeWidth={1.5}
+            strokeDasharray="5 4"
+            label={{
+              value: `8-K · ${formatMarkerDate(marker.filingDate)}`,
+              position: "insideBottomLeft",
+              fill: MARKER_COLOR,
+              fontSize: 10,
+            }}
+          />
+        ))}
+      </EvilLineChart>
 
       {eightKFilings.length === 0 ? (
         <p className="mt-3 text-sm text-zinc-500">
@@ -180,6 +167,47 @@ export function DocumentTimelineChart({
           })}
         </ul>
       ) : null}
+    </>
+  );
+}
+
+export function DocumentTimelineChart({
+  cik,
+  timeline,
+  ticker,
+  enabled,
+}: DocumentTimelineChartProps) {
+  if (!enabled) {
+    return null;
+  }
+
+  if (!ticker) {
+    return (
+      <div className="border-b border-zinc-100 px-6 py-5">
+        <h3 className="text-base font-semibold text-zinc-900">Stock price &amp; 8-K filings</h3>
+        <p className="mt-4 py-8 text-center text-sm text-zinc-500">
+          Stock price chart requires a ticker symbol for this company.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="border-b border-zinc-100 px-6 py-5">
+      <div className="relative flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <h3 className="text-base font-semibold text-zinc-900">Stock price &amp; 8-K filings</h3>
+          <p className="mt-1 max-w-2xl text-sm text-zinc-500">
+            Daily close from Yahoo Finance ({ticker}) with dashed lines on each 8-K filing date.
+          </p>
+        </div>
+      </div>
+
+      <div className="relative mt-4">
+        <Suspense fallback={<DocumentTimelineChartLoading />}>
+          <DocumentTimelineChartContent cik={cik} timeline={timeline} ticker={ticker} />
+        </Suspense>
+      </div>
     </div>
   );
 }

@@ -14,7 +14,7 @@ export function buildDocumentTimelineChartData(
   chartData: DocumentTimelineChartRow[];
   markers: FilingMarker[];
 } {
-  const sortedQuotes = [...quotes].sort((a, b) => a.date.localeCompare(b.date));
+  const sortedQuotes = quotes.toSorted((a, b) => a.date.localeCompare(b.date));
   const quoteDates = sortedQuotes.map((quote) => quote.date);
   const closeByDate = new Map(sortedQuotes.map((quote) => [quote.date, quote.close]));
 

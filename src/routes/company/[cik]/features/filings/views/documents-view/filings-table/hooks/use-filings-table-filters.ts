@@ -47,7 +47,7 @@ export function useFilingsTableFilters(filings: Filing[]) {
     if (!column) return filteredFilings;
 
     const sortOrder = sortOrderByColumn[activeSortColumn];
-    return [...filteredFilings].sort((a, b) => compareFilings(a, b, column, sortOrder));
+    return filteredFilings.toSorted((a, b) => compareFilings(a, b, column, sortOrder));
   }, [filteredFilings, activeSortColumn, sortOrderByColumn]);
 
   function updateSelected(columnKey: ColumnKey, selected: Set<string>) {

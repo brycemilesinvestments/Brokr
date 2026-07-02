@@ -1,19 +1,17 @@
 "use client";
 
-import { useEffect } from "react";
-import { ReferenceDot } from "recharts";
 import {
   ActiveDot,
   Area,
   Dot,
   EvilAreaChart,
   Grid,
+  ReferenceDot,
   XAxis,
   YAxis,
 } from "@/components/evilcharts/charts/area-chart";
 import { type ChartConfig } from "@/components/evilcharts/ui/chart";
 import { ChartTooltip, ChartTooltipContent } from "@/components/evilcharts/ui/tooltip";
-import type { ChartPoint } from "@/lib/analysis";
 import { humanizeConcept } from "@/routes/company/[cik]/features/financial-trends/utils/humanize-concept";
 import type { MetricChartRow } from "../lib/build-metric-chart-geometry";
 import { formatAxisDate, formatDeltaPercent, formatMetricValue } from "../utils/format-metric";
@@ -33,22 +31,14 @@ type MetricLineChartProps = {
 
 function MetricTooltipContent({
   metric,
-  onActivePointChange,
   active,
   payload,
   label,
 }: React.ComponentProps<typeof ChartTooltipContent> & {
   metric: string;
-  onActivePointChange?: (point: MetricChartRow | null) => void;
 }) {
   const row = payload?.[0]?.payload as MetricChartRow | undefined;
   const labelText = metric.includes("_") ? metric.replace(/_/g, " ") : humanizeConcept(metric);
-
-  useEffect(() => {
-    if (active && row) {
-      onActivePointChange?.(row);
-    }
-  }, [active, row, onActivePointChange]);
 
   if (!active || !row) {
     return <ChartTooltipContent active={active} payload={payload} label={label} />;
@@ -91,6 +81,22 @@ export function MetricLineChart({ metric, chartData, onActivePointChange }: Metr
     );
   }
 
+  const anomalyDots: React.ReactNode[] = [];
+  for (const row of chartData) {
+    if (!row.anomaly) continue;
+    anomalyDots.push(
+      <ReferenceDot
+        key={`${row.date}-${row.frequency}`}
+        x={row.date}
+        y={row.value}
+        r={5}
+        fill="#dc2626"
+        stroke="#ffffff"
+        strokeWidth={2}
+      />,
+    );
+  }
+
   return (
     <EvilAreaChart
       data={chartData}
@@ -98,6 +104,17 @@ export function MetricLineChart({ metric, chartData, onActivePointChange }: Metr
       curveType="monotone"
       animationType="left-to-right"
       className="h-[280px] w-full"
+      chartProps={{
+        onMouseMove: (state) => {
+          const activePayload =
+            state && "activePayload" in state
+              ? (state.activePayload as Array<{ payload?: MetricChartRow }> | undefined)
+              : undefined;
+          const row = activePayload?.[0]?.payload;
+          onActivePointChange?.(row ?? null);
+        },
+        onMouseLeave: () => onActivePointChange?.(null),
+      }}
     >
       <Grid />
       <XAxis
@@ -107,37 +124,13 @@ export function MetricLineChart({ metric, chartData, onActivePointChange }: Metr
       />
       <YAxis tickFormatter={(value) => formatMetricValue(metric, Number(value))} width={72} />
       <ChartTooltip
-        content={
-          <MetricTooltipContent metric={metric} onActivePointChange={onActivePointChange} />
-        }
+        content={<MetricTooltipContent metric={metric} />}
       />
       <Area dataKey="value" variant="gradient">
         <Dot variant="default" />
         <ActiveDot variant="colored-border" />
       </Area>
-      {chartData
-        .filter((row) => row.anomaly)
-        .map((row) => (
-          <ReferenceDot
-            key={`${row.date}-${row.frequency}`}
-            x={row.date}
-            y={row.value}
-            r={5}
-            fill="#dc2626"
-            stroke="#ffffff"
-            strokeWidth={2}
-          />
-        ))}
+      {anomalyDots}
     </EvilAreaChart>
   );
-}
-
-export function filterChartPoints(
-  allPoints: ChartPoint[] | undefined,
-  frequency: "quarterly" | "annual" | "both",
-): ChartPoint[] {
-  if (!allPoints) return [];
-  const filtered =
-    frequency === "both" ? allPoints : allPoints.filter((point) => point.frequency === frequency);
-  return [...filtered].sort((a, b) => a.x.localeCompare(b.x));
 }

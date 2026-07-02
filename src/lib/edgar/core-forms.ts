@@ -71,11 +71,11 @@ export function classifyCoreForm(formType: string): CoreFormCategory | null {
   return null;
 }
 
-export function isCoreForm(formType: string): boolean {
+function isCoreForm(formType: string): boolean {
   return classifyCoreForm(formType) !== null;
 }
 
-export function getCoreFormMeta(formType: string): CoreFormMeta | null {
+function getCoreFormMeta(formType: string): CoreFormMeta | null {
   const category = classifyCoreForm(formType);
   return category ? CORE_FORM_META[category] : null;
 }

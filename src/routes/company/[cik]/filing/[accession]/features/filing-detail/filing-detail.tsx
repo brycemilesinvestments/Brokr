@@ -3,7 +3,7 @@ import { DiscoveryPanel } from "./discovery-panel";
 import { FilingDiffPanel } from "@/routes/company/[cik]/filing/[accession]/features/filing-diff";
 import { FilersSection } from "./components/filers-section";
 import { FilingHeader } from "./components/filing-header";
-import { FilingXbrl } from "./filing-xbrl";
+import { FilingXbrl } from "./filing-xbrl/filing-xbrl";
 import type { FilingDetailProps } from "@/routes/company/[cik]/filing/[accession]/types";
 
 export function FilingDetail({ filing, companyName, discovery }: FilingDetailProps) {

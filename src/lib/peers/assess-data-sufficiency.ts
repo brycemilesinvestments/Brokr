@@ -1,7 +1,7 @@
 import type { RelativeMetricSeries } from "@/lib/peers/types";
 
-export const MIN_PEERS_WITH_DATA = 2;
-export const MIN_METRICS_WITH_PEER_DATA = 4;
+const MIN_PEERS_WITH_DATA = 2;
+const MIN_METRICS_WITH_PEER_DATA = 4;
 
 export type PeerDataSufficiency = {
   sufficient: boolean;
@@ -21,10 +21,11 @@ export function assessPeerDataSufficiency(
   const minMetrics = options?.minMetrics ?? MIN_METRICS_WITH_PEER_DATA;
   const minPeers = options?.minPeers ?? MIN_PEERS_WITH_DATA;
 
+  const seriesByMetricKey = new Map(relativeMetrics.map((series) => [series.metricKey, series]));
   let metricsWithData = 0;
 
   for (const key of metricKeys) {
-    const series = relativeMetrics.find((s) => s.metricKey === key);
+    const series = seriesByMetricKey.get(key);
     if (!series) continue;
 
     const comparableBand = [...series.peerBand]

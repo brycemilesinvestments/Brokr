@@ -54,4 +54,4 @@ export function useCompanyAnalysis(
 }
 
 /** @deprecated Use useCompanyAnalysis */
-export const useQuarterlyAnalysis = useCompanyAnalysis;
+const useQuarterlyAnalysis = useCompanyAnalysis;

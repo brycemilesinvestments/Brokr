@@ -22,7 +22,7 @@ export function buildActivityBarData(series: LineSeries[]): ActivityBarRow[] {
   for (const point of buysSeries?.points ?? []) dates.add(point.date);
   for (const point of sellsSeries?.points ?? []) dates.add(point.date);
 
-  return [...dates].sort().map((date) => ({
+  return [...dates].toSorted().map((date) => ({
     date,
     buys: buysSeries?.points.find((point) => point.date === date)?.value ?? 0,
     sells: sellsSeries?.points.find((point) => point.date === date)?.value ?? 0,
@@ -44,7 +44,7 @@ export function buildHoldingsLineData(series: LineSeries[]): {
   }
 
   return {
-    data: [...rows.values()].sort((a, b) => String(a.date).localeCompare(String(b.date))),
+    data: [...rows.values()].toSorted((a, b) => String(a.date).localeCompare(String(b.date))),
     series: series.map((line, index) => ({
       key: line.id,
       label: line.label,

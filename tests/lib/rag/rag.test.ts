@@ -3,15 +3,17 @@ import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { AiClient } from "@/lib/ai/client";
 import { extractIxbrl } from "@/lib/edgar";
-import { locateProseSections } from "@/lib/edgar/discovery";
+import { locateProseSections, emptyProseSections } from "@/lib/edgar/discovery";
 import type { ProseSections } from "@/lib/edgar/discovery";
 
 const FIXTURE_PROSE: ProseSections = {
+  ...emptyProseSections(),
   mda: {
     key: "mda",
     concept: "ManagementDiscussionAndAnalysisTextBlock",
     taxonomy: "us-gaap",
     charCount: 500,
+    source: "ixbrl_textblock",
     text: `Management's Discussion and Analysis of Financial Condition and Results of Operations.
 
 Our revenue increased significantly during the third quarter driven by strong NAND demand.
@@ -23,6 +25,7 @@ We continue to invest in technology leadership while managing operating expenses
     concept: "RiskFactorsTextBlock",
     taxonomy: "us-gaap",
     charCount: 400,
+    source: "ixbrl_textblock",
     text: `We face intense competition in NAND storage markets. Supply chain disruptions could adversely affect our operations.
 Customer concentration among hyperscale buyers may increase pricing volatility.`,
   },

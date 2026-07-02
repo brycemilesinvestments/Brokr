@@ -83,7 +83,7 @@ export async function deleteWatchlistEntry(cik: string): Promise<boolean> {
  * Return all previously fired event keys for a CIK.
  * Pass sinceDate (ISO 8601) to limit the window; omit for the full history.
  */
-export async function getFiredEventKeys(
+async function getFiredEventKeys(
   cik: string,
   sinceDate?: string,
 ): Promise<string[]> {
@@ -110,11 +110,11 @@ export async function getFiredEventKeys(
  * CIKs are processed in sorted order for determinism.
  */
 export async function loadFiredEventKeys(ciks: string[]): Promise<Set<string>> {
-  const sortedCiks = [...ciks].sort((a, b) => a.localeCompare(b));
+  const sortedCiks = ciks.toSorted((a, b) => a.localeCompare(b));
   const keys = new Set<string>();
 
-  for (const cik of sortedCiks) {
-    const rows = await getFiredEventKeys(cik);
+  const rowSets = await Promise.all(sortedCiks.map((cik) => getFiredEventKeys(cik)));
+  for (const rows of rowSets) {
     for (const key of rows) {
       keys.add(key);
     }
@@ -128,7 +128,7 @@ export async function loadFiredEventKeys(ciks: string[]): Promise<Set<string>> {
  * Idempotent: duplicate (cik, alert_type, event_key) rows are silently ignored
  * thanks to the unique index in the migration.
  */
-export async function recordAlertEvent(
+async function recordAlertEvent(
   cik: string,
   alertType: string,
   eventKey: string,
@@ -152,15 +152,15 @@ export async function recordAlertEvent(
  * Returns the number of successfully recorded events.
  */
 export async function recordAlertEvents(alerts: AlertRecord[]): Promise<number> {
-  let recorded = 0;
-  for (const alert of alerts) {
-    const ok = await recordAlertEvent(
-      alert.cik,
-      alert.type,
-      alert.eventKey,
-      alert as unknown as Record<string, unknown>,
-    );
-    if (ok) recorded++;
-  }
-  return recorded;
+  const results = await Promise.all(
+    alerts.map((alert) =>
+      recordAlertEvent(
+        alert.cik,
+        alert.type,
+        alert.eventKey,
+        alert as unknown as Record<string, unknown>,
+      ),
+    ),
+  );
+  return results.filter(Boolean).length;
 }

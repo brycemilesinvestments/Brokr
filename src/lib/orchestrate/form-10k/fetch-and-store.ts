@@ -116,6 +116,6 @@ export function filter10kFilings(filings: FilingRef[]): FilingRef[] {
   return filings.filter((filing) => /^10-K/i.test(filing.form));
 }
 
-export function filterPeriodicFilings(filings: FilingRef[]): FilingRef[] {
+function filterPeriodicFilings(filings: FilingRef[]): FilingRef[] {
   return filings.filter((filing) => /^10-K/i.test(filing.form) || /^10-Q/i.test(filing.form));
 }

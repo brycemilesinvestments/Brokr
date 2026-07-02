@@ -20,8 +20,8 @@ import type {
   FilingDiscoveryConfig,
 } from "@/lib/orchestrate/filing-discovery/types";
 
-export const DEFAULT_FILING_MAX_ITERATIONS = 10;
-export const DEFAULT_FILING_MAX_COST_USD = 0.1;
+const DEFAULT_FILING_MAX_ITERATIONS = 10;
+const DEFAULT_FILING_MAX_COST_USD = 0.1;
 
 export function parseFilingDiscoveryConfig(
   env: Record<string, string | undefined> = process.env,

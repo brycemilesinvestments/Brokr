@@ -17,7 +17,7 @@ export function buildMetricChartData(points: ChartPoint[]): MetricChartRow[] {
 export type PlottedPoint = MetricChartRow;
 
 /** @deprecated Use buildMetricChartData */
-export function buildMetricChartGeometry(points: ChartPoint[]) {
+function buildMetricChartGeometry(points: ChartPoint[]) {
   const chartData = buildMetricChartData(points);
   return {
     chartPoints: chartData,

@@ -1,1 +1,1 @@
-export { CompanyAnalysisPanel, QuarterlyAnalysisPanel } from "./quarterly-analysis-panel";
+export { QuarterlyAnalysisPanel } from "./quarterly-analysis-panel";

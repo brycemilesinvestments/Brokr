@@ -21,7 +21,7 @@ function yearFromDate(dateString: string): number | null {
 }
 
 function sortByFilingDateDesc(items: FilingRef[]): FilingRef[] {
-  return [...items].sort((a, b) => b.filingDate.localeCompare(a.filingDate));
+  return items.toSorted((a, b) => b.filingDate.localeCompare(a.filingDate));
 }
 
 /** F1 — Pair a filing with its comparison baseline (10-Q YoY quarter or prior 10-K). */

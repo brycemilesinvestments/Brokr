@@ -18,7 +18,7 @@ function unitToPoint(unit: string, raw: CompanyFactUnit): RawTimeSeriesPoint | u
   };
 }
 
-export function conceptExistsInFacts(
+function conceptExistsInFacts(
   response: CompanyFactsResponse,
   concept: string,
 ): boolean {

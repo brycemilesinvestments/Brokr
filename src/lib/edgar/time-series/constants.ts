@@ -5,8 +5,6 @@ import {
   SHARE_DATA,
 } from "@/lib/edgar/xbrl/filter-financial-facts";
 
-export { INCOME_STATEMENT, BALANCE_SHEET, CASH_FLOW, SHARE_DATA };
-
 export const ALL_WHITELISTED_CONCEPTS = [
   ...INCOME_STATEMENT,
   ...BALANCE_SHEET,

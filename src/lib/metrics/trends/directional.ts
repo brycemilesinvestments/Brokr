@@ -25,10 +25,13 @@ export function extractRatioPoints(
   key: RatioSeriesKey,
   frequency: SeriesFrequency,
 ): ValuePoint[] {
-  return ratioSeries[key]
-    .filter((p) => p.frequency === frequency && p.value !== undefined)
-    .map((p) => ({ periodEnd: p.periodEnd, value: p.value! }))
-    .sort((a, b) => a.periodEnd.localeCompare(b.periodEnd));
+  const points = ratioSeries[key].reduce<ValuePoint[]>((acc, p) => {
+    if (p.frequency === frequency && p.value !== undefined) {
+      acc.push({ periodEnd: p.periodEnd, value: p.value });
+    }
+    return acc;
+  }, []);
+  return points.sort((a, b) => a.periodEnd.localeCompare(b.periodEnd));
 }
 
 export function extractDerivedPoints(

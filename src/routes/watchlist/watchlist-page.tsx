@@ -106,7 +106,11 @@ export function WatchlistPage() {
           </p>
 
           <form className="mt-6 flex gap-2" onSubmit={(e) => void addEntry(e)}>
+            <label htmlFor="watchlist-cik-input" className="sr-only">
+              Company CIK
+            </label>
             <input
+              id="watchlist-cik-input"
               value={cikInput}
               onChange={(e) => setCikInput(e.target.value)}
               placeholder="CIK (e.g. 0000320193)"

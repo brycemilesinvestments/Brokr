@@ -84,10 +84,12 @@ function parseSectionRows(sectionText: string, segmentNames: readonly string[]):
     if (index === -1) continue;
 
     const afterName = sectionText.slice(index + name.length);
-    const valuesMillions = [...afterName.matchAll(/\$?([\d,]+)/g)]
-      .slice(0, 4)
-      .map((match) => Number(match[1].replace(/,/g, "")))
-      .filter((value) => !Number.isNaN(value));
+    const valuesMillions: number[] = [];
+    for (const match of afterName.matchAll(/\$?([\d,]+)/g)) {
+      if (valuesMillions.length >= 4) break;
+      const value = Number(match[1].replace(/,/g, ""));
+      if (!Number.isNaN(value)) valuesMillions.push(value);
+    }
 
     if (valuesMillions.length < 2) continue;
 
@@ -97,7 +99,7 @@ function parseSectionRows(sectionText: string, segmentNames: readonly string[]):
   return rows;
 }
 
-export function parseDisaggregationTableText(text: string): ParsedDisaggregationTable | null {
+function parseDisaggregationTableText(text: string): ParsedDisaggregationTable | null {
   const normalized = normalizeWhitespace(text);
   const periodEnds = extractPeriodEnds(normalized);
   if (!periodEnds) return null;

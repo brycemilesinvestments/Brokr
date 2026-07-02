@@ -29,6 +29,6 @@ export function buildQuarterlyContract(
   };
 }
 
-export function isQuarterlyComplete(output: Partial<QuarterlyAnalysisOutput>): boolean {
+function isQuarterlyComplete(output: Partial<QuarterlyAnalysisOutput>): boolean {
   return Boolean(output.analysis?.financials?.cik && output.completedAt);
 }

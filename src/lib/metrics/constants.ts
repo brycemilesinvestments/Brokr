@@ -1,7 +1,7 @@
 import type { ExtendedConceptKey } from "@/lib/metrics/types";
 
 /** Chunk 7 concepts beyond the Chunk 3 whitelist. */
-export const EXTENDED_CONCEPTS: ExtendedConceptKey[] = [
+const EXTENDED_CONCEPTS: ExtendedConceptKey[] = [
   "PaymentsToAcquirePropertyPlantAndEquipment",
   "ShareBasedCompensation",
   "RevenueRemainingPerformanceObligation",

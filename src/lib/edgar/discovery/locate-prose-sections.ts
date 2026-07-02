@@ -33,6 +33,7 @@ function findTextBlock(
       taxonomy: match.taxonomy,
       text,
       charCount: text.length,
+      source: "ixbrl_textblock",
     };
   }
   return null;

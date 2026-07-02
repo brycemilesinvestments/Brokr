@@ -4,10 +4,12 @@ import type { TimeRange } from "../types";
 import { parseTransactionDate } from "../utils/parse-transaction-date";
 
 function latestTransactionTime(transactions: InsiderTransaction[]): number {
-  const times = transactions
-    .map((transaction) => parseTransactionDate(transaction.transactionDate))
-    .filter((time) => time > 0);
-  return times.length > 0 ? Math.max(...times) : Date.now();
+  let latest = 0;
+  for (const transaction of transactions) {
+    const time = parseTransactionDate(transaction.transactionDate);
+    if (time > 0 && time > latest) latest = time;
+  }
+  return latest > 0 ? latest : Date.now();
 }
 
 export function filterByTimeRange(

@@ -33,31 +33,34 @@ export async function extractProseSignals(
   const extracted: SectionQualitativeSignal[] = [];
   let costUsd = 0;
 
-  for (const section of sections) {
-    const config = SECTION_PROMPTS[section.key];
-    const response = await client.complete({
-      max_tokens: 1024,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: "user", content: buildUserPrompt(section, config) }],
-    });
+  const results = await Promise.all(
+    sections.map(async (section) => {
+      const config = SECTION_PROMPTS[section.key];
+      const response = await client.complete({
+        max_tokens: 1024,
+        system: SYSTEM_PROMPT,
+        messages: [{ role: "user", content: buildUserPrompt(section, config) }],
+      });
 
-    const text = response.content.find((c) => c.type === "text")?.text ?? "";
-    let parsed: unknown;
-    try {
-      parsed = parseJsonFromText(text);
-    } catch {
-      extracted.push({ section: section.key });
-      continue;
-    }
+      const text = response.content.find((c) => c.type === "text")?.text ?? "";
+      let parsed: unknown;
+      try {
+        parsed = parseJsonFromText(text);
+      } catch {
+        return { signal: { section: section.key } as SectionQualitativeSignal, costUsd: 0 };
+      }
 
-    extracted.push(parseSectionResponse(section.key, parsed, config));
+      const signal = parseSectionResponse(section.key, parsed, config);
+      const sectionCost = response.usage
+        ? client.estimateCostUsd(response.usage.input_tokens, response.usage.output_tokens)
+        : 0;
+      return { signal, costUsd: sectionCost };
+    }),
+  );
 
-    if (response.usage) {
-      costUsd += client.estimateCostUsd(
-        response.usage.input_tokens,
-        response.usage.output_tokens,
-      );
-    }
+  for (const { signal, costUsd: sectionCost } of results) {
+    extracted.push(signal);
+    costUsd += sectionCost;
   }
 
   return {

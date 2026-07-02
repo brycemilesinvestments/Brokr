@@ -184,7 +184,11 @@ export function FilingXbrl({
           <>
             <div className="border-b border-zinc-100 px-6 py-4">
               <div className="flex flex-wrap items-center gap-4">
+                <label htmlFor="xbrl-fact-search" className="sr-only">
+                  Filter raw XBRL facts
+                </label>
                 <input
+                  id="xbrl-fact-search"
                   type="search"
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}

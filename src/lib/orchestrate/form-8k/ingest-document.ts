@@ -106,7 +106,7 @@ export async function ingest8kDocument(input: {
   };
 }
 
-export async function loadStored8kHtml(
+async function loadStored8kHtml(
   filePath: string,
 ): Promise<string | null> {
   const supabase = createAdminClient();

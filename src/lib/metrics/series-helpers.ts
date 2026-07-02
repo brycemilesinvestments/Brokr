@@ -52,7 +52,7 @@ export function daysInPeriod(
   return frequency === "annual" ? 365 : 90;
 }
 
-export function notReportedSeries(key: DerivedMetricKey): DerivedMetricSeries {
+function notReportedSeries(key: DerivedMetricKey): DerivedMetricSeries {
   return { key, status: "not_reported", annual: [], quarterly: [] };
 }
 

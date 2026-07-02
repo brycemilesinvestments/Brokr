@@ -40,12 +40,10 @@ function filingScore(filing: FilingRef): { score: number; reasons: string[] } {
     reasons.push("primary_document_has_99");
   }
 
-  for (const hint of EARNINGS_HINTS) {
-    if (primary.includes(hint)) {
-      score += 1;
-      reasons.push(`primary_document_has_${hint}`);
-      break;
-    }
+  const matchedHint = EARNINGS_HINTS.find((hint) => primary.includes(hint));
+  if (matchedHint) {
+    score += 1;
+    reasons.push(`primary_document_has_${matchedHint}`);
   }
 
   return { score, reasons };

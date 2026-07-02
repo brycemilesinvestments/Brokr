@@ -1,8 +1,6 @@
 export {
   analyzeFilingDiscovery,
   parseFilingDiscoveryConfig,
-  DEFAULT_FILING_MAX_ITERATIONS,
-  DEFAULT_FILING_MAX_COST_USD,
 } from "@/lib/orchestrate/filing-discovery/analyze-filing";
 
 export { crossCheckSignals } from "@/lib/orchestrate/filing-discovery/cross-check";

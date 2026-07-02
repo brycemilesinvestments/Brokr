@@ -62,7 +62,7 @@ export async function getCompanyByEdgarId(edgarId: string): Promise<CompanyRow |
   return data ? mapRow(data) : null;
 }
 
-export async function getCompanyById(id: number): Promise<CompanyRow | null> {
+async function getCompanyById(id: number): Promise<CompanyRow | null> {
   const supabase = createAdminClient();
   if (!supabase) return null;
 
@@ -75,7 +75,7 @@ export async function getCompanyById(id: number): Promise<CompanyRow | null> {
   return data ? mapRow(data) : null;
 }
 
-export async function upsertCompanyFromSearch(input: CompanySearchInput): Promise<CompanyRow | null> {
+async function upsertCompanyFromSearch(input: CompanySearchInput): Promise<CompanyRow | null> {
   const supabase = createAdminClient();
   if (!supabase) return null;
 

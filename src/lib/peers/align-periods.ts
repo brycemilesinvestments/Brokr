@@ -53,7 +53,7 @@ export function alignTargetSeries(
     });
   }
 
-  return [...byKey.values()].sort((a, b) => a.calendarKey.localeCompare(b.calendarKey));
+  return [...byKey.values()].toSorted((a, b) => a.calendarKey.localeCompare(b.calendarKey));
 }
 
 /** Peer chart points grouped by calendarKey for a given metric. */

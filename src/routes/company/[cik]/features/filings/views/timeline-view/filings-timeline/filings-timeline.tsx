@@ -2,7 +2,7 @@
 
 import { CORE_FORM_CATEGORIES, CORE_FORM_META } from "@/lib/edgar/core-forms";
 import { FiscalYearSection } from "./components/fiscal-year-section";
-import { DocumentTimelineChart } from "./document-timeline-chart";
+import { DocumentTimelineChart } from "./document-timeline-chart/document-timeline-chart";
 import { TimelineEntry } from "./components/timeline-entry";
 import { CATEGORY_STYLES } from "./constants";
 import { useFilingsTimeline } from "./hooks/use-filings-timeline";

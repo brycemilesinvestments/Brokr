@@ -73,7 +73,7 @@ function mergeMatches(
     });
   }
 
-  return [...byCik.values()].sort(
+  return [...byCik.values()].toSorted(
     (a, b) => b.score - a.score || a.title.localeCompare(b.title),
   );
 }
@@ -86,10 +86,12 @@ function isExactTickerQuery(query: string, matches: CompanyMatch[]): boolean {
 }
 
 function rankTickerMatches(query: string, tickers: CompanyTicker[]): CompanyMatch[] {
-  return tickers
-    .map((company) => ({ ...company, score: scoreMatch(query, company) }))
-    .filter((match) => match.score > 0)
-    .sort((a, b) => b.score - a.score || a.title.localeCompare(b.title));
+  const matches: CompanyMatch[] = [];
+  for (const company of tickers) {
+    const score = scoreMatch(query, company);
+    if (score > 0) matches.push({ ...company, score });
+  }
+  return matches.sort((a, b) => b.score - a.score || a.title.localeCompare(b.title));
 }
 
 async function fetchSecHtml(url: string): Promise<string> {
@@ -221,7 +223,7 @@ export async function resolveCompanyByCik(cik: string): Promise<CompanyTicker | 
   }
 }
 
-export function getSecFilingsPageUrl(cik: string | number): string {
+function getSecFilingsPageUrl(cik: string | number): string {
   return companyFilingsUrl(cik);
 }
 

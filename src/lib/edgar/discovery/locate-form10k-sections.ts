@@ -3,11 +3,17 @@ import {
   AUDITOR_NAME_CONCEPTS,
   PROSE_TEXT_BLOCK_CONCEPTS,
 } from "@/lib/edgar/discovery/constants";
+import {
+  extractHtmlHeadingSections,
+  countNarrativeIxbrlSections,
+  IXBRL_SECTION_THRESHOLD,
+} from "@/lib/edgar/discovery/extract-html-heading-sections";
 import type {
   Form10kSectionKey,
   ProseSection,
   ProseSectionKey,
   ProseSections,
+  SectionCoverage,
 } from "@/lib/edgar/discovery/types";
 
 function stripHtml(text: string): string {
@@ -39,12 +45,13 @@ function findTextBlock(
       taxonomy: match.taxonomy,
       text,
       charCount: text.length,
+      source: "ixbrl_textblock",
     };
   }
   return null;
 }
 
-function locateSection(
+function locateIxbrlSection(
   facts: XbrlFact[],
   key: ProseSectionKey,
 ): ProseSection | null {
@@ -52,6 +59,21 @@ function locateSection(
   const section = findTextBlock(facts, concepts);
   if (!section) return null;
   return { ...section, key };
+}
+
+function htmlSectionToProse(section: {
+  sectionType: Form10kSectionKey;
+  text: string;
+  charCount: number;
+}): ProseSection {
+  return {
+    key: section.sectionType,
+    concept: `html:ITEM_${section.sectionType}`,
+    taxonomy: "html",
+    text: section.text,
+    charCount: section.charCount,
+    source: "html_heading_fallback",
+  };
 }
 
 const FORM10K_SECTION_KEYS: Form10kSectionKey[] = [
@@ -66,28 +88,69 @@ const FORM10K_SECTION_KEYS: Form10kSectionKey[] = [
   "subsequent_events",
 ];
 
-/** K1 — Locate all nine canonical 10-K prose sections from iXBRL text blocks. */
-export function locateForm10kSections(ixbrlFacts: XbrlFact[]): ProseSections {
-  const sections: Partial<ProseSections> = {};
+function countIxbrlSections(sections: Partial<ProseSections>): number {
+  return countNarrativeIxbrlSections(sections);
+}
+
+/**
+ * K1 — Two-path section extraction.
+ * Path A: iXBRL TextBlock concepts. If >= 3 sections found, stop.
+ * Path B: HTML Item heading fallback when Path A finds < 3 sections.
+ */
+export function locateForm10kSections(
+  ixbrlFacts: XbrlFact[],
+  html?: string | null,
+): ProseSections {
+  const fromIxbrl: Partial<ProseSections> = {};
 
   for (const key of FORM10K_SECTION_KEYS) {
-    sections[key] = locateSection(ixbrlFacts, key);
+    fromIxbrl[key] = locateIxbrlSection(ixbrlFacts, key);
+  }
+
+  const ixbrlCount = countIxbrlSections(fromIxbrl);
+  const useHtmlFallback = ixbrlCount < IXBRL_SECTION_THRESHOLD && Boolean(html?.trim());
+  const fromHtml = useHtmlFallback ? extractHtmlHeadingSections(html!) : [];
+
+  const htmlByKey = new Map<Form10kSectionKey, ProseSection>();
+  for (const section of fromHtml) {
+    if (!htmlByKey.has(section.sectionType)) {
+      htmlByKey.set(section.sectionType, htmlSectionToProse(section));
+    }
+  }
+
+  function resolve(key: Form10kSectionKey): ProseSection | null {
+    return fromIxbrl[key] ?? htmlByKey.get(key) ?? null;
   }
 
   return {
-    business: sections.business ?? null,
-    risk_factors: sections.risk_factors ?? null,
-    mda: sections.mda ?? null,
-    financials: sections.financials ?? null,
-    notes: sections.notes ?? null,
-    auditor: sections.auditor ?? null,
-    controls: sections.controls ?? null,
-    legal: sections.legal ?? null,
-    subsequent_events: sections.subsequent_events ?? null,
-    revenue_concentration: locateSection(ixbrlFacts, "revenue_concentration"),
+    business: resolve("business"),
+    risk_factors: resolve("risk_factors"),
+    mda: resolve("mda"),
+    financials: resolve("financials"),
+    notes: resolve("notes"),
+    auditor: resolve("auditor"),
+    controls: resolve("controls"),
+    legal: resolve("legal"),
+    subsequent_events: resolve("subsequent_events"),
+    revenue_concentration: locateIxbrlSection(ixbrlFacts, "revenue_concentration"),
     form_8k_body: null,
     exhibit_99_1: null,
   };
+}
+
+/** Build K1 coverage report for sectionsPresent and per-section source tagging. */
+export function buildSectionCoverage(sections: ProseSections): SectionCoverage {
+  const sectionsPresent: ProseSectionKey[] = [];
+  const sectionSources: SectionCoverage["sectionSources"] = {};
+
+  for (const key of FORM10K_SECTION_KEYS) {
+    const section = sections[key];
+    if (!section) continue;
+    sectionsPresent.push(key);
+    sectionSources[key] = section.source;
+  }
+
+  return { sectionsPresent, sectionSources };
 }
 
 /** K11 — Extract auditor name from tagged facts or auditor section prose. */

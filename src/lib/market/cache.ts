@@ -14,7 +14,7 @@ export function isCacheValid<T>(
   return entry.expiresAt > nowIso;
 }
 
-export function createCacheEntry<T>(
+function createCacheEntry<T>(
   key: string,
   data: T,
   fetchedAtIso: string,

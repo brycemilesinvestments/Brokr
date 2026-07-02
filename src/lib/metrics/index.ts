@@ -20,7 +20,7 @@ export type {
   ExtendedMetricsState,
 } from "@/lib/metrics/types";
 
-export { EXTENDED_CONCEPTS, REVENUE_CONCEPT, OPERATING_CF_CONCEPT } from "@/lib/metrics/constants";
+export { REVENUE_CONCEPT, OPERATING_CF_CONCEPT } from "@/lib/metrics/constants";
 
 export {
   valueAtPeriod,
@@ -39,10 +39,7 @@ export { computeDilutionMetrics } from "@/lib/metrics/dilution";
 export { computeSegmentBreakout } from "@/lib/metrics/segments";
 export { computeBacklogSeries } from "@/lib/metrics/backlog";
 export { toMetricsChartBundle, derivedToChartPoints } from "@/lib/metrics/chart-bundle";
-export {
-  buildExtendedMetricsBundle,
-  buildExtendedMetricsState,
-} from "@/lib/metrics/build-bundle";
+export { buildExtendedMetricsBundle } from "@/lib/metrics/build-bundle";
 
 export type {
   TrendDirection,

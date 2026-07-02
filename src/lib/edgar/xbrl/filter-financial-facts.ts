@@ -197,7 +197,7 @@ function detectBalanceSheetInstants(
     }
   }
 
-  const sorted = [...bestByInstant.values()].sort(
+  const sorted = [...bestByInstant.values()].toSorted(
     (a, b) => Date.parse(b.context!.instant!) - Date.parse(a.context!.instant!),
   );
 
@@ -213,12 +213,12 @@ function detectCanonicalContexts(facts: XbrlFact[]): CanonicalContexts {
     whitelisted.filter((fact) => CATEGORY_BY_CONCEPT.get(fact.concept) !== "balance"),
   );
 
-  const sortedByEnd = [...durations].sort(
+  const sortedByEnd = durations.toSorted(
     (a, b) =>
       Date.parse(b.context.endDate ?? "") - Date.parse(a.context.endDate ?? ""),
   );
 
-  const shortest = [...durations].sort((a, b) => a.days - b.days)[0];
+  const shortest = durations.toSorted((a, b) => a.days - b.days)[0];
   const quarterCurrent =
     sortedByEnd.find((period) => period.days <= 120) ??
     shortest;
@@ -232,10 +232,16 @@ function detectCanonicalContexts(facts: XbrlFact[]): CanonicalContexts {
   const { current: instantCurrent, prior: instantPrior } =
     detectBalanceSheetInstants(whitelisted);
 
-  const coverInstant = whitelisted
-    .filter((fact) => fact.concept === "EntityCommonStockSharesOutstanding")
-    .map((fact) => fact.context)
-    .find((context) => context?.periodType === "instant");
+  let coverInstant: (typeof whitelisted)[number]["context"];
+  for (const fact of whitelisted) {
+    if (fact.concept === "EntityCommonStockSharesOutstanding") {
+      const context = fact.context;
+      if (context?.periodType === "instant") {
+        coverInstant = context;
+        break;
+      }
+    }
+  }
 
   const allowedContextRefs = new Set<string>();
   for (const period of [quarterCurrent, quarterPrior, ytdCurrent, ytdPrior]) {

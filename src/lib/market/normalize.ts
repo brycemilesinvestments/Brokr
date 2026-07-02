@@ -4,7 +4,7 @@ function unixToUtcIso(unix: number): string {
   return new Date(unix * 1000).toISOString().slice(0, 10);
 }
 
-export function normalizeChartResult(result: YahooChartResult, symbol: string): NormalizedBar[] {
+function normalizeChartResult(result: YahooChartResult, symbol: string): NormalizedBar[] {
   const quote = result.indicators.quote[0];
   if (!quote) return [];
 

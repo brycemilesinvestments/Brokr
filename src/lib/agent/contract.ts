@@ -43,8 +43,8 @@ export type AgentRunResult = {
   reason: "complete" | "max_iterations" | "budget_exceeded" | "error";
 };
 
-export const DEFAULT_MAX_ITERATIONS = 10;
-export const DEFAULT_MAX_COST_USD = 0.5;
+const DEFAULT_MAX_ITERATIONS = 10;
+const DEFAULT_MAX_COST_USD = 0.5;
 
 export function parseAgentConfigFromEnv(env: Record<string, string | undefined> = process.env): AgentConfig {
   return {

@@ -8,7 +8,7 @@ import type { CoverageReport, PeriodRange, SegmentCoverage } from "@/lib/orchest
 
 function periodRange(dates: string[]): PeriodRange | undefined {
   if (dates.length === 0) return undefined;
-  const sorted = [...dates].sort();
+  const sorted = dates.toSorted();
   return {
     earliest: sorted[0],
     latest: sorted[sorted.length - 1],

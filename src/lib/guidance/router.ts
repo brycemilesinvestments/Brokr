@@ -4,6 +4,7 @@ import { extract_tagged_numbers } from "@/lib/guidance/extract_tagged_numbers";
 import { audit_earnings_8k, find_earnings_8k } from "@/lib/guidance/find_earnings_8k";
 import { track_vs_actual } from "@/lib/guidance/track_vs_actual";
 import type {
+  Earnings8kCandidate,
   GuidanceExtraction,
   GuidanceRouterAction,
   GuidanceRouterInput,
@@ -78,15 +79,20 @@ export async function run_guidance_router(
         {
           ...state,
           earnings8kAudit: audit,
-          candidates: audit.filter((entry) => entry.accepted).map((entry) => ({
-            cik: state.cik,
-            accessionNumber: entry.accessionNumber,
-            filingDate: entry.filingDate,
-            form: entry.form,
-            primaryDocument: entry.primaryDocument,
-            score: entry.score,
-            reasons: entry.reasons,
-          })),
+          candidates: audit.reduce<Earnings8kCandidate[]>((acc, entry) => {
+            if (entry.accepted) {
+              acc.push({
+                cik: state.cik,
+                accessionNumber: entry.accessionNumber,
+                filingDate: entry.filingDate,
+                form: entry.form,
+                primaryDocument: entry.primaryDocument,
+                score: entry.score,
+                reasons: entry.reasons,
+              });
+            }
+            return acc;
+          }, []),
         },
         action,
       );
@@ -111,60 +117,81 @@ export async function run_guidance_router(
     }
 
     if (action === "check_cache") {
-      const cacheByAccession: Record<string, Awaited<ReturnType<typeof check_cache>>["record"]> = {};
-      for (const candidate of state.candidates ?? []) {
-        const result = await check_cache(input.cache, input.cik, candidate.accessionNumber);
-        cacheByAccession[candidate.accessionNumber] = result.record;
-      }
+      const candidates = state.candidates ?? [];
+      const cacheEntries = await Promise.all(
+        candidates.map(async (candidate) => {
+          const result = await check_cache(input.cache, input.cik, candidate.accessionNumber);
+          return [candidate.accessionNumber, result.record] as const;
+        }),
+      );
+      const cacheByAccession: Record<string, Awaited<ReturnType<typeof check_cache>>["record"]> =
+        Object.fromEntries(cacheEntries);
 
       state = apply_completed({ ...state, cacheByAccession }, action);
       continue;
     }
 
     if (action === "extract_guidance") {
+      const extractionResults = await Promise.all(
+        (state.candidates ?? []).map(async (candidate) => {
+          const cached = state.cacheByAccession?.[candidate.accessionNumber] ?? null;
+          if (cached) {
+            return {
+              accession: candidate.accessionNumber,
+              guidance: cached.guidance,
+              costUsd: 0,
+              error: null as string | null,
+            };
+          }
+
+          try {
+            const result = await extract_guidance({
+              input: {
+                cik: input.cik,
+                filing: {
+                  cik: candidate.cik,
+                  accessionNumber: candidate.accessionNumber,
+                  form: candidate.form,
+                  filingDate: candidate.filingDate,
+                  reportDate: candidate.reportDate,
+                  primaryDocument: candidate.primaryDocument,
+                },
+                taggedNumbers: state.taggedNumbersByAccession?.[candidate.accessionNumber] ?? [],
+              },
+              aiClient: input.aiClient,
+              extractor: input.aiExtractor,
+            });
+
+            return {
+              accession: candidate.accessionNumber,
+              guidance: result.guidance,
+              costUsd: result.costUsd,
+              error: null as string | null,
+            };
+          } catch (error) {
+            return {
+              accession: candidate.accessionNumber,
+              guidance: {
+                found: false,
+                hasGuidance: false,
+                ranges: [],
+              } as GuidanceExtraction,
+              costUsd: 0,
+              error: `Guidance extraction failed for ${candidate.accessionNumber}: ${
+                error instanceof Error ? error.message : String(error)
+              }`,
+            };
+          }
+        }),
+      );
+
       const extractedByAccession: Record<string, GuidanceExtraction> = {};
       let stepCost = 0;
       const stepErrors: string[] = [];
-
-      for (const candidate of state.candidates ?? []) {
-        const cached = state.cacheByAccession?.[candidate.accessionNumber] ?? null;
-        if (cached) {
-          extractedByAccession[candidate.accessionNumber] = cached.guidance;
-          continue;
-        }
-
-        try {
-          const result = await extract_guidance({
-            input: {
-              cik: input.cik,
-              filing: {
-                cik: candidate.cik,
-                accessionNumber: candidate.accessionNumber,
-                form: candidate.form,
-                filingDate: candidate.filingDate,
-                reportDate: candidate.reportDate,
-                primaryDocument: candidate.primaryDocument,
-              },
-              taggedNumbers: state.taggedNumbersByAccession?.[candidate.accessionNumber] ?? [],
-            },
-            aiClient: input.aiClient,
-            extractor: input.aiExtractor,
-          });
-
-          extractedByAccession[candidate.accessionNumber] = result.guidance;
-          stepCost += result.costUsd;
-        } catch (error) {
-          extractedByAccession[candidate.accessionNumber] = {
-            found: false,
-            hasGuidance: false,
-            ranges: [],
-          };
-          stepErrors.push(
-            `Guidance extraction failed for ${candidate.accessionNumber}: ${
-              error instanceof Error ? error.message : String(error)
-            }`,
-          );
-        }
+      for (const result of extractionResults) {
+        extractedByAccession[result.accession] = result.guidance;
+        stepCost += result.costUsd;
+        if (result.error) stepErrors.push(result.error);
       }
 
       state = apply_completed(
@@ -180,13 +207,15 @@ export async function run_guidance_router(
     }
 
     if (action === "write_cache") {
-      for (const candidate of state.candidates ?? []) {
-        const accession = candidate.accessionNumber;
-        if (state.cacheByAccession?.[accession]) continue;
-        const guidance = state.extractedByAccession?.[accession];
-        if (!guidance) continue;
-        await write_cache(input.cache, input.cik, accession, guidance);
-      }
+      await Promise.all(
+        (state.candidates ?? []).map(async (candidate) => {
+          const accession = candidate.accessionNumber;
+          if (state.cacheByAccession?.[accession]) return;
+          const guidance = state.extractedByAccession?.[accession];
+          if (!guidance) return;
+          await write_cache(input.cache, input.cik, accession, guidance);
+        }),
+      );
 
       state = apply_completed(state, action);
       continue;

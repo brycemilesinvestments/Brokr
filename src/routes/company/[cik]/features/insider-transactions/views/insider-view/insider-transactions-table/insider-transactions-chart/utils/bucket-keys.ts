@@ -1,13 +1,13 @@
 import type { BucketSize, TimeRange } from "../types";
 import { parseTransactionDate } from "./parse-transaction-date";
 
-export function dayKey(date: string): string {
+function dayKey(date: string): string {
   const time = parseTransactionDate(date);
   if (!time) return date;
   return new Date(time).toISOString().slice(0, 10);
 }
 
-export function weekKey(date: string): string {
+function weekKey(date: string): string {
   const time = parseTransactionDate(date);
   if (!time) return date;
   const d = new Date(time);
@@ -17,7 +17,7 @@ export function weekKey(date: string): string {
   return monday.toISOString().slice(0, 10);
 }
 
-export function monthKey(date: string): string {
+function monthKey(date: string): string {
   const time = parseTransactionDate(date);
   if (!time) return date;
   const d = new Date(time);

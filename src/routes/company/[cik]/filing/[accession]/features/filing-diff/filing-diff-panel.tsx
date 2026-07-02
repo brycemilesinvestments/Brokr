@@ -52,6 +52,10 @@ export function FilingDiffPanel({ cik, accessionNumber }: FilingDiffPanelProps) 
 
   const { diff } = data;
   const topNumeric = diff.numeric.items.filter((item) => item.changed).slice(0, 12);
+  const changedProseSections = [];
+  for (const section of diff.prose.sections) {
+    if (section.changed) changedProseSections.push(section);
+  }
 
   return (
     <Shell title="Filing changes">
@@ -108,14 +112,12 @@ export function FilingDiffPanel({ cik, accessionNumber }: FilingDiffPanelProps) 
         <h3 className="text-sm font-semibold text-zinc-900">Prose diff (MD&A & risk factors)</h3>
         {diff.prose.changed ? (
           <ul className="mt-2 space-y-2 text-sm text-zinc-700">
-            {diff.prose.sections
-              .filter((section) => section.changed)
-              .map((section) => (
-                <li key={section.key} className="rounded-lg border border-zinc-100 px-3 py-2">
-                  <span className="font-medium">{section.key}</span>
-                  {section.summary ? `: ${section.summary}` : " changed"}
-                </li>
-              ))}
+            {changedProseSections.map((section) => (
+              <li key={section.key} className="rounded-lg border border-zinc-100 px-3 py-2">
+                <span className="font-medium">{section.key}</span>
+                {section.summary ? `: ${section.summary}` : " changed"}
+              </li>
+            ))}
           </ul>
         ) : (
           <p className="mt-2 text-sm text-zinc-500">

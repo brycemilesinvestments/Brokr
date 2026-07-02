@@ -16,7 +16,7 @@ import {
   VALUATION_METRIC_GROUPS,
 } from "./constants";
 
-export function CompanyAnalysisPanel({ cik, ticker }: CompanyAnalysisPanelProps) {
+function CompanyAnalysisPanel({ cik, ticker }: CompanyAnalysisPanelProps) {
   const { data, loading, error, refetch } = useCompanyAnalysis(cik, true, ticker);
 
   if (loading) {
