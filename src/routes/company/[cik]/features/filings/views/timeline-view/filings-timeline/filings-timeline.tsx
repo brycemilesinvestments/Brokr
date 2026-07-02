@@ -3,6 +3,7 @@
 import { CORE_FORM_CATEGORIES, CORE_FORM_META } from "@/lib/edgar/core-forms";
 import { FRED_CATEGORIES } from "@/lib/fred/constants";
 import { FiscalYearSection } from "./components/fiscal-year-section";
+import { FredDataPanel } from "./components/fred-data-panel";
 import { FredTimelineEntry } from "./components/fred-timeline-entry";
 import { TimelineEntry } from "./components/timeline-entry";
 import { DocumentTimelineChart } from "./document-timeline-chart";
@@ -53,9 +54,11 @@ export function FilingsTimeline({
     toggleCategory,
     toggleFredCategory,
     fred,
+    fredData,
+    handleRefetchFromFred,
   } = useDocumentTimeline({ timeline, enabled });
 
-  if (timeline.length === 0 && !fred.loading && fred.events.length === 0) {
+  if (timeline.length === 0 && !enabled) {
     return null;
   }
 
@@ -162,6 +165,20 @@ export function FilingsTimeline({
         </div>
       </div>
 
+      {enabled ? (
+        <div className="border-b border-zinc-100 px-6 py-4">
+          <FredDataPanel
+            status={fredData.status}
+            ingestResult={fredData.ingestResult}
+            loadingStatus={fredData.loadingStatus}
+            ingesting={fredData.ingesting}
+            error={fredData.error}
+            onRefreshStatus={() => void fredData.refreshStatus()}
+            onRefetchFromFred={() => void handleRefetchFromFred()}
+          />
+        </div>
+      ) : null}
+
       <DocumentTimelineChart
         cik={cik}
         timeline={timeline}
@@ -236,8 +253,7 @@ export function FilingsTimeline({
             <dt className="font-semibold text-zinc-800">Macro indicators (FRED)</dt>
             <dd className="mt-0.5">
               U.S. economic releases from the St. Louis Fed, shown alongside company filings for
-              macro context. Run <code className="rounded bg-zinc-200 px-1">npm run ingest-fred</code>{" "}
-              to refresh data.
+              macro context. Use the panel above to refresh data from FRED.
             </dd>
           </div>
         </dl>

@@ -30,3 +30,28 @@ export type FredTimelineResponse = {
   to: string;
   seriesCount: number;
 };
+
+export type FredStatus = {
+  schemaReady: boolean;
+  schemaError?: string;
+  targetSeriesCount: number;
+  seriesCount: number;
+  observationCount: number;
+  latestObservationDate: string | null;
+  completedSeriesCount: number;
+  failedSeries: string[];
+  inProgressSeries: string | null;
+  lastIngestedAt: string | null;
+  fredApiKeyConfigured: boolean;
+};
+
+export type FredIngestResult = {
+  totalSeries: number;
+  ingestedSeries: number;
+  failedSeries: Array<{ seriesId: string; reason: string }>;
+  seriesCount: number;
+  observationCount: number;
+  latestObservationDate: string | null;
+  observationStart: string;
+  source: "api" | "csv";
+};

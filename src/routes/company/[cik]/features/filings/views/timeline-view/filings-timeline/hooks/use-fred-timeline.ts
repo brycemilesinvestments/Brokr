@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { FredTimelineEvent, FredTimelineResponse } from "@/lib/fred/types";
 import type { TimelineFiling } from "@/routes/company/[cik]/features/filings/types";
 
@@ -31,8 +31,13 @@ export function useFredTimeline({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [seriesCount, setSeriesCount] = useState(0);
+  const [reloadToken, setReloadToken] = useState(0);
 
   const range = useMemo(() => resolveFredDateRange(timeline), [timeline]);
+
+  const reload = useCallback(() => {
+    setReloadToken((current) => current + 1);
+  }, []);
 
   useEffect(() => {
     if (!enabled) return;
@@ -70,7 +75,7 @@ export function useFredTimeline({
 
     void load();
     return () => controller.abort();
-  }, [enabled, range.from, range.to]);
+  }, [enabled, range.from, range.to, reloadToken]);
 
   return {
     events,
@@ -78,5 +83,6 @@ export function useFredTimeline({
     error,
     seriesCount,
     range,
+    reload,
   };
 }

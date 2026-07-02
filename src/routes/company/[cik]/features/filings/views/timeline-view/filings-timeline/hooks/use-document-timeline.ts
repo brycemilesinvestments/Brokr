@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { FRED_CATEGORIES, type FredCategory } from "@/lib/fred/constants";
 import { CORE_FORM_CATEGORIES, type CoreFormCategory } from "@/lib/edgar/core-forms";
 import {
@@ -9,6 +9,7 @@ import {
 } from "@/routes/company/[cik]/features/filings/lib/timeline";
 import type { FredTimelineEvent } from "@/lib/fred/types";
 import type { DocumentTimelineItem, ViewMode } from "../types";
+import { useFredData } from "./use-fred-data";
 import { useFredTimeline } from "./use-fred-timeline";
 
 export function useDocumentTimeline({
@@ -27,7 +28,15 @@ export function useDocumentTimeline({
   );
   const [showMacroIndicators, setShowMacroIndicators] = useState(true);
 
+  const fredData = useFredData(enabled);
   const fred = useFredTimeline({ timeline, enabled: enabled && showMacroIndicators });
+
+  const handleRefetchFromFred = useCallback(async () => {
+    const result = await fredData.refetchFromFred();
+    if (result) {
+      fred.reload();
+    }
+  }, [fred, fredData]);
 
   const filteredFilings = useMemo(
     () => timeline.filter((filing) => activeCategories.has(filing.category)),
@@ -132,6 +141,8 @@ export function useDocumentTimeline({
     toggleCategory,
     toggleFredCategory,
     fred,
+    fredData,
+    handleRefetchFromFred,
   };
 }
 
