@@ -15,6 +15,7 @@ import {
 } from "@/components/evilcharts/charts/line-chart";
 import { type ChartConfig } from "@/components/evilcharts/ui/chart";
 import { resolveFilingPagePath } from "@/lib/edgar/constants";
+import { FRED_MARKER_COLOR } from "../constants";
 import { MARKER_COLOR } from "./constants";
 import { useDocumentTimelineChart } from "./hooks/use-document-timeline-chart";
 import type { DocumentTimelineChartProps } from "./types";
@@ -47,15 +48,23 @@ function DocumentTimelineChartLoading() {
 function DocumentTimelineChartContent({
   cik,
   timeline,
+  fredEvents = [],
   ticker,
-}: Pick<DocumentTimelineChartProps, "cik" | "timeline" | "ticker">) {
-  const { eightKFilings, data, chartData, markers, latestPrice, hasChartData } =
-    useDocumentTimelineChart({ cik, timeline });
+}: Pick<DocumentTimelineChartProps, "cik" | "timeline" | "fredEvents" | "ticker">) {
+  const {
+    eightKFilings,
+    data,
+    chartData,
+    filingMarkers,
+    fredMarkers,
+    latestPrice,
+    hasChartData,
+  } = useDocumentTimelineChart({ cik, timeline, fredEvents });
 
   const displayTicker = data.ticker ?? ticker;
-  const markerDates = useMemo(
-    () => new Set(markers.map((marker) => marker.snappedDate)),
-    [markers],
+  const filingMarkerDates = useMemo(
+    () => new Set(filingMarkers.map((marker) => marker.snappedDate)),
+    [filingMarkers],
   );
 
   if (!hasChartData) {
@@ -98,52 +107,66 @@ function DocumentTimelineChartContent({
           <Dot variant="default" />
           <ActiveDot variant="colored-border" />
         </Line>
-        {markers.map((marker) => (
+        {filingMarkers.map((marker) => (
           <ReferenceLine
-            key={marker.filing.accessionNumber ?? `${marker.filingDate}-${marker.filing.type}`}
+            key={marker.filing.accessionNumber ?? `${marker.eventDate}-${marker.filing.type}`}
             x={marker.snappedDate}
             stroke={MARKER_COLOR}
             strokeWidth={1.5}
             strokeDasharray="5 4"
             label={{
-              value: `8-K · ${formatMarkerDate(marker.filingDate)}`,
+              value: `8-K · ${formatMarkerDate(marker.eventDate)}`,
               position: "insideBottomLeft",
               fill: MARKER_COLOR,
               fontSize: 10,
             }}
           />
         ))}
+        {fredMarkers.map((marker) => (
+          <ReferenceLine
+            key={marker.event.id}
+            x={marker.snappedDate}
+            stroke={FRED_MARKER_COLOR}
+            strokeWidth={1.25}
+            strokeDasharray="3 4"
+            label={{
+              value: `${marker.event.seriesId} · ${formatMarkerDate(marker.eventDate)}`,
+              position: "insideTopLeft",
+              fill: FRED_MARKER_COLOR,
+              fontSize: 10,
+            }}
+          />
+        ))}
       </EvilLineChart>
 
-      {eightKFilings.length === 0 ? (
+      {eightKFilings.length === 0 && fredMarkers.length === 0 ? (
         <p className="mt-3 text-sm text-zinc-500">
-          No 8-K filings in the timeline — the price line will appear once 8-Ks are indexed.
+          No 8-K filings or macro releases in range — the price line will appear once events are
+          indexed.
         </p>
       ) : (
         <p className="mt-3 text-xs text-zinc-500">
-          {markers.length} of {eightKFilings.length} 8-K filing
-          {eightKFilings.length === 1 ? "" : "s"} plotted on trading days.
-          {markers.length < eightKFilings.length ? (
-            <> Older filings may fall outside the loaded price range.</>
-          ) : null}
+          {filingMarkers.length} of {eightKFilings.length} 8-K filing
+          {eightKFilings.length === 1 ? "" : "s"} and {fredMarkers.length} of {fredEvents.length}{" "}
+          macro release{fredEvents.length === 1 ? "" : "s"} plotted on trading days.
         </p>
       )}
 
-      {markers.length > 0 ? (
+      {filingMarkers.length > 0 ? (
         <ul className="mt-4 space-y-2 border-t border-zinc-100 pt-4">
-          {markers.map((marker) => {
+          {filingMarkers.map((marker) => {
             const filingHref = resolveFilingPagePath(cik, marker.filing);
-            const filedOnMarkerDay = markerDates.has(marker.filingDate);
+            const filedOnMarkerDay = filingMarkerDates.has(marker.eventDate);
             return (
               <li
-                key={marker.filing.accessionNumber ?? `${marker.filingDate}-${marker.filing.type}`}
+                key={marker.filing.accessionNumber ?? `${marker.eventDate}-${marker.filing.type}`}
                 className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-600"
               >
                 <span className="rounded-md bg-amber-100 px-2 py-0.5 font-mono font-semibold text-amber-800">
                   8-K
                 </span>
                 <span className="font-medium text-zinc-800">
-                  {formatMarkerDate(marker.filingDate)}
+                  {formatMarkerDate(marker.eventDate)}
                 </span>
                 {!filedOnMarkerDay ? (
                   <span className="text-zinc-400">
@@ -174,6 +197,7 @@ function DocumentTimelineChartContent({
 export function DocumentTimelineChart({
   cik,
   timeline,
+  fredEvents = [],
   ticker,
   enabled,
 }: DocumentTimelineChartProps) {
@@ -184,7 +208,7 @@ export function DocumentTimelineChart({
   if (!ticker) {
     return (
       <div className="border-b border-zinc-100 px-6 py-5">
-        <h3 className="text-base font-semibold text-zinc-900">Stock price &amp; 8-K filings</h3>
+        <h3 className="text-base font-semibold text-zinc-900">Stock price &amp; timeline events</h3>
         <p className="mt-4 py-8 text-center text-sm text-zinc-500">
           Stock price chart requires a ticker symbol for this company.
         </p>
@@ -196,16 +220,22 @@ export function DocumentTimelineChart({
     <div className="border-b border-zinc-100 px-6 py-5">
       <div className="relative flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h3 className="text-base font-semibold text-zinc-900">Stock price &amp; 8-K filings</h3>
+          <h3 className="text-base font-semibold text-zinc-900">Stock price &amp; timeline events</h3>
           <p className="mt-1 max-w-2xl text-sm text-zinc-500">
-            Daily close from Yahoo Finance ({ticker}) with dashed lines on each 8-K filing date.
+            Daily close from Yahoo Finance ({ticker}) with 8-K filings (amber) and macro indicator
+            releases (indigo).
           </p>
         </div>
       </div>
 
       <div className="relative mt-4">
         <Suspense fallback={<DocumentTimelineChartLoading />}>
-          <DocumentTimelineChartContent cik={cik} timeline={timeline} ticker={ticker} />
+          <DocumentTimelineChartContent
+            cik={cik}
+            timeline={timeline}
+            fredEvents={fredEvents}
+            ticker={ticker}
+          />
         </Suspense>
       </div>
     </div>

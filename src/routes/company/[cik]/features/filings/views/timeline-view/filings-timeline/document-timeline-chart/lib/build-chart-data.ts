@@ -1,5 +1,6 @@
+import type { FredTimelineEvent } from "@/lib/fred/types";
 import type { TimelineFiling } from "@/routes/company/[cik]/features/filings/types";
-import type { FilingMarker } from "../types";
+import type { FredMarker, FilingMarker, TimelineMarker } from "../types";
 import { snapToTradingDay } from "../utils/snap-to-trading-day";
 
 export type DocumentTimelineChartRow = {
@@ -7,12 +8,67 @@ export type DocumentTimelineChartRow = {
   close: number;
 };
 
+function buildFilingMarkers(
+  filings: TimelineFiling[],
+  quoteDates: string[],
+  closeByDate: Map<string, number>,
+): FilingMarker[] {
+  const markers: FilingMarker[] = [];
+
+  for (const filing of filings) {
+    const snappedDate = snapToTradingDay(filing.filingDate, quoteDates);
+    if (!snappedDate) continue;
+
+    const close = closeByDate.get(snappedDate);
+    if (close == null) continue;
+
+    markers.push({
+      kind: "filing",
+      filing,
+      eventDate: filing.filingDate,
+      snappedDate,
+      close,
+    });
+  }
+
+  return markers;
+}
+
+function buildFredMarkers(
+  events: FredTimelineEvent[],
+  quoteDates: string[],
+  closeByDate: Map<string, number>,
+): FredMarker[] {
+  const markers: FredMarker[] = [];
+
+  for (const event of events) {
+    const snappedDate = snapToTradingDay(event.observationDate, quoteDates);
+    if (!snappedDate) continue;
+
+    const close = closeByDate.get(snappedDate);
+    if (close == null) continue;
+
+    markers.push({
+      kind: "fred",
+      event,
+      eventDate: event.observationDate,
+      snappedDate,
+      close,
+    });
+  }
+
+  return markers;
+}
+
 export function buildDocumentTimelineChartData(
   quotes: Array<{ date: string; close: number }>,
   filings: TimelineFiling[],
+  fredEvents: FredTimelineEvent[] = [],
 ): {
   chartData: DocumentTimelineChartRow[];
-  markers: FilingMarker[];
+  filingMarkers: FilingMarker[];
+  fredMarkers: FredMarker[];
+  markers: TimelineMarker[];
 } {
   const sortedQuotes = quotes.toSorted((a, b) => a.date.localeCompare(b.date));
   const quoteDates = sortedQuotes.map((quote) => quote.date);
@@ -23,23 +79,11 @@ export function buildDocumentTimelineChartData(
     close: quote.close,
   }));
 
-  const markers: FilingMarker[] = [];
-  for (const filing of filings) {
-    const snappedDate = snapToTradingDay(filing.filingDate, quoteDates);
-    if (!snappedDate) continue;
+  const filingMarkers = buildFilingMarkers(filings, quoteDates, closeByDate);
+  const fredMarkers = buildFredMarkers(fredEvents, quoteDates, closeByDate);
+  const markers = [...filingMarkers, ...fredMarkers].sort((a, b) =>
+    a.snappedDate.localeCompare(b.snappedDate),
+  );
 
-    const close = closeByDate.get(snappedDate);
-    if (close == null) continue;
-
-    markers.push({
-      filing,
-      filingDate: filing.filingDate,
-      snappedDate,
-      close,
-    });
-  }
-
-  markers.sort((a, b) => a.snappedDate.localeCompare(b.snappedDate));
-
-  return { chartData, markers };
+  return { chartData, filingMarkers, fredMarkers, markers };
 }

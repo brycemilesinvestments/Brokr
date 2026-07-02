@@ -14,6 +14,11 @@
     "check-usage": "python3 scripts/check-file-usage.py",
     "check-usage:promote": "python3 scripts/check-file-usage.py --promote",
     "reset-8k": "npx tsx scripts/reset-8k-pipeline.ts",
+    "setup-fred-schema": "npx tsx scripts/setup-fred-schema.ts",
+    "ingest-fred": "npx tsx scripts/ingest-fred.ts",
+    "verify-fred-api": "npx tsx scripts/verify-fred-api.ts",
+    "apply-fred-migration": "npx tsx scripts/apply-fred-migration.ts",
+    "fred:all": "npx tsx scripts/apply-fred-migration.ts && npx tsx scripts/ingest-fred.ts",
     "doctor": "npx react-doctor@latest"
   },
   "dependencies": {
@@ -35,6 +40,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/pg": "^8.15.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitest/ui": "^4.1.9",
@@ -42,6 +48,7 @@
     "eslint-config-next": "16.2.9",
     "eslint-plugin-project-structure": "^3.14.3",
     "happy-dom": "^20.10.6",
+    "pg": "^8.16.3",
     "react-doctor": "^0.5.8",
     "tailwindcss": "^4",
     "typescript": "^5",
