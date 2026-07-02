@@ -1,0 +1,20 @@
+---
+description: Run ESLint (including project-structure rules) before finishing work
+alwaysApply: true
+---
+
+# ESLint Verification
+
+Before considering work complete, validate against project architecture rules:
+
+- **Do** run `npm run lint`
+- **Do** fix all `project-structure/folder-structure` and `project-structure/independent-modules` errors
+- **Do not** use `npm run build` as a substitute for linting
+
+When editing specific areas, you may scope lint:
+
+```bash
+npx eslint src/routes/company/
+```
+
+Architecture rules live in `folderStructure.mjs` and `independentModules.mjs`.

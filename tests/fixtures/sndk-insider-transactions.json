@@ -1,0 +1,119 @@
+{
+  "cik": "0002023554",
+  "symbol": "SNDK",
+  "description": "SNDK insider transactions — mostly spin-off F-InKind, few discretionary sells, no open-market purchases",
+  "transactions": [
+    {
+      "transaction": {
+        "acquiredOrDisposed": "A",
+        "transactionDate": "2025-02-14",
+        "reportingOwner": "Jane Spinoff",
+        "transactionType": "F-InKind",
+        "sharesTransacted": 125000,
+        "accessionNumber": "0001628280-25-000101"
+      },
+      "filingDate": "2025-02-18"
+    },
+    {
+      "transaction": {
+        "acquiredOrDisposed": "A",
+        "transactionDate": "2025-02-14",
+        "reportingOwner": "Robert Grant",
+        "transactionType": "F-InKind",
+        "sharesTransacted": 84000,
+        "accessionNumber": "0001628280-25-000102"
+      },
+      "filingDate": "2025-02-18"
+    },
+    {
+      "transaction": {
+        "acquiredOrDisposed": "A",
+        "transactionDate": "2025-02-14",
+        "reportingOwner": "Maria Equity",
+        "transactionType": "F-InKind",
+        "sharesTransacted": 62000,
+        "accessionNumber": "0001628280-25-000103"
+      },
+      "filingDate": "2025-02-19"
+    },
+    {
+      "transaction": {
+        "acquiredOrDisposed": "A",
+        "transactionDate": "2025-03-01",
+        "reportingOwner": "Jane Spinoff",
+        "transactionType": "A-Award",
+        "sharesTransacted": 15000,
+        "accessionNumber": "0001628280-25-000201"
+      },
+      "filingDate": "2025-03-04"
+    },
+    {
+      "transaction": {
+        "acquiredOrDisposed": "A",
+        "transactionDate": "2025-03-01",
+        "reportingOwner": "Robert Grant",
+        "transactionType": "G-Gift",
+        "sharesTransacted": 5000,
+        "accessionNumber": "0001628280-25-000202"
+      },
+      "filingDate": "2025-03-05"
+    },
+    {
+      "transaction": {
+        "acquiredOrDisposed": "D",
+        "transactionDate": "2025-04-10",
+        "reportingOwner": "Jane Spinoff",
+        "transactionType": "S-Sale",
+        "sharesTransacted": 1200,
+        "accessionNumber": "0001628280-25-000301"
+      },
+      "filingDate": "2025-04-14"
+    },
+    {
+      "transaction": {
+        "acquiredOrDisposed": "D",
+        "transactionDate": "2025-05-20",
+        "reportingOwner": "Robert Grant",
+        "transactionType": "S-Sale",
+        "sharesTransacted": 800,
+        "accessionNumber": "0001628280-25-000401"
+      },
+      "filingDate": "2025-05-22"
+    },
+    {
+      "transaction": {
+        "acquiredOrDisposed": "A",
+        "transactionDate": "2025-06-01",
+        "reportingOwner": "Maria Equity",
+        "transactionType": "C-Conversion",
+        "sharesTransacted": 10000,
+        "accessionNumber": "0001628280-25-000501"
+      },
+      "filingDate": "2025-06-03"
+    },
+    {
+      "transaction": {
+        "acquiredOrDisposed": "A",
+        "transactionDate": "2025-06-15",
+        "reportingOwner": "Jane Spinoff",
+        "transactionType": "J-Other",
+        "sharesTransacted": 3000,
+        "accessionNumber": "0001628280-25-000601"
+      },
+      "filingDate": "2025-06-17"
+    },
+    {
+      "transaction": {
+        "acquiredOrDisposed": "A",
+        "transactionDate": "2025-07-01",
+        "reportingOwner": "Robert Grant",
+        "transactionType": "F-InKind",
+        "sharesTransacted": 45000,
+        "accessionNumber": "0001628280-25-000701"
+      },
+      "filingDate": "2025-07-03"
+    }
+  ],
+  "expectedSignalCount": 2,
+  "expectedNoiseCodes": ["F", "A", "G", "C", "J"]
+}

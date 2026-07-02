@@ -1,0 +1,26 @@
+{
+  "chart": {
+    "result": [
+      {
+        "meta": {
+          "currency": "USD",
+          "symbol": "SNDK",
+          "exchangeName": "NMS"
+        },
+        "timestamp": [1746057600, 1746144000, 1746230400],
+        "indicators": {
+          "quote": [
+            {
+              "open": [45.1, 46.2, 47.0],
+              "high": [46.5, 47.8, 48.2],
+              "low": [44.8, 45.9, 46.5],
+              "close": [46.0, 47.5, 47.8],
+              "volume": [1200000, 980000, 1100000]
+            }
+          ]
+        }
+      }
+    ],
+    "error": null
+  }
+}

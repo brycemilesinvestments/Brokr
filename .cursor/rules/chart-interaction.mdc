@@ -1,0 +1,69 @@
+---
+description: All SVG time-series charts must show a vertical crosshair and hover tooltip
+globs: src/**/*chart*/**/*.{ts,tsx},src/**/*-chart.{ts,tsx}
+alwaysApply: false
+---
+
+# Chart interaction — crosshair + tooltip
+
+Every interactive time-series chart in this app **must** show:
+
+1. **Vertical dashed crosshair** at the hovered x-position
+2. **HTML tooltip** with the snapped date/period and value(s) at that x
+
+Do not rely on native SVG `<title>` alone. Do not use per-point `onMouseEnter` without a plot-area crosshair.
+
+## Canonical reference
+
+`src/routes/company/[cik]/features/insider-transactions/.../insider-transactions-chart/insider-transactions-chart.tsx`
+
+## Required behavior
+
+- Wrap the SVG in `relative` container; tooltip is `absolute`, `pointer-events-none`, `z-10`
+- Transparent `rect` over the plot area with `cursor-crosshair`, `onMouseMove`, `onMouseLeave`
+- Snap hover to the nearest x-bucket / data point (not free-floating pixel coords)
+- On hover:
+  - Render vertical line: `stroke="#71717a"`, `strokeWidth="1.5"`, `strokeDasharray="5 4"`, from plot top to plot bottom
+  - Emphasize active point(s) with larger circles + white stroke
+  - Dim non-hovered series/points (`opacity={0.35}`) when applicable
+- Tooltip content:
+  - Date/period label (`text-xs font-medium text-zinc-500`)
+  - One or more value rows with label + formatted value (`font-mono`)
+  - Position with `left: (hover.x / CHART_WIDTH) * 100%`, `transform: translateX(-50%)`, `top: 8`
+
+## SVG structure checklist
+
+```tsx
+<div className="relative overflow-x-auto">
+  {hover ? (
+    <div className="pointer-events-none absolute z-10 ..." style={{ left: `${(hover.x / CHART_WIDTH) * 100}%`, top: 8, transform: "translateX(-50%)" }}>
+      {/* date + values */}
+    </div>
+  ) : null}
+  <svg viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}>
+    {/* grid, paths, points */}
+    {hover ? (
+      <>
+        <line x1={hover.x} x2={hover.x} y1={PADDING.top} y2={CHART_HEIGHT - PADDING.bottom} stroke="#71717a" strokeWidth="1.5" strokeDasharray="5 4" />
+        {/* emphasized active dots */}
+      </>
+    ) : null}
+    <rect x={PADDING.left} y={PADDING.top} width={plotWidth} height={plotHeight} fill="transparent" className="cursor-crosshair" onMouseMove={...} onMouseLeave={...} />
+  </svg>
+</div>
+```
+
+## When adding or editing a chart
+
+- [ ] Plot-area mouse tracking (not only dot hover)
+- [ ] Vertical dashed crosshair on hover
+- [ ] Positioned HTML tooltip (not `<title>` only)
+- [ ] `role="img"` + meaningful `aria-label` on the SVG
+- [ ] Reuse existing chart constants (`CHART_WIDTH`, `CHART_HEIGHT`, `PADDING`) from sibling charts
+
+## Charts that must comply
+
+- Outstanding shares (`outstanding-shares-chart`)
+- Financial trends (`metric-line-chart`)
+- Insider transactions (`insider-transactions-chart`) — reference impl
+- Any new chart added under `src/routes/` or `src/components/`

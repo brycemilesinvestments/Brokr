@@ -1,0 +1,38 @@
+{
+  "cik": 2023554,
+  "ticker": "SNDK",
+  "companyName": "Western Digital Corporation",
+  "description": "Golden test data for SNDK (Sandisk/Western Digital) — verified against real 10-Q filings",
+  "shares": 148089758,
+  "financials": {
+    "revenue": {
+      "fy2024": 5950000000,
+      "fy2023": 1695000000,
+      "yoyGrowth": 2.51,
+      "yoyGrowthPercent": 251
+    },
+    "grossMargin": {
+      "fy2024": 0.7835,
+      "fy2024Percent": 78.35,
+      "fy2023": 0.22,
+      "fy2023Percent": 22
+    },
+    "operatingMargin": {
+      "estimate": 0.25
+    },
+    "netIncome": {
+      "fy2024": 1469000000
+    }
+  },
+  "ixbrlMetrics": {
+    "factCount": 1123,
+    "description": "iXBRL 10-Q filing contains 1123 financial and contextual facts"
+  },
+  "sources": {
+    "cikVerified": "SEC EDGAR CIK 2023554",
+    "sharesVerified": "148,089,758 shares (from company filings)",
+    "revenueVerified": "FY2024 $5,950M vs FY2023 $1,695M YoY growth",
+    "marginVerified": "Gross margin 78.35% in FY2024 vs 22% in FY2023",
+    "ixbrlVerified": "Count from parsed 10-Q iXBRL document"
+  }
+}

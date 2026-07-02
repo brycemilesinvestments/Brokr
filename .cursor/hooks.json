@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "hooks": {
+    "stop": [
+      {
+        "command": ".cursor/hooks/lint-check.sh",
+        "loop_limit": 5
+      }
+    ]
+  }
+}

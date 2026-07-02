@@ -1,0 +1,21 @@
+---
+description: Use tsc --noEmit for type checking; never run npm run build
+alwaysApply: true
+---
+
+# TypeScript Verification
+
+When verifying TypeScript compiles or checking for type errors:
+
+- **Do** run `npx tsc --noEmit`
+- **Do not** run `npm run build` or `next build`
+
+`npm run build` is slow and unnecessary for type-check feedback during development. Use `npx tsc --noEmit` instead.
+
+```bash
+# ✅ Correct
+npx tsc --noEmit
+
+# ❌ Do not use for type checking
+npm run build
+```
