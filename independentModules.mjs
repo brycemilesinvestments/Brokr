@@ -148,6 +148,11 @@ export const independentModulesConfig = createIndependentModules({
         "src/lib/ai/**",
       ],
     },
+    {
+      name: "FRED chunk",
+      pattern: "src/lib/fred/**",
+      allowImportsFrom: ["src/lib/fred/**", "src/lib/supabase/**"],
+    },
     // === INFRA ===
     {
       name: "Supabase layer",

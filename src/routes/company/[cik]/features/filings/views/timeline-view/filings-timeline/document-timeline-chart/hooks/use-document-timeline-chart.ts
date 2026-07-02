@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import type { FredTimelineEvent } from "@/lib/fred/types";
 import type { TimelineFiling } from "@/routes/company/[cik]/features/filings/types";
 import { buildDocumentTimelineChartData } from "../lib/build-chart-data";
 import type { StockHistoryResponse } from "../types";
@@ -8,10 +9,12 @@ const BUFFER_MS = 30 * 86_400_000;
 export function useDocumentTimelineChart({
   cik,
   timeline,
+  fredEvents = [],
   enabled,
 }: {
   cik: string;
   timeline: TimelineFiling[];
+  fredEvents?: FredTimelineEvent[];
   enabled: boolean;
 }) {
   const eightKFilings = useMemo(
@@ -69,9 +72,9 @@ export function useDocumentTimelineChart({
     return () => controller.abort();
   }, [cik, enabled, eightKFilings]);
 
-  const { chartData, markers } = useMemo(
-    () => buildDocumentTimelineChartData(data?.quotes ?? [], eightKFilings),
-    [data?.quotes, eightKFilings],
+  const { chartData, filingMarkers, fredMarkers, markers } = useMemo(
+    () => buildDocumentTimelineChartData(data?.quotes ?? [], eightKFilings, fredEvents),
+    [data?.quotes, eightKFilings, fredEvents],
   );
 
   const latestPrice = chartData[chartData.length - 1]?.close ?? null;
@@ -82,6 +85,8 @@ export function useDocumentTimelineChart({
     loading,
     error,
     chartData,
+    filingMarkers,
+    fredMarkers,
     markers,
     latestPrice,
     hasChartData: chartData.length > 0,
