@@ -14,9 +14,11 @@
     "check-usage": "python3 scripts/check-file-usage.py",
     "check-usage:promote": "python3 scripts/check-file-usage.py --promote",
     "reset-8k": "npx tsx scripts/reset-8k-pipeline.ts",
+    "setup-fred-schema": "npx tsx scripts/setup-fred-schema.ts",
     "ingest-fred": "npx tsx scripts/ingest-fred.ts",
     "verify-fred-api": "npx tsx scripts/verify-fred-api.ts",
     "apply-fred-migration": "npx tsx scripts/apply-fred-migration.ts",
+    "fred:all": "npx tsx scripts/apply-fred-migration.ts && npx tsx scripts/ingest-fred.ts",
     "doctor": "npx react-doctor@latest"
   },
   "dependencies": {

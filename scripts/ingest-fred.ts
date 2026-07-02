@@ -8,15 +8,19 @@
  *   npx tsx scripts/ingest-fred.ts
  *
  * Environment:
- *   FRED_API_KEY              — required; free key from https://fred.stlouisfed.org/docs/api/api_key.html
+ *   FRED_API_KEY              — optional; uses public CSV fallback when absent
  *   NEXT_PUBLIC_SUPABASE_URL  — Supabase project URL (or SUPABASE_URL)
  *   SUPABASE_SECRET_KEY       — service role key (or SUPABASE_SERVICE_KEY)
  */
 
+import { execFile } from "node:child_process";
 import { loadEnvFile } from "node:process";
+import { promisify } from "node:util";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { applyFredMigration, hasDatabaseCredentials } from "./apply-fred-migration";
 import { TARGET_SERIES, type SeriesTarget } from "./fred-target-series";
+
+const execFileAsync = promisify(execFile);
 
 try {
   loadEnvFile(".env.local");
@@ -25,6 +29,7 @@ try {
 }
 
 const FRED_BASE = "https://api.stlouisfed.org/fred";
+const FRED_CSV_BASE = "https://fred.stlouisfed.org/graph/fredgraph.csv";
 const OBSERVATION_START = "1984-01-01";
 const BATCH_SIZE = 500;
 const INTER_SERIES_DELAY_MS = 600;
@@ -71,17 +76,20 @@ function getEnv(name: string, aliases: string[] = []): string | undefined {
   return undefined;
 }
 
+function getFredApiKey(): string | undefined {
+  return getEnv("FRED_API_KEY", ["FRED_KEY", "FRED_STLOUIS_API_KEY"]);
+}
+
 function verifyEnvironment(): {
-  fredApiKey: string;
+  fredApiKey: string | null;
   supabaseUrl: string;
   supabaseKey: string;
 } {
-  const fredApiKey = getEnv("FRED_API_KEY");
+  const fredApiKey = getFredApiKey() ?? null;
   const supabaseUrl = getEnv("NEXT_PUBLIC_SUPABASE_URL", ["SUPABASE_URL"]);
   const supabaseKey = getEnv("SUPABASE_SECRET_KEY", ["SUPABASE_SERVICE_KEY"]);
 
   const missing: string[] = [];
-  if (!fredApiKey) missing.push("FRED_API_KEY");
   if (!supabaseUrl) missing.push("NEXT_PUBLIC_SUPABASE_URL (or SUPABASE_URL)");
   if (!supabaseKey) missing.push("SUPABASE_SECRET_KEY (or SUPABASE_SERVICE_KEY)");
 
@@ -93,8 +101,14 @@ function verifyEnvironment(): {
     process.exit(1);
   }
 
+  if (!fredApiKey) {
+    console.warn(
+      "FRED_API_KEY not set — using public FRED CSV downloads for observations and local metadata.",
+    );
+  }
+
   return {
-    fredApiKey: fredApiKey!,
+    fredApiKey,
     supabaseUrl: supabaseUrl!,
     supabaseKey: supabaseKey!,
   };
@@ -103,19 +117,35 @@ function verifyEnvironment(): {
 function createSupabaseClient(url: string, key: string): SupabaseClient {
   return createClient(url, key, {
     auth: { persistSession: false, autoRefreshToken: false },
+    global: {
+      headers: {
+        apikey: key,
+      },
+    },
   });
 }
 
-async function verifyFredApi(fredApiKey: string): Promise<void> {
+async function httpGet(url: string): Promise<string> {
+  const { stdout } = await execFileAsync(
+    "curl",
+    ["-fsSL", "--max-time", "120", url],
+    { maxBuffer: 64 * 1024 * 1024 },
+  );
+  return stdout;
+}
+
+async function verifyFredApi(fredApiKey: string | null): Promise<void> {
+  if (!fredApiKey) {
+    await httpGet(`${FRED_CSV_BASE}?id=UNRATE`);
+    return;
+  }
+
   const url = new URL(`${FRED_BASE}/series`);
   url.searchParams.set("series_id", "UNRATE");
   url.searchParams.set("api_key", fredApiKey);
   url.searchParams.set("file_type", "json");
 
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`FRED API check failed: HTTP ${response.status} ${response.statusText}`);
-  }
+  await httpGet(url.toString());
 }
 
 async function getMissingFredTables(supabase: SupabaseClient): Promise<string[]> {
@@ -147,11 +177,9 @@ async function ensureFredSchema(supabase: SupabaseClient): Promise<void> {
     for (const detail of missing) {
       console.error(`  - ${detail}`);
     }
-    console.error(
-      "\nApply the migration with one of:",
-    );
+    console.error("\nApply the migration with one of:");
     console.error("  npx supabase db push --linked");
-    console.error("  npx tsx scripts/apply-fred-migration.ts  (requires DATABASE_URL or SUPABASE_DB_PASSWORD)");
+    console.error("  npm run apply-fred-migration  (requires DATABASE_URL or SUPABASE_DB_PASSWORD)");
     console.error("  Or run supabase/migrations/20260702140000_create_fred_tables.sql in the SQL editor.");
     process.exit(1);
   }
@@ -231,19 +259,8 @@ async function fetchFredJson<T>(
     }
 
     try {
-      const response = await fetch(url);
-
-      if (response.status === 429) {
-        console.warn("FRED rate limit (429) — waiting 30s before retry");
-        await sleep(30_000);
-        continue;
-      }
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status} ${response.statusText}`);
-      }
-
-      return (await response.json()) as T;
+      const body = await httpGet(url.toString());
+      return JSON.parse(body) as T;
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
     }
@@ -253,8 +270,8 @@ async function fetchFredJson<T>(
 }
 
 async function fetchSeriesMetadata(
-  seriesId: string,
-  fredApiKey: string,
+  target: SeriesTarget,
+  fredApiKey: string | null,
 ): Promise<{
   title: string;
   frequency: string | null;
@@ -262,9 +279,19 @@ async function fetchSeriesMetadata(
   seasonal_adjustment: string | null;
   last_updated: string | null;
 }> {
+  if (!fredApiKey) {
+    return {
+      title: target.description,
+      frequency: null,
+      units: null,
+      seasonal_adjustment: null,
+      last_updated: null,
+    };
+  }
+
   const data = await fetchFredJson<FredSeriesResponse>(
     "/series",
-    { series_id: seriesId },
+    { series_id: target.id },
     fredApiKey,
     3,
     [2000, 2000, 2000],
@@ -284,10 +311,42 @@ async function fetchSeriesMetadata(
   };
 }
 
+async function fetchObservationsFromCsv(
+  seriesId: string,
+): Promise<Array<{ observation_date: string; value: number }>> {
+  const text = await httpGet(`${FRED_CSV_BASE}?id=${encodeURIComponent(seriesId)}`);
+  const lines = text.trim().split("\n");
+  if (lines.length < 2) {
+    throw new Error("FRED CSV returned no observations");
+  }
+
+  const rows: Array<{ observation_date: string; value: number }> = [];
+
+  for (const line of lines.slice(1)) {
+    const [date, rawValue] = line.split(",");
+    if (!date || !rawValue || rawValue === ".") continue;
+    if (date < OBSERVATION_START) continue;
+
+    const parsed = Number.parseFloat(rawValue);
+    if (!Number.isFinite(parsed)) {
+      console.warn(`  Skipping unparseable CSV value for ${seriesId} on ${date}: ${rawValue}`);
+      continue;
+    }
+
+    rows.push({ observation_date: date, value: parsed });
+  }
+
+  return rows;
+}
+
 async function fetchObservations(
   seriesId: string,
-  fredApiKey: string,
+  fredApiKey: string | null,
 ): Promise<Array<{ observation_date: string; value: number }>> {
+  if (!fredApiKey) {
+    return fetchObservationsFromCsv(seriesId);
+  }
+
   const data = await fetchFredJson<FredObservationsResponse>(
     "/series/observations",
     {
@@ -368,13 +427,13 @@ async function upsertObservations(
 async function ingestSeries(
   supabase: SupabaseClient,
   target: SeriesTarget,
-  fredApiKey: string,
+  fredApiKey: string | null,
   state: IngestionState,
 ): Promise<{ observationCount: number }> {
   state.in_progress = target.id;
   await persistState(supabase, state);
 
-  const metadata = await fetchSeriesMetadata(target.id, fredApiKey);
+  const metadata = await fetchSeriesMetadata(target, fredApiKey);
   const observations = await fetchObservations(target.id, fredApiKey);
 
   await upsertSeries(supabase, target, metadata);
@@ -391,7 +450,7 @@ async function ingestSeries(
 async function ingestSeriesSafe(
   supabase: SupabaseClient,
   target: SeriesTarget,
-  fredApiKey: string,
+  fredApiKey: string | null,
   state: IngestionState,
 ): Promise<{ ok: true; observationCount: number } | { ok: false; reason: string }> {
   try {
@@ -459,7 +518,7 @@ function printProgress(
 
 async function runIngestionLoop(
   supabase: SupabaseClient,
-  fredApiKey: string,
+  fredApiKey: string | null,
   state: IngestionState,
   seriesIds: string[],
   permanentFailures: Map<string, string>,
@@ -491,7 +550,7 @@ async function main(): Promise<void> {
   const supabase = createSupabaseClient(supabaseUrl, supabaseKey);
 
   await verifyFredApi(fredApiKey);
-  console.log("  FRED API: OK");
+  console.log(`  FRED source: ${fredApiKey ? "API" : "public CSV"}`);
 
   console.log("Step 2 — Verifying Supabase schema...\n");
   await ensureFredSchema(supabase);
