@@ -1,11 +1,42 @@
 "use client";
 
-import { CHART_HEIGHT, CHART_WIDTH, PADDING, TIME_RANGE_OPTIONS } from "./constants";
+import {
+  Bar,
+  EvilBarChart,
+  Grid,
+  Legend,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "@/components/evilcharts/charts/bar-chart";
+import {
+  ActiveDot as LineActiveDot,
+  Dot,
+  EvilLineChart,
+  Grid as LineGrid,
+  Legend as LineLegend,
+  Line,
+  Tooltip as LineTooltip,
+  XAxis as LineXAxis,
+  YAxis as LineYAxis,
+} from "@/components/evilcharts/charts/line-chart";
+import { TIME_RANGE_OPTIONS } from "./constants";
 import { useInsiderTransactionsChart } from "./hooks/use-insider-transactions-chart";
 import type { InsiderTransactionsChartProps } from "./types";
-import { formatTableDate } from "./utils/format-dates";
+import { formatAxisDateForRange } from "./utils/format-dates";
 import { formatShares, formatSharesFull } from "./utils/format-shares";
-import { linePath } from "./utils/line-path";
+import { type ChartConfig } from "@/components/evilcharts/ui/chart";
+
+const activityChartConfig = {
+  buys: {
+    label: "Shares acquired",
+    colors: { light: ["#047857"] },
+  },
+  sells: {
+    label: "Shares disposed",
+    colors: { light: ["#dc2626"] },
+  },
+} satisfies ChartConfig;
 
 export function InsiderTransactionsChart({ transactions }: InsiderTransactionsChartProps) {
   const {
@@ -14,21 +45,13 @@ export function InsiderTransactionsChart({ transactions }: InsiderTransactionsCh
     setChartMode,
     timeRange,
     setTimeRange,
-    hover,
-    svgRef,
     selectedOwners,
     effectiveSelectedOwners,
     holdingsSecurity,
-    lines,
-    yTicks,
-    xLabels,
-    yMin,
-    yMax,
-    plotWidth,
-    plotHeight,
-    handleChartMouseMove,
-    handleChartMouseLeave,
-    activeDots,
+    activityData,
+    holdingsData,
+    holdingsSeries,
+    holdingsConfig,
     totalBuys,
     totalSells,
     toggleOwner,
@@ -124,150 +147,52 @@ export function InsiderTransactionsChart({ transactions }: InsiderTransactionsCh
         })}
       </div>
 
-      <div className="relative mt-4 overflow-x-auto">
+      <div className="mt-4">
         {hasChartData ? (
-          <>
-            {hover ? (
-              <div
-                className="pointer-events-none absolute z-10 min-w-[10rem] rounded-lg border border-zinc-200 bg-white px-3 py-2 shadow-md"
-                style={{
-                  left: `${(hover.x / CHART_WIDTH) * 100}%`,
-                  top: 8,
-                  transform: "translateX(-50%)",
-                }}
-              >
-                <p className="text-xs font-medium text-zinc-500">{formatTableDate(hover.date)}</p>
-                <ul className="mt-1.5 space-y-1">
-                  {hover.entries.map((entry) => (
-                    <li
-                      key={entry.label}
-                      className="flex items-center justify-between gap-4 text-xs"
-                    >
-                      <span className="flex items-center gap-1.5 text-zinc-700">
-                        <span
-                          className="inline-block h-2 w-2 rounded-full"
-                          style={{ backgroundColor: entry.color }}
-                        />
-                        <span className="max-w-[9rem] truncate">{entry.label}</span>
-                      </span>
-                      <span className="font-mono font-medium text-zinc-900">
-                        {formatSharesFull(entry.value)}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
-
-            <svg
-              ref={svgRef}
-              viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}
-              className="w-full min-w-[560px]"
-              role="img"
-              aria-label={
-                chartMode === "activity"
-                  ? "Insider buy and sell volume over time"
-                  : "Insider holdings over time by reporting owner"
-              }
+          chartMode === "activity" ? (
+            <EvilBarChart
+              data={activityData}
+              config={activityChartConfig}
+              animationType="left-to-right"
+              className="h-[280px] w-full"
             >
-              {yTicks.map((tick) => {
-                const y =
-                  PADDING.top + plotHeight - ((tick - yMin) / (yMax - yMin)) * plotHeight;
-
-                return (
-                  <g key={tick}>
-                    <line
-                      x1={PADDING.left}
-                      x2={CHART_WIDTH - PADDING.right}
-                      y1={y}
-                      y2={y}
-                      stroke="#e4e4e7"
-                      strokeDasharray="4 4"
-                    />
-                    <text
-                      x={PADDING.left - 10}
-                      y={y + 4}
-                      textAnchor="end"
-                      className="fill-zinc-500 text-[11px]"
-                    >
-                      {formatShares(tick)}
-                    </text>
-                  </g>
-                );
-              })}
-
-              {lines.map((line) => (
-                <g key={line.id}>
-                  <path
-                    d={linePath(line.chartPoints)}
-                    fill="none"
-                    stroke={line.color}
-                    strokeWidth="2.5"
-                    strokeLinejoin="round"
-                    strokeLinecap="round"
-                  />
-                  {line.chartPoints.map((point) => (
-                    <circle
-                      key={`${line.id}-${point.date}-${point.value}`}
-                      cx={point.x}
-                      cy={point.y}
-                      r={3.5}
-                      fill={line.color}
-                      opacity={hover ? 0.35 : 1}
-                    />
-                  ))}
-                </g>
-              ))}
-
-              {hover ? (
-                <>
-                  <line
-                    x1={hover.x}
-                    x2={hover.x}
-                    y1={PADDING.top}
-                    y2={CHART_HEIGHT - PADDING.bottom}
-                    stroke="#71717a"
-                    strokeWidth="1.5"
-                    strokeDasharray="5 4"
-                  />
-                  {activeDots.map((dot) => (
-                    <circle
-                      key={dot.lineId}
-                      cx={dot.x}
-                      cy={dot.y}
-                      r={5.5}
-                      fill={dot.color}
-                      stroke="#ffffff"
-                      strokeWidth="2"
-                    />
-                  ))}
-                </>
-              ) : null}
-
-              {xLabels.map((label) => (
-                <text
-                  key={`${label.x}-${label.label}`}
-                  x={label.x}
-                  y={CHART_HEIGHT - 14}
-                  textAnchor="middle"
-                  className="fill-zinc-500 text-[11px]"
-                >
-                  {label.label}
-                </text>
-              ))}
-
-              <rect
-                x={PADDING.left}
-                y={PADDING.top}
-                width={plotWidth}
-                height={plotHeight}
-                fill="transparent"
-                className="cursor-crosshair"
-                onMouseMove={handleChartMouseMove}
-                onMouseLeave={handleChartMouseLeave}
+              <Grid />
+              <XAxis
+                dataKey="date"
+                tickFormatter={(value) => formatAxisDateForRange(String(value), timeRange)}
+                minTickGap={48}
               />
-            </svg>
-          </>
+              <YAxis tickFormatter={(value) => formatShares(Number(value))} width={72} />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="buys" variant="gradient" />
+              <Bar dataKey="sells" variant="gradient" />
+            </EvilBarChart>
+          ) : (
+            <EvilLineChart
+              data={holdingsData}
+              config={holdingsConfig as ChartConfig}
+              curveType="monotone"
+              animationType="left-to-right"
+              className="h-[280px] w-full"
+            >
+              <LineGrid />
+              <LineXAxis
+                dataKey="date"
+                tickFormatter={(value) => formatAxisDateForRange(String(value), timeRange)}
+                minTickGap={48}
+              />
+              <LineYAxis tickFormatter={(value) => formatShares(Number(value))} width={72} />
+              <LineTooltip />
+              <LineLegend />
+              {holdingsSeries.map((line) => (
+                <Line key={line.key} dataKey={line.key}>
+                  <Dot variant="default" />
+                  <LineActiveDot variant="colored-border" />
+                </Line>
+              ))}
+            </EvilLineChart>
+          )
         ) : (
           <p className="py-8 text-center text-sm text-zinc-500">
             No chart data for the selected owners
@@ -294,10 +219,10 @@ export function InsiderTransactionsChart({ transactions }: InsiderTransactionsCh
         ))}
       </div>
 
-      {hasChartData ? (
+      {hasChartData && chartMode === "holdings" ? (
         <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2">
-          {lines.map((line) => (
-            <div key={line.id} className="flex items-center gap-2 text-xs text-zinc-600">
+          {holdingsSeries.map((line) => (
+            <div key={line.key} className="flex items-center gap-2 text-xs text-zinc-600">
               <span
                 className="inline-block h-0.5 w-5 rounded-full"
                 style={{ backgroundColor: line.color }}

@@ -22,6 +22,13 @@ export const folderStructureConfig = createFolderStructure({
       children: [
         { name: "{kebab-case}.tsx" },
         { name: "ui", children: [{ name: "{kebab-case}.tsx" }] },
+        {
+          name: "evilcharts",
+          children: [
+            { name: "ui", children: [{ name: "{kebab-case}.tsx" }] },
+            { name: "charts", children: [{ name: "{kebab-case}.tsx" }] },
+          ],
+        },
       ],
     },
 

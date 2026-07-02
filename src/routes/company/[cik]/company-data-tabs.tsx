@@ -70,6 +70,15 @@ function tabFromHash(hash: string): TabValue | null {
   return HASH_TO_TAB[hash] ?? null;
 }
 
+function initialTabFromHash(
+  insider: CompanyDataTabsProps["insider"],
+): TabValue {
+  if (typeof window === "undefined") return "analysis";
+  const tab = tabFromHash(window.location.hash);
+  if (tab === "insider" && !insider) return "analysis";
+  return tab ?? "analysis";
+}
+
 export function CompanyDataTabs({
   cik,
   companyName,
@@ -82,7 +91,16 @@ export function CompanyDataTabs({
   outstandingShares,
   financialTrends,
 }: CompanyDataTabsProps) {
-  const [activeTab, setActiveTab] = useState<TabValue>("analysis");
+  const [activeTab, setActiveTab] = useState<TabValue>(() =>
+    initialTabFromHash(insider),
+  );
+  const [prevInsider, setPrevInsider] = useState(insider);
+  if (insider !== prevInsider) {
+    setPrevInsider(insider);
+    if (activeTab === "insider" && !insider) {
+      setActiveTab("analysis");
+    }
+  }
 
   useEffect(() => {
     function syncFromHash() {
@@ -91,7 +109,6 @@ export function CompanyDataTabs({
       if (tab) setActiveTab(tab);
     }
 
-    syncFromHash();
     window.addEventListener("hashchange", syncFromHash);
     return () => window.removeEventListener("hashchange", syncFromHash);
   }, [insider]);
@@ -255,7 +272,13 @@ export function CompanyDataTabs({
       ) : null}
 
       <TabsContent value="timeline" className="mt-0">
-        <FilingsTimeline cik={cik} timeline={timeline} fiscalYearEnd={fiscalYearEnd} />
+        <FilingsTimeline
+          cik={cik}
+          timeline={timeline}
+          fiscalYearEnd={fiscalYearEnd}
+          ticker={ticker}
+          enabled={activeTab === "timeline"}
+        />
       </TabsContent>
 
       <TabsContent value="documents" className="mt-0">

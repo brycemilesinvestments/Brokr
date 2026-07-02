@@ -1,4 +1,5 @@
 import type { ProseSections } from "@/lib/edgar/discovery";
+import { emptyProseSections } from "@/lib/edgar/discovery";
 import { checkDiffCache } from "@/lib/filing-diff/check_diff_cache";
 import { computeNumericDiff } from "@/lib/filing-diff/numeric_diff";
 import { pairFilings } from "@/lib/filing-diff/pair_filings";
@@ -17,15 +18,8 @@ import type {
 } from "@/lib/filing-diff/types";
 import { writeDiffCache } from "@/lib/filing-diff/write_cache";
 
-function emptyProseSections(): ProseSections {
-  return {
-    mda: null,
-    risk_factors: null,
-    revenue_concentration: null,
-    subsequent_events: null,
-    form_8k_body: null,
-    exhibit_99_1: null,
-  };
+function emptyProseSectionsForDiff(): ProseSections {
+  return emptyProseSections();
 }
 
 const DEFAULT_NO_CHANGE_PROSE: ProseDiffResult = {
@@ -101,9 +95,9 @@ export async function runFilingDiffRouter(input: FilingDiffRouterInput): Promise
         const pair = state.pair;
         if (!pair) break;
         const currentProse =
-          input.proseByAccession[pair.current.accessionNumber] ?? emptyProseSections();
+          input.proseByAccession[pair.current.accessionNumber] ?? emptyProseSectionsForDiff();
         const previousProse =
-          input.proseByAccession[pair.previous.accessionNumber] ?? emptyProseSections();
+          input.proseByAccession[pair.previous.accessionNumber] ?? emptyProseSectionsForDiff();
         state.structural = computeStructuralDiff(
           buildStructuralSnapshot({
             proseSections: currentProse,
@@ -134,9 +128,9 @@ export async function runFilingDiffRouter(input: FilingDiffRouterInput): Promise
         const pair = state.pair;
         if (!pair) break;
         const currentProse =
-          input.proseByAccession[pair.current.accessionNumber] ?? emptyProseSections();
+          input.proseByAccession[pair.current.accessionNumber] ?? emptyProseSectionsForDiff();
         const previousProse =
-          input.proseByAccession[pair.previous.accessionNumber] ?? emptyProseSections();
+          input.proseByAccession[pair.previous.accessionNumber] ?? emptyProseSectionsForDiff();
         if (!input.aiDiff) {
           state.prose = { ...DEFAULT_NO_CHANGE_PROSE, refusal: true };
           break;

@@ -6,8 +6,8 @@ import {
   filterChartPoints,
   MetricLineChart,
 } from "@/routes/company/[cik]/features/financial-trends/views/trends-view/financial-trends-panel/components/metric-line-chart";
-import { buildMetricChartGeometry } from "@/routes/company/[cik]/features/financial-trends/views/trends-view/financial-trends-panel/lib/build-metric-chart-geometry";
-import type { PlottedPoint } from "@/routes/company/[cik]/features/financial-trends/views/trends-view/financial-trends-panel/lib/build-metric-chart-geometry";
+import { buildMetricChartData } from "@/routes/company/[cik]/features/financial-trends/views/trends-view/financial-trends-panel/lib/build-metric-chart-geometry";
+import type { MetricChartRow } from "@/routes/company/[cik]/features/financial-trends/views/trends-view/financial-trends-panel/lib/build-metric-chart-geometry";
 import { formatMetricValue } from "@/routes/company/[cik]/features/financial-trends/views/trends-view/financial-trends-panel/utils/format-metric";
 import { humanizeConcept } from "@/routes/company/[cik]/features/financial-trends/utils/humanize-concept";
 
@@ -58,19 +58,16 @@ export function ChartMetricExplorer({
       : metrics[0] ?? defaultMetric ?? "",
   );
   const [frequency, setFrequency] = useState<FrequencyFilter>("quarterly");
-  const [activePoint, setActivePoint] = useState<PlottedPoint | null>(null);
+  const [activePoint, setActivePoint] = useState<MetricChartRow | null>(null);
 
   const filteredPoints = useMemo(
     () => filterChartPoints(chart[selectedMetric], frequency),
     [chart, selectedMetric, frequency],
   );
 
-  const { chartPoints, yTicks, xLabels, yMin, yMax } = useMemo(
-    () => buildMetricChartGeometry(filteredPoints),
-    [filteredPoints],
-  );
+  const chartData = useMemo(() => buildMetricChartData(filteredPoints), [filteredPoints]);
 
-  const displayPoint = activePoint ?? chartPoints[chartPoints.length - 1] ?? null;
+  const displayPoint = activePoint ?? chartData[chartData.length - 1] ?? null;
 
   if (metrics.length === 0) {
     return (
@@ -140,10 +137,10 @@ export function ChartMetricExplorer({
           <div className="text-sm">
             <p className="text-xs uppercase tracking-wide text-zinc-500">Selected</p>
             <p className="mt-1 font-mono text-xl font-semibold text-zinc-900">
-              {formatMetricValue(selectedMetric, displayPoint.y)}
+              {formatMetricValue(selectedMetric, displayPoint.value)}
             </p>
             <p className="mt-0.5 text-zinc-500">
-              {displayPoint.x} · {displayPoint.frequency}
+              {displayPoint.date} · {displayPoint.frequency}
               {displayPoint.delta_yoy !== undefined
                 ? ` · YoY ${(displayPoint.delta_yoy * 100).toFixed(1)}%`
                 : ""}
@@ -155,11 +152,7 @@ export function ChartMetricExplorer({
       <div className="mt-4">
         <MetricLineChart
           metric={selectedMetric}
-          chartPoints={chartPoints}
-          yTicks={yTicks}
-          xLabels={xLabels}
-          yMin={yMin}
-          yMax={yMax}
+          chartData={chartData}
           onActivePointChange={setActivePoint}
         />
       </div>

@@ -12,12 +12,14 @@ export async function fetchFilingDiscovery(
   filing: FilingDetailPage,
 ): Promise<FilingDiscoveryOutput> {
   const edgar = createEdgarClient({ supabaseClient: createAdminClient() ?? undefined });
-  const companyFacts = await edgar.getCompanyFacts(filing.cik);
-  const xbrl = await edgar.fetchFilingXbrl(
-    filing.cik,
-    filing.accessionNumber,
-    filing.documents,
-  );
+  const [companyFacts, xbrl] = await Promise.all([
+    edgar.getCompanyFacts(filing.cik),
+    edgar.fetchFilingXbrl(
+      filing.cik,
+      filing.accessionNumber,
+      filing.documents,
+    ),
+  ]);
 
   const ixbrlFacts = xbrl.documents.flatMap((doc) => doc.facts);
   const cache = createSignalCache({ supabaseClient: createAdminClient() ?? undefined });

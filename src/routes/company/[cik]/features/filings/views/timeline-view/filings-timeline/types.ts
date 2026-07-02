@@ -6,6 +6,8 @@ export type FilingsTimelineProps = {
   cik: string;
   timeline: TimelineFiling[];
   fiscalYearEnd?: string;
+  ticker?: string;
+  enabled?: boolean;
 };
 
 export type TimelineEntryProps = {

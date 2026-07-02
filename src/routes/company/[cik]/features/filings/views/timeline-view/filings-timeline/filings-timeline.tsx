@@ -2,12 +2,19 @@
 
 import { CORE_FORM_CATEGORIES, CORE_FORM_META } from "@/lib/edgar/core-forms";
 import { FiscalYearSection } from "./components/fiscal-year-section";
+import { DocumentTimelineChart } from "./document-timeline-chart";
 import { TimelineEntry } from "./components/timeline-entry";
 import { CATEGORY_STYLES } from "./constants";
 import { useFilingsTimeline } from "./hooks/use-filings-timeline";
 import type { FilingsTimelineProps } from "./types";
 
-export function FilingsTimeline({ cik, timeline, fiscalYearEnd }: FilingsTimelineProps) {
+export function FilingsTimeline({
+  cik,
+  timeline,
+  fiscalYearEnd,
+  ticker,
+  enabled = true,
+}: FilingsTimelineProps) {
   const {
     viewMode,
     setViewMode,
@@ -27,10 +34,10 @@ export function FilingsTimeline({ cik, timeline, fiscalYearEnd }: FilingsTimelin
       <div className="border-b border-zinc-100 px-6 py-4">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-zinc-900">Core Four timeline</h2>
+            <h2 className="text-lg font-semibold text-zinc-900">Document timeline</h2>
             <p className="mt-1 text-sm text-zinc-500">
-              {filtered.length} of {timeline.length} primary filings — ordered by period and event
-              date
+              {filtered.length} of {timeline.length} primary filings — stock price with 8-K markers
+              above, filing list below
               {fiscalYearEnd ? ` (FY end ${fiscalYearEnd})` : ""}
             </p>
           </div>
@@ -86,6 +93,13 @@ export function FilingsTimeline({ cik, timeline, fiscalYearEnd }: FilingsTimelin
           })}
         </div>
       </div>
+
+      <DocumentTimelineChart
+        cik={cik}
+        timeline={timeline}
+        ticker={ticker}
+        enabled={enabled}
+      />
 
       <div className="px-6 py-6">
         {filtered.length === 0 ? (

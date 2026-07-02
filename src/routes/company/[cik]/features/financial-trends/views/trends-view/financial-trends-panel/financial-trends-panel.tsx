@@ -1,13 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { PlottedPoint } from "./lib/build-metric-chart-geometry";
+import type { MetricChartRow } from "./lib/build-metric-chart-geometry";
 import type { FinancialTrendsPanelProps } from "@/routes/company/[cik]/features/financial-trends/types";
 import { AnomaliesTimeline, ContractStatus } from "./components/contract-status";
 import { MetricDataTable } from "./components/metric-data-table";
 import { filterChartPoints, MetricLineChart } from "./components/metric-line-chart";
 import { DEFAULT_METRIC, METRIC_GROUPS } from "./constants";
-import { buildMetricChartGeometry } from "./lib/build-metric-chart-geometry";
+import { buildMetricChartData } from "./lib/build-metric-chart-geometry";
 import { formatMetricValue } from "./utils/format-metric";
 import { humanizeConcept } from "@/routes/company/[cik]/features/financial-trends/utils/humanize-concept";
 
@@ -28,19 +28,16 @@ export function FinancialTrendsPanel({ data }: FinancialTrendsPanelProps) {
     metrics.includes(DEFAULT_METRIC) ? DEFAULT_METRIC : metrics[0] ?? DEFAULT_METRIC,
   );
   const [frequency, setFrequency] = useState<FrequencyFilter>("quarterly");
-  const [activePoint, setActivePoint] = useState<PlottedPoint | null>(null);
+  const [activePoint, setActivePoint] = useState<MetricChartRow | null>(null);
 
   const filteredPoints = useMemo(
     () => filterChartPoints(data.chart[selectedMetric], frequency),
     [data.chart, selectedMetric, frequency],
   );
 
-  const { chartPoints, yTicks, xLabels, yMin, yMax } = useMemo(
-    () => buildMetricChartGeometry(filteredPoints),
-    [filteredPoints],
-  );
+  const chartData = useMemo(() => buildMetricChartData(filteredPoints), [filteredPoints]);
 
-  const displayPoint = activePoint ?? chartPoints[chartPoints.length - 1];
+  const displayPoint = activePoint ?? chartData[chartData.length - 1];
   const reportedCount = data.seriesSummary.filter((s) => s.status === "reported").length;
 
   return (
@@ -114,10 +111,10 @@ export function FinancialTrendsPanel({ data }: FinancialTrendsPanelProps) {
             <div className="text-sm">
               <p className="text-xs uppercase tracking-wide text-zinc-500">Selected</p>
               <p className="mt-1 font-mono text-xl font-semibold text-zinc-900">
-                {formatMetricValue(selectedMetric, displayPoint.y)}
+                {formatMetricValue(selectedMetric, displayPoint.value)}
               </p>
               <p className="mt-0.5 text-zinc-500">
-                {displayPoint.x} · {displayPoint.frequency}
+                {displayPoint.date} · {displayPoint.frequency}
                 {displayPoint.delta_yoy !== undefined
                   ? ` · YoY ${(displayPoint.delta_yoy * 100).toFixed(1)}%`
                   : ""}
@@ -128,11 +125,7 @@ export function FinancialTrendsPanel({ data }: FinancialTrendsPanelProps) {
 
         <MetricLineChart
           metric={selectedMetric}
-          chartPoints={chartPoints}
-          yTicks={yTicks}
-          xLabels={xLabels}
-          yMin={yMin}
-          yMax={yMax}
+          chartData={chartData}
           onActivePointChange={setActivePoint}
         />
 

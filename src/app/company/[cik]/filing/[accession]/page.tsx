@@ -13,21 +13,13 @@ export default async function FilingPage({ params }: PageProps) {
   const { cik, accession } = await params;
   const accessionNumber = decodeURIComponent(accession);
 
-  let filing;
-  try {
-    filing = await fetchFilingDetail(cik, accessionNumber);
-  } catch {
-    notFound();
-  }
+  const filing = await fetchFilingDetail(cik, accessionNumber).catch(() => null);
+  if (!filing) notFound();
 
-  const companyMeta = await resolveCompanyByCik(cik);
-
-  let discovery;
-  try {
-    discovery = await fetchFilingDiscovery(filing);
-  } catch {
-    discovery = undefined;
-  }
+  const [companyMeta, discovery] = await Promise.all([
+    resolveCompanyByCik(cik),
+    fetchFilingDiscovery(filing).catch(() => undefined),
+  ]);
 
   return (
     <div className="min-h-full bg-zinc-50">

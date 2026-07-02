@@ -14,6 +14,8 @@ export type FilingChunk = {
   tokenCount: number;
   embedding?: number[];
   documentId?: number;
+  /** K3 / K12 — sourced from filing form type. */
+  audited?: boolean;
 };
 
 export type StructuredMetric = {
@@ -27,6 +29,8 @@ export type StructuredMetric = {
   value: number;
   unit?: string;
   accession?: string;
+  /** K3 — true when sourced from audited 10-K filing. */
+  audited?: boolean;
 };
 
 export type IngestStatus = {

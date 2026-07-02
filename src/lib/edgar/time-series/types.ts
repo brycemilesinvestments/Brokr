@@ -10,6 +10,8 @@ export type RawTimeSeriesPoint = {
   accn: string;
   unit: string;
   start?: string;
+  /** K3 — true for 10-K sourced points, false for 10-Q. */
+  audited?: boolean;
 };
 
 export type PeriodGap = {

@@ -1,5 +1,6 @@
 import type { XbrlFact } from "@/lib/edgar/xbrl/types";
 import { PROSE_TEXT_BLOCK_CONCEPTS } from "@/lib/edgar/discovery/constants";
+import { emptyProseSections } from "@/lib/edgar/discovery/empty-prose-sections";
 import type { ProseSection, ProseSectionKey, ProseSections } from "@/lib/edgar/discovery/types";
 
 function stripHtml(text: string): string {
@@ -50,11 +51,10 @@ function locateSection(
 /** D5 — Locate qualitative prose sections from XBRL text-block tags. */
 export function locateProseSections(ixbrlFacts: XbrlFact[]): ProseSections {
   return {
+    ...emptyProseSections(),
     mda: locateSection(ixbrlFacts, "mda"),
     risk_factors: locateSection(ixbrlFacts, "risk_factors"),
     revenue_concentration: locateSection(ixbrlFacts, "revenue_concentration"),
     subsequent_events: locateSection(ixbrlFacts, "subsequent_events"),
-    form_8k_body: null,
-    exhibit_99_1: null,
   };
 }

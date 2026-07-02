@@ -77,12 +77,16 @@ export function chunkSections(input: {
   accession: string;
   periodEnd: string | null;
   proseSections: ProseSections;
+  audited?: boolean;
 }): FilingChunk[] {
   const sections = Object.values(input.proseSections).filter(
     (s): s is ProseSection => s !== null && s.text.length > 0,
   );
 
   return sections.flatMap((section) =>
-    splitSection(section, input.companyId, input.accession, input.periodEnd),
+    splitSection(section, input.companyId, input.accession, input.periodEnd).map((chunk) => ({
+      ...chunk,
+      audited: input.audited,
+    })),
   );
 }

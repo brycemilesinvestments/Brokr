@@ -16,14 +16,12 @@ type PageProps = {
 export default async function CompanyPage({ params }: PageProps) {
   const { cik } = await params;
 
-  let page;
-  try {
-    page = await fetchCompanyFilings(cik);
-  } catch {
-    notFound();
-  }
+  const [page, companyMeta] = await Promise.all([
+    fetchCompanyFilings(cik).catch(() => null),
+    resolveCompanyByCik(cik),
+  ]);
+  if (!page) notFound();
 
-  const companyMeta = await resolveCompanyByCik(cik);
   const [timeline, insider, outstandingShares, financialTrends] = await Promise.all([
     buildCompanyTimeline(cik, page.filings, page.info.fiscalYearEnd),
     fetchInsiderTransactions(cik).catch(() => null),

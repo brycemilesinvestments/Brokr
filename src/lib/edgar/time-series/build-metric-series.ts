@@ -1,6 +1,7 @@
 import type { CompanyFactsResponse } from "@/lib/edgar/types";
 import { ALL_WHITELISTED_CONCEPTS } from "@/lib/edgar/time-series/constants";
 import { classifyFrequency } from "@/lib/edgar/time-series/classify-frequency";
+import { tagPointAuditStatus } from "@/lib/edgar/time-series/audit-status";
 import { extractConceptPoints } from "@/lib/edgar/time-series/extract-points";
 import { dedupeSeries, detectGaps } from "@/lib/edgar/time-series/process-series";
 import type { MetricSeries, MetricSeriesBundle, RawTimeSeriesPoint } from "@/lib/edgar/time-series/types";
@@ -57,8 +58,8 @@ function buildMetricSeries(
     concept,
     status: "reported",
     unit,
-    annual: annual.map((p) => ({ ...p })),
-    quarterly: quarterly.map((p) => ({ ...p })),
+    annual: annual.map((p) => tagPointAuditStatus(p)),
+    quarterly: quarterly.map((p) => tagPointAuditStatus(p)),
     gaps,
   };
 }

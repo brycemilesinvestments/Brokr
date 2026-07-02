@@ -1,22 +1,21 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import type { InsiderTransaction } from "@/routes/company/[cik]/features/insider-transactions/types";
-import { CHART_HEIGHT, CHART_WIDTH, PADDING } from "../constants";
 import { buildActivitySeries } from "../lib/build-activity-series";
-import { buildChartGeometry } from "../lib/build-chart-geometry";
+import {
+  buildActivityBarData,
+  buildHoldingsChartConfig,
+  buildHoldingsLineData,
+} from "../lib/build-recharts-data";
 import { buildHoldingsSeries } from "../lib/build-holdings-series";
 import { filterByTimeRange, latestTransactionTime } from "../lib/filter-by-time-range";
-import { buildHoverState } from "../lib/hover-state";
-import type { ChartMode, HoverState, SnapPoint, TimeRange } from "../types";
+import type { ChartMode, TimeRange } from "../types";
 import { primarySecurityName } from "../utils/primary-security-name";
-import { findLineValueAtSnap, findNearestSnap, getSvgX } from "../utils/svg-coords";
 import { uniqueOwners } from "../utils/unique-owners";
 
 export function useInsiderTransactionsChart(transactions: InsiderTransaction[]) {
   const owners = useMemo(() => uniqueOwners(transactions), [transactions]);
   const [chartMode, setChartMode] = useState<ChartMode>("activity");
   const [timeRange, setTimeRange] = useState<TimeRange>("3M");
-  const [hover, setHover] = useState<HoverState | null>(null);
-  const svgRef = useRef<SVGSVGElement>(null);
   const [selectedOwners, setSelectedOwners] = useState<Set<string>>(() => new Set(owners));
 
   const effectiveSelectedOwners = useMemo(() => {
@@ -25,7 +24,7 @@ export function useInsiderTransactionsChart(transactions: InsiderTransaction[]) 
   }, [owners, selectedOwners]);
 
   const ownerFilteredTransactions = useMemo(
-    () => transactions.filter((t) => effectiveSelectedOwners.includes(t.reportingOwner)),
+    () => transactions.filter((transaction) => effectiveSelectedOwners.includes(transaction.reportingOwner)),
     [transactions, effectiveSelectedOwners],
   );
 
@@ -55,64 +54,34 @@ export function useInsiderTransactionsChart(transactions: InsiderTransaction[]) 
     );
   }, [chartMode, rangedTransactions, timeRange, effectiveSelectedOwners, holdingsSecurity]);
 
-  const geometry = useMemo(() => buildChartGeometry(series, timeRange), [series, timeRange]);
-  const { lines, yTicks, xLabels, yMin, yMax, snapPoints } = geometry;
-
-  const plotWidth = CHART_WIDTH - PADDING.left - PADDING.right;
-  const plotHeight = CHART_HEIGHT - PADDING.top - PADDING.bottom;
-
-  const handleChartMouseMove = useCallback(
-    (event: React.MouseEvent<SVGRectElement>) => {
-      const svg = svgRef.current;
-      if (!svg || snapPoints.length === 0) return;
-
-      const svgX = getSvgX(svg, event.clientX);
-      if (svgX < PADDING.left || svgX > CHART_WIDTH - PADDING.right) {
-        setHover(null);
-        return;
-      }
-
-      const snap = findNearestSnap(snapPoints, svgX);
-      if (!snap) return;
-
-      setHover(buildHoverState(geometry, snap));
-    },
-    [geometry, snapPoints],
+  const activityData = useMemo(
+    () => (chartMode === "activity" ? buildActivityBarData(series) : []),
+    [chartMode, series],
   );
 
-  const handleChartMouseLeave = useCallback(() => {
-    setHover(null);
-  }, []);
+  const holdings = useMemo(
+    () => (chartMode === "holdings" ? buildHoldingsLineData(series) : { data: [], series: [] }),
+    [chartMode, series],
+  );
 
-  const activeDots = useMemo(() => {
-    if (!hover) return [];
-
-    const snap: SnapPoint = { time: hover.time, date: hover.date, x: hover.x };
-
-    return lines.flatMap((line) => {
-      const match = findLineValueAtSnap(line, snap);
-      if (!match) return [];
-      return [{ lineId: line.id, color: line.color, x: hover.x, y: match.y }];
-    });
-  }, [hover, lines]);
-
-  useEffect(() => {
-    setHover(null);
-  }, [chartMode, timeRange, series]);
+  const holdingsConfig = useMemo(
+    () => buildHoldingsChartConfig(holdings.series),
+    [holdings.series],
+  );
 
   const totalBuys = useMemo(
     () =>
       rangedTransactions
-        .filter((t) => t.acquiredOrDisposed === "A")
-        .reduce((sum, t) => sum + (t.sharesTransacted ?? 0), 0),
+        .filter((transaction) => transaction.acquiredOrDisposed === "A")
+        .reduce((sum, transaction) => sum + (transaction.sharesTransacted ?? 0), 0),
     [rangedTransactions],
   );
 
   const totalSells = useMemo(
     () =>
       rangedTransactions
-        .filter((t) => t.acquiredOrDisposed === "D")
-        .reduce((sum, t) => sum + (t.sharesTransacted ?? 0), 0),
+        .filter((transaction) => transaction.acquiredOrDisposed === "D")
+        .reduce((sum, transaction) => sum + (transaction.sharesTransacted ?? 0), 0),
     [rangedTransactions],
   );
 
@@ -128,7 +97,10 @@ export function useInsiderTransactionsChart(transactions: InsiderTransaction[]) 
     });
   }, []);
 
-  const hasChartData = lines.some((line) => line.chartPoints.length > 0);
+  const hasChartData =
+    chartMode === "activity"
+      ? activityData.some((row) => row.buys > 0 || row.sells > 0)
+      : holdings.data.length > 0;
 
   return {
     owners,
@@ -136,21 +108,13 @@ export function useInsiderTransactionsChart(transactions: InsiderTransaction[]) 
     setChartMode,
     timeRange,
     setTimeRange,
-    hover,
-    svgRef,
     selectedOwners,
     effectiveSelectedOwners,
     holdingsSecurity,
-    lines,
-    yTicks,
-    xLabels,
-    yMin,
-    yMax,
-    plotWidth,
-    plotHeight,
-    handleChartMouseMove,
-    handleChartMouseLeave,
-    activeDots,
+    activityData,
+    holdingsData: holdings.data,
+    holdingsSeries: holdings.series,
+    holdingsConfig,
     totalBuys,
     totalSells,
     toggleOwner,

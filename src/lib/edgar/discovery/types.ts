@@ -63,11 +63,21 @@ export type ForwardSignals = {
   segmentGrowth: SegmentGrowthRate[];
 };
 
-export type ProseSectionKey =
-  | "mda"
+/** Nine canonical 10-K / 10-Q prose sections (K1). */
+export type Form10kSectionKey =
+  | "business"
   | "risk_factors"
+  | "mda"
+  | "financials"
+  | "notes"
+  | "auditor"
+  | "controls"
+  | "legal"
+  | "subsequent_events";
+
+export type ProseSectionKey =
+  | Form10kSectionKey
   | "revenue_concentration"
-  | "subsequent_events"
   | "form_8k_body"
   | "exhibit_99_1";
 

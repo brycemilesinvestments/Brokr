@@ -1,30 +1,39 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { SharesChartSvg } from "./components/shares-chart-svg";
+import { useMemo } from "react";
+import {
+  ActiveDot,
+  Area,
+  Dot,
+  EvilAreaChart,
+  Grid,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "@/components/evilcharts/charts/area-chart";
+import { type ChartConfig } from "@/components/evilcharts/ui/chart";
 import { SharesDataTable } from "./components/shares-data-table";
-import { buildChartGeometry } from "./lib/build-chart-geometry";
+import { buildSharesChartData } from "./lib/build-chart-data";
 import type { OutstandingSharesChartProps } from "./types";
-import { formatSharesFull, formatTableDate } from "./utils/format-shares";
+import { formatAxisDate, formatShares, formatSharesFull, formatTableDate } from "./utils/format-shares";
+
+const chartConfig = {
+  shares: {
+    label: "Shares outstanding",
+    colors: { light: ["#047857"] },
+  },
+} satisfies ChartConfig;
 
 export function OutstandingSharesChart({ points }: OutstandingSharesChartProps) {
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-  const sortedPoints = useMemo(
-    () => [...points].sort((a, b) => Date.parse(a.asOfDate) - Date.parse(b.asOfDate)),
-    [points],
-  );
-  const { chartPoints, yTicks, xLabels } = useMemo(
-    () => buildChartGeometry(sortedPoints),
-    [sortedPoints],
-  );
-  const latest = sortedPoints[sortedPoints.length - 1];
-  const earliest = sortedPoints[0];
+  const chartData = useMemo(() => buildSharesChartData(points), [points]);
+  const latest = chartData[chartData.length - 1];
+  const earliest = chartData[0];
   const changePct =
     earliest && latest && earliest.shares > 0
       ? ((latest.shares - earliest.shares) / earliest.shares) * 100
       : null;
 
-  if (sortedPoints.length === 0) {
+  if (chartData.length === 0) {
     return (
       <section className="rounded-2xl border border-zinc-200 bg-white shadow-sm">
         <div className="border-b border-zinc-100 px-6 py-5">
@@ -36,8 +45,6 @@ export function OutstandingSharesChart({ points }: OutstandingSharesChartProps) 
       </section>
     );
   }
-
-  const activePoint = hoveredIndex !== null ? chartPoints[hoveredIndex] : latest;
 
   return (
     <section className="rounded-2xl border border-zinc-200 bg-white shadow-sm">
@@ -54,10 +61,10 @@ export function OutstandingSharesChart({ points }: OutstandingSharesChartProps) 
             <div>
               <p className="text-xs uppercase tracking-wide text-zinc-500">Latest</p>
               <p className="mt-1 font-mono text-xl font-semibold text-zinc-900">
-                {formatSharesFull(activePoint.shares)}
+                {formatSharesFull(latest.shares)}
               </p>
               <p className="mt-0.5 text-zinc-500">
-                as of {formatTableDate(activePoint.asOfDate)} · {activePoint.form}
+                as of {formatTableDate(latest.asOfDate)} · {latest.form}
               </p>
             </div>
             {changePct !== null ? (
@@ -79,17 +86,29 @@ export function OutstandingSharesChart({ points }: OutstandingSharesChartProps) 
       </div>
 
       <div className="px-4 py-6 sm:px-6">
-        <SharesChartSvg
-          chartPoints={chartPoints}
-          yTicks={yTicks}
-          xLabels={xLabels}
-          sortedPoints={sortedPoints}
-          hoveredIndex={hoveredIndex}
-          onHoverIndexChange={setHoveredIndex}
-        />
+        <EvilAreaChart
+          data={chartData}
+          config={chartConfig}
+          curveType="monotone"
+          animationType="left-to-right"
+          className="h-[280px] w-full"
+        >
+          <Grid />
+          <XAxis
+            dataKey="date"
+            tickFormatter={(value) => formatAxisDate(String(value))}
+            minTickGap={48}
+          />
+          <YAxis tickFormatter={(value) => formatShares(Number(value))} width={72} />
+          <Tooltip />
+          <Area dataKey="shares" variant="gradient">
+            <Dot variant="default" />
+            <ActiveDot variant="colored-border" />
+          </Area>
+        </EvilAreaChart>
       </div>
 
-      <SharesDataTable points={sortedPoints} />
+      <SharesDataTable points={points} />
     </section>
   );
 }

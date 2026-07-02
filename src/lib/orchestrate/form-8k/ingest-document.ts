@@ -1,4 +1,5 @@
 import type { ProseSection, ProseSections } from "@/lib/edgar/discovery";
+import { emptyProseSections } from "@/lib/edgar/discovery";
 import { createEmbeddingClient } from "@/lib/rag/embed/client";
 import { chunkSections } from "@/lib/rag/ingest/chunk-sections";
 import {
@@ -41,10 +42,7 @@ function buildProseSections(form8kText: string, exhibit991Text: string | null): 
   }
 
   return {
-    mda: null,
-    risk_factors: null,
-    revenue_concentration: null,
-    subsequent_events: null,
+    ...emptyProseSections(),
     form_8k_body: sections.form_8k_body ?? null,
     exhibit_99_1: sections.exhibit_99_1 ?? null,
   };
