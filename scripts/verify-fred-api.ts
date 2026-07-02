@@ -8,8 +8,12 @@
  *   FRED_API_KEY — required
  */
 
+import { execFile } from "node:child_process";
 import { loadEnvFile } from "node:process";
+import { promisify } from "node:util";
 import { TARGET_SERIES } from "./fred-target-series";
+
+const execFileAsync = promisify(execFile);
 
 try {
   loadEnvFile(".env.local");
@@ -45,12 +49,13 @@ async function fetchFred<T>(
   url.searchParams.set("api_key", apiKey);
   url.searchParams.set("file_type", "json");
 
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status} ${response.statusText}`);
-  }
+  const { stdout } = await execFileAsync(
+    "curl",
+    ["-fsSL", "--max-time", "120", url.toString()],
+    { maxBuffer: 32 * 1024 * 1024 },
+  );
 
-  return (await response.json()) as T;
+  return JSON.parse(stdout) as T;
 }
 
 async function verifySeries(
