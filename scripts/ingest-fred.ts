@@ -15,6 +15,8 @@
 
 import { loadEnvFile } from "node:process";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { applyFredMigration, hasDatabaseCredentials } from "./apply-fred-migration";
+import { TARGET_SERIES, type SeriesTarget } from "./fred-target-series";
 
 try {
   loadEnvFile(".env.local");
@@ -28,110 +30,6 @@ const BATCH_SIZE = 500;
 const INTER_SERIES_DELAY_MS = 600;
 const RETRY_PASS_DELAY_MS = 10_000;
 const MAX_RETRY_PASSES = 2;
-
-type SeriesTarget = {
-  id: string;
-  category: string;
-  description: string;
-};
-
-const TARGET_SERIES: SeriesTarget[] = [
-  // Employment
-  { id: "UNRATE", category: "Employment", description: "Unemployment rate" },
-  { id: "PAYEMS", category: "Employment", description: "Nonfarm payrolls" },
-  { id: "ICSA", category: "Employment", description: "Initial jobless claims (weekly)" },
-  { id: "JTSJOL", category: "Employment", description: "Job openings" },
-  {
-    id: "LNS12300060",
-    category: "Employment",
-    description: "Prime age employment rate (25-54)",
-  },
-  // Inflation
-  { id: "CPIAUCSL", category: "Inflation", description: "CPI all items" },
-  { id: "CPILFESL", category: "Inflation", description: "Core CPI (less food and energy)" },
-  { id: "PCEPI", category: "Inflation", description: "PCE price index (Fed's preferred measure)" },
-  { id: "PCEPILFE", category: "Inflation", description: "Core PCE" },
-  { id: "T10YIE", category: "Inflation", description: "10-year breakeven inflation expectations" },
-  { id: "PPIFIS", category: "Inflation", description: "Producer Price Index final demand" },
-  // Interest Rates
-  { id: "FEDFUNDS", category: "Interest Rates", description: "Federal funds rate" },
-  { id: "DGS10", category: "Interest Rates", description: "10-year treasury yield" },
-  { id: "DGS2", category: "Interest Rates", description: "2-year treasury yield" },
-  {
-    id: "T10Y2Y",
-    category: "Interest Rates",
-    description: "Yield curve spread (10Y minus 2Y, recession signal)",
-  },
-  { id: "BAMLH0A0HYM2", category: "Interest Rates", description: "High yield credit spread" },
-  { id: "MORTGAGE30US", category: "Interest Rates", description: "30-year mortgage rate" },
-  // GDP & Growth
-  { id: "GDP", category: "GDP & Growth", description: "Nominal GDP" },
-  {
-    id: "A191RL1Q225SBEA",
-    category: "GDP & Growth",
-    description: "Real GDP growth rate (quarter over quarter)",
-  },
-  { id: "GDPC1", category: "GDP & Growth", description: "Real GDP chained dollars" },
-  { id: "GFDEGDQ188S", category: "GDP & Growth", description: "Federal debt as percent of GDP" },
-  // Consumer
-  {
-    id: "RSXFS",
-    category: "Consumer",
-    description: "Retail sales excluding food services",
-  },
-  { id: "PCE", category: "Consumer", description: "Personal consumption expenditures" },
-  { id: "PSAVERT", category: "Consumer", description: "Personal savings rate" },
-  { id: "UMCSENT", category: "Consumer", description: "University of Michigan consumer sentiment" },
-  { id: "DSPIC96", category: "Consumer", description: "Real disposable personal income" },
-  // Business & Capex
-  {
-    id: "PNFI",
-    category: "Business & Capex",
-    description: "Private nonresidential fixed investment (economy-wide capex)",
-  },
-  { id: "INDPRO", category: "Business & Capex", description: "Industrial production index" },
-  { id: "CAPUTLB00004SQ", category: "Business & Capex", description: "Capacity utilization" },
-  { id: "ISRATIO", category: "Business & Capex", description: "Business inventory to sales ratio" },
-  { id: "MNFCTRIRSA", category: "Business & Capex", description: "Manufacturing inventories" },
-  // Housing
-  { id: "HOUST", category: "Housing", description: "Housing starts" },
-  { id: "PERMIT", category: "Housing", description: "Building permits" },
-  { id: "EXHOSLUSM495S", category: "Housing", description: "Existing home sales" },
-  { id: "CSUSHPINSA", category: "Housing", description: "Case-Shiller national home price index" },
-  // Credit & Financial Conditions
-  {
-    id: "DRCCLACBS",
-    category: "Credit & Financial Conditions",
-    description: "Credit card delinquency rate",
-  },
-  {
-    id: "DRSFRMACBS",
-    category: "Credit & Financial Conditions",
-    description: "Mortgage delinquency rate",
-  },
-  {
-    id: "TOTCI",
-    category: "Credit & Financial Conditions",
-    description: "Total consumer credit outstanding",
-  },
-  {
-    id: "NFCI",
-    category: "Credit & Financial Conditions",
-    description: "Chicago Fed National Financial Conditions Index",
-  },
-  // Trade & Dollar
-  { id: "BOPGSTB", category: "Trade & Dollar", description: "Trade balance goods and services" },
-  { id: "DTWEXBGS", category: "Trade & Dollar", description: "Nominal broad US dollar index" },
-  // Leading Indicators
-  {
-    id: "USSLIND",
-    category: "Leading Indicators",
-    description: "Conference Board Leading Economic Index",
-  },
-  { id: "USREC", category: "Leading Indicators", description: "NBER recession indicator (1 = recession)" },
-  { id: "VIXCLS", category: "Leading Indicators", description: "VIX volatility index" },
-  { id: "M2SL", category: "Leading Indicators", description: "M2 money supply" },
-];
 
 type IngestionState = {
   completed: string[];
@@ -220,7 +118,7 @@ async function verifyFredApi(fredApiKey: string): Promise<void> {
   }
 }
 
-async function verifySupabaseTables(supabase: SupabaseClient): Promise<void> {
+async function getMissingFredTables(supabase: SupabaseClient): Promise<string[]> {
   const tables = ["fred_series", "fred_observations", "fred_ingestion_state"] as const;
   const missing: string[] = [];
 
@@ -231,14 +129,30 @@ async function verifySupabaseTables(supabase: SupabaseClient): Promise<void> {
     }
   }
 
+  return missing;
+}
+
+async function ensureFredSchema(supabase: SupabaseClient): Promise<void> {
+  let missing = await getMissingFredTables(supabase);
+  if (missing.length === 0) return;
+
+  if (hasDatabaseCredentials()) {
+    console.log("  fred_* tables missing — applying migration via direct Postgres connection...");
+    await applyFredMigration();
+    missing = await getMissingFredTables(supabase);
+  }
+
   if (missing.length > 0) {
     console.error("SUPABASE SCHEMA CHECK FAILED — required tables are missing or inaccessible:");
     for (const detail of missing) {
       console.error(`  - ${detail}`);
     }
     console.error(
-      "\nApply the migration at supabase/migrations/20260702140000_create_fred_tables.sql",
+      "\nApply the migration with one of:",
     );
+    console.error("  npx supabase db push --linked");
+    console.error("  npx tsx scripts/apply-fred-migration.ts  (requires DATABASE_URL or SUPABASE_DB_PASSWORD)");
+    console.error("  Or run supabase/migrations/20260702140000_create_fred_tables.sql in the SQL editor.");
     process.exit(1);
   }
 }
@@ -579,7 +493,8 @@ async function main(): Promise<void> {
   await verifyFredApi(fredApiKey);
   console.log("  FRED API: OK");
 
-  await verifySupabaseTables(supabase);
+  console.log("Step 2 — Verifying Supabase schema...\n");
+  await ensureFredSchema(supabase);
   console.log("  Supabase fred_* tables: OK\n");
 
   console.log("Step 3 — Loading ingestion state...\n");
