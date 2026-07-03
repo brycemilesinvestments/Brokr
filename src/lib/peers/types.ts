@@ -4,13 +4,15 @@ import type { SeriesFrequency } from "@/lib/edgar/time-series";
 export type { ChartBundle, ChartPoint };
 
 /** How a peer was selected. */
-export type PeerSelectionMethod = "sic" | "manual";
+export type PeerSelectionMethod = "sic" | "manual" | "yahoo";
 
 /** A single resolved peer company. */
 export type PeerEntry = {
   cik: string;
   entityName: string;
   selectionMethod: PeerSelectionMethod;
+  /** US ticker when known (from companies table or SEC feed). */
+  ticker?: string;
   /** SIC code if selection was SIC-based. */
   sic?: string;
 };
@@ -132,6 +134,12 @@ export type PeerResolveDeps = {
   fetchCompaniesBySic: (sic: string) => Promise<Array<{ cik: string; entityName: string }>>;
   /** Most recent SEC filing date for a CIK (used to filter inactive SIC matches). */
   fetchLastFilingDate: (cik: string) => Promise<string | null>;
+  /** Yahoo Finance compare suggestions for a target ticker. */
+  fetchComparePeersByTicker?: (ticker: string) => Promise<Array<{ ticker: string; score: number }>>;
+  /** Resolve a US ticker to SEC CIK + entity name. */
+  resolveTickerToCompany?: (
+    ticker: string,
+  ) => Promise<{ cik: string; entityName: string } | null>;
 };
 
 /** Dependencies for peer metric extraction. */

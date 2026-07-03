@@ -10,6 +10,7 @@ import { OutstandingSharesChart } from "@/routes/company/[cik]/features/outstand
 import { PatternsPanel } from "@/routes/company/[cik]/features/patterns";
 import { PeersPanel } from "@/routes/company/[cik]/features/peers";
 import { FinancialTrendsPanel } from "@/routes/company/[cik]/features/financial-trends";
+import { FredPanel } from "@/routes/company/[cik]/features/fred";
 import { QuarterlyAnalysisPanel } from "@/routes/company/[cik]/features/quarterly-analysis";
 import { RagChatPanel } from "@/routes/company/[cik]/features/rag-chat";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -27,6 +28,7 @@ type CompanyDataTabsProps = {
   fiscalYearEnd?: string;
   filings: Filing[];
   totalShown: number;
+  hasMoreFilings?: boolean;
   insider?: {
     transactions: InsiderTransaction[];
     totalShown: number;
@@ -46,6 +48,7 @@ type TabValue =
   | "trends"
   | "shares"
   | "timeline"
+  | "fred"
   | "documents"
   | "insider";
 
@@ -64,19 +67,21 @@ const HASH_TO_TAB: Record<string, TabValue> = {
   "#insider-transactions": "insider",
   "#insider": "insider",
   "#documents": "documents",
+  "#fred": "fred",
 };
+
+function parseLocationHash(hash: string): { tab: TabValue | null; fredSeriesId: string | null } {
+  if (hash === "#fred" || hash.startsWith("#fred/")) {
+    const fredSeriesId =
+      hash.length > "#fred/".length ? decodeURIComponent(hash.slice("#fred/".length)) : null;
+    return { tab: "fred", fredSeriesId };
+  }
+
+  return { tab: tabFromHash(hash), fredSeriesId: null };
+}
 
 function tabFromHash(hash: string): TabValue | null {
   return HASH_TO_TAB[hash] ?? null;
-}
-
-function initialTabFromHash(
-  insider: CompanyDataTabsProps["insider"],
-): TabValue {
-  if (typeof window === "undefined") return "analysis";
-  const tab = tabFromHash(window.location.hash);
-  if (tab === "insider" && !insider) return "analysis";
-  return tab ?? "analysis";
 }
 
 export function CompanyDataTabs({
@@ -87,13 +92,15 @@ export function CompanyDataTabs({
   fiscalYearEnd,
   filings,
   totalShown,
+  hasMoreFilings,
   insider,
   outstandingShares,
   financialTrends,
 }: CompanyDataTabsProps) {
-  const [activeTab, setActiveTab] = useState<TabValue>(() =>
-    initialTabFromHash(insider),
-  );
+  const [activeTab, setActiveTab] = useState<TabValue>("analysis");
+  const [fredSeriesId, setFredSeriesId] = useState<string | null>(null);
+  const [isHashReady, setIsHashReady] = useState(false);
+  const displayedTab = isHashReady ? activeTab : "analysis";
   const [prevInsider, setPrevInsider] = useState(insider);
   if (insider !== prevInsider) {
     setPrevInsider(insider);
@@ -104,11 +111,20 @@ export function CompanyDataTabs({
 
   useEffect(() => {
     function syncFromHash() {
-      const tab = tabFromHash(window.location.hash);
-      if (tab === "insider" && !insider) return;
-      if (tab) setActiveTab(tab);
+      const { tab, fredSeriesId: nextFredSeriesId } = parseLocationHash(window.location.hash);
+      if (tab === "insider" && !insider) {
+        setActiveTab("analysis");
+        setFredSeriesId(null);
+        return;
+      }
+      if (tab) {
+        setActiveTab(tab);
+        setFredSeriesId(nextFredSeriesId);
+      }
     }
 
+    syncFromHash();
+    setIsHashReady(true);
     window.addEventListener("hashchange", syncFromHash);
     return () => window.removeEventListener("hashchange", syncFromHash);
   }, [insider]);
@@ -116,6 +132,10 @@ export function CompanyDataTabs({
   function handleTabChange(value: string) {
     const tab = value as TabValue;
     setActiveTab(tab);
+    setIsHashReady(true);
+    if (tab !== "fred") {
+      setFredSeriesId(null);
+    }
     const hash =
       tab === "analysis"
         ? "#analysis"
@@ -135,6 +155,10 @@ export function CompanyDataTabs({
           ? "#insider-transactions"
           : tab === "documents"
             ? "#documents"
+          : tab === "fred"
+            ? fredSeriesId
+              ? `#fred/${encodeURIComponent(fredSeriesId)}`
+              : "#fred"
           : tab === "shares"
             ? "#outstanding-shares"
             : "";
@@ -143,8 +167,18 @@ export function CompanyDataTabs({
     }
   }
 
+  function handleFredSeriesChange(seriesId: string | null) {
+    setFredSeriesId(seriesId);
+    if (!seriesId) return;
+
+    const hash = `#fred/${encodeURIComponent(seriesId)}`;
+    if (window.location.hash !== hash) {
+      window.history.replaceState(null, "", hash);
+    }
+  }
+
   return (
-    <Tabs value={activeTab} onValueChange={handleTabChange} className="gap-4">
+    <Tabs value={displayedTab} onValueChange={handleTabChange} className="gap-4">
       <TabsList variant="line" className="h-auto w-full justify-start gap-1 border-b border-zinc-200 bg-transparent p-0">
         <TabsTrigger
           value="analysis"
@@ -209,6 +243,12 @@ export function CompanyDataTabs({
           Document timeline
         </TabsTrigger>
         <TabsTrigger
+          value="fred"
+          className="rounded-none border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-zinc-600 data-active:border-emerald-600 data-active:text-emerald-800 data-active:shadow-none after:hidden"
+        >
+          FRED analytics
+        </TabsTrigger>
+        <TabsTrigger
           value="documents"
           className="rounded-none border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-zinc-600 data-active:border-emerald-600 data-active:text-emerald-800 data-active:shadow-none after:hidden"
         >
@@ -217,31 +257,31 @@ export function CompanyDataTabs({
       </TabsList>
 
       <TabsContent value="analysis" className="mt-0">
-        {activeTab === "analysis" ? (
+        {displayedTab === "analysis" ? (
           <QuarterlyAnalysisPanel cik={cik} ticker={ticker} />
         ) : null}
       </TabsContent>
 
       <TabsContent value="chat" className="mt-0">
-        {activeTab === "chat" ? (
+        {displayedTab === "chat" ? (
           <RagChatPanel cik={cik} companyName={companyName} />
         ) : null}
       </TabsContent>
 
       <TabsContent value="peers" className="mt-0">
-        <PeersPanel cik={cik} enabled={activeTab === "peers"} />
+        <PeersPanel cik={cik} ticker={ticker} enabled={displayedTab === "peers"} />
       </TabsContent>
 
       <TabsContent value="health" className="mt-0">
-        <HealthPanel cik={cik} enabled={activeTab === "health"} />
+        <HealthPanel cik={cik} enabled={displayedTab === "health"} />
       </TabsContent>
 
       <TabsContent value="patterns" className="mt-0">
-        <PatternsPanel cik={cik} enabled={activeTab === "patterns"} />
+        <PatternsPanel cik={cik} enabled={displayedTab === "patterns"} />
       </TabsContent>
 
       <TabsContent value="guidance" className="mt-0">
-        <GuidancePanel cik={cik} enabled={activeTab === "guidance"} />
+        <GuidancePanel cik={cik} enabled={displayedTab === "guidance"} />
       </TabsContent>
 
       <TabsContent value="trends" className="mt-0">
@@ -267,6 +307,7 @@ export function CompanyDataTabs({
             transactions={insider.transactions}
             totalShown={insider.totalShown}
             secUrl={insider.secUrl}
+            ticker={ticker}
           />
         </TabsContent>
       ) : null}
@@ -274,20 +315,30 @@ export function CompanyDataTabs({
       <TabsContent value="timeline" className="mt-0">
         <FilingsTimeline
           cik={cik}
+          companyName={companyName}
           timeline={timeline}
           fiscalYearEnd={fiscalYearEnd}
           ticker={ticker}
-          enabled={activeTab === "timeline"}
+          enabled={displayedTab === "timeline"}
+        />
+      </TabsContent>
+
+      <TabsContent value="fred" className="mt-0">
+        <FredPanel
+          enabled={displayedTab === "fred"}
+          selectedSeriesId={fredSeriesId}
+          onSelectedSeriesIdChange={handleFredSeriesChange}
         />
       </TabsContent>
 
       <TabsContent value="documents" className="mt-0">
-        {activeTab === "documents" ? (
+        {displayedTab === "documents" ? (
           <DocumentsView
             cik={cik}
             filings={filings}
             totalShown={totalShown}
-            enabled={activeTab === "documents"}
+            hasMoreFilings={hasMoreFilings}
+            enabled={displayedTab === "documents"}
           />
         ) : null}
       </TabsContent>

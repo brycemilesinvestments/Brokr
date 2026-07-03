@@ -1,18 +1,28 @@
 import type { TimeRange } from "./types";
+import { CHART_TIME_RANGE_OPTIONS } from "@/routes/company/[cik]/components/chart-time-range-switch";
 
-const CHART_WIDTH = 800;
-const CHART_HEIGHT = 280;
-const PADDING = { top: 20, right: 24, bottom: 44, left: 72 };
+export const DIVERGING_CHART_WIDTH = 800;
+export const DIVERGING_CHART_HEIGHT = 314;
+export const DIVERGING_PADDING = { top: 26, right: 62, bottom: 38, left: 62 };
+export const DIVERGING_ZERO_Y = 164;
+export const DIVERGING_COLORS = {
+  acquired: "#047857",
+  disposed: "#dc2626",
+  grid: "#f0f0f1",
+  zeroLine: "#3f3f46",
+  axisLabel: "#a1a1aa",
+  monthLabel: "#71717a",
+} as const;
 
-export const TIME_RANGE_OPTIONS: Array<{ value: TimeRange; label: string; ms: number | null }> = [
-  { value: "1D", label: "1D", ms: 1 * 86_400_000 },
-  { value: "1W", label: "1W", ms: 7 * 86_400_000 },
-  { value: "1M", label: "1M", ms: 30 * 86_400_000 },
-  { value: "3M", label: "3M", ms: 91 * 86_400_000 },
-  { value: "1Y", label: "1Y", ms: 365 * 86_400_000 },
-  { value: "5Y", label: "5Y", ms: 5 * 365 * 86_400_000 },
-  { value: "MAX", label: "MAX", ms: null },
-];
+export const TIME_RANGE_OPTIONS: Array<{ value: TimeRange; label: string; ms: number | null }> =
+  CHART_TIME_RANGE_OPTIONS;
+
+export const NET_POSITION_BAR_HEIGHT = 12;
+export const NET_POSITION_BODY_HEIGHT_CLASS = "h-[min(420px,50vh)] min-h-[280px]";
+export const NET_POSITION_COLORS = {
+  acquired: "#047857",
+  disposed: "#dc2626",
+} as const;
 
 export const OWNER_COLORS = [
   "#047857",

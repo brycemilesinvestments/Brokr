@@ -1,12 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { FRED_OBSERVATION_START } from "./constants";
 import { fetchFredStatus } from "./fetch-status";
 import { FRED_TARGET_SERIES, type FredSeriesTarget } from "./target-series";
 import type { FredIngestResult } from "./types";
 
 const FRED_BASE = "https://api.stlouisfed.org/fred";
 const FRED_CSV_BASE = "https://fred.stlouisfed.org/graph/fredgraph.csv";
-export const FRED_OBSERVATION_START = "1984-01-01";
 const BATCH_SIZE = 500;
 const INTER_SERIES_DELAY_MS = 600;
 const RETRY_PASS_DELAY_MS = 10_000;

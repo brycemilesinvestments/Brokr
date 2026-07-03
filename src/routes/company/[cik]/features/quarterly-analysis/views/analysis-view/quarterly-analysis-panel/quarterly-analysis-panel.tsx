@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { CompanyAnalysisLoading } from "@/components/bones/company-analysis-loading";
 import { useCompanyAnalysis } from "@/routes/company/[cik]/features/quarterly-analysis/hooks/use-company-analysis";
 import type { CompanyAnalysisPanelProps } from "@/routes/company/[cik]/features/quarterly-analysis/types";
 import { ContractStatus } from "@/routes/company/[cik]/features/financial-trends/views/trends-view/financial-trends-panel/components/contract-status";
@@ -20,22 +21,7 @@ function CompanyAnalysisPanel({ cik, ticker }: CompanyAnalysisPanelProps) {
   const { data, loading, error, refetch } = useCompanyAnalysis(cik, true, ticker);
 
   if (loading) {
-    return (
-      <section className="rounded-2xl border border-zinc-200 bg-white shadow-sm">
-        <div className="border-b border-zinc-100 px-6 py-5">
-          <h2 className="text-lg font-semibold text-zinc-900">Company analysis</h2>
-          <p className="mt-1 text-sm text-zinc-500">Loading full Chunk 10 analysis…</p>
-        </div>
-        <div className="space-y-4 px-6 py-8">
-          <div className="h-4 w-48 animate-pulse rounded bg-zinc-100" />
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {Array.from({ length: 6 }).map((_, index) => (
-              <div key={index} className="h-20 animate-pulse rounded-xl bg-zinc-100" />
-            ))}
-          </div>
-        </div>
-      </section>
-    );
+    return <CompanyAnalysisLoading />;
   }
 
   if (error) {

@@ -102,6 +102,7 @@ async function fetchFilingsPage(cik: string, start: number, count: number): Prom
 export async function fetchCompanyFilings(
   cikInput: string | number,
   count = DEFAULT_FILING_COUNT,
+  options: { maxPages?: number } = {},
 ): Promise<CompanyFilingsPage> {
   const cik = formatCik(cikInput);
   const secUrl = companyFilingsUrl(cik, count);
@@ -109,7 +110,9 @@ export async function fetchCompanyFilings(
   const allFilings: Filing[] = [];
   const seenAccessions = new Set<string>();
   let start = 0;
+  let pageIndex = 0;
   let info: CompanyInfo | null = null;
+  let hasMoreFilings = false;
 
   while (true) {
     const html = await fetchFilingsPage(cik, start, count);
@@ -132,8 +135,14 @@ export async function fetchCompanyFilings(
       allFilings.push(filing);
     }
 
+    pageIndex += 1;
     const isLastPage = pageFilings.length < count || !hasNextPage($);
     if (isLastPage) break;
+
+    if (options.maxPages && pageIndex >= options.maxPages) {
+      hasMoreFilings = true;
+      break;
+    }
 
     start += count;
   }
@@ -148,5 +157,6 @@ export async function fetchCompanyFilings(
     filings: allFilings,
     secUrl,
     totalShown: allFilings.length,
+    hasMoreFilings,
   };
 }

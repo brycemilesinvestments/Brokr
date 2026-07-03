@@ -1,0 +1,17 @@
+{
+  "finance": {
+    "result": [
+      {
+        "symbol": "SNDK",
+        "recommendedSymbols": [
+          { "symbol": "WDC", "score": 0.149428 },
+          { "symbol": "STX", "score": 0.12872 },
+          { "symbol": "MRVL", "score": 0.124361 },
+          { "symbol": "MU", "score": 0.123974 },
+          { "symbol": "NBIS", "score": 0.113993 }
+        ]
+      }
+    ],
+    "error": null
+  }
+}

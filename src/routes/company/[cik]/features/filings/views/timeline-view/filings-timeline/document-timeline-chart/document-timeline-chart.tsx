@@ -1,75 +1,77 @@
 "use client";
 
-import Link from "next/link";
-import { Suspense, useMemo } from "react";
-import {
-  ActiveDot,
-  Dot,
-  EvilLineChart,
-  Grid,
-  Line,
-  ReferenceLine,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "@/components/evilcharts/charts/line-chart";
-import { type ChartConfig } from "@/components/evilcharts/ui/chart";
-import { resolveFilingPagePath } from "@/lib/edgar/constants";
-import { FRED_MARKER_COLOR } from "../constants";
-import { MARKER_COLOR } from "./constants";
+import { Suspense, useCallback, useMemo, useState } from "react";
+import { CHART_VIEWPORT_HEIGHT } from "@/routes/company/[cik]/lib/chart-viewport";
+import { EventImpactList } from "./components/event-impact-list";
+import { EventSortOptions } from "./components/event-sort-options";
+import { TimelinePriceChart } from "./components/timeline-price-chart";
 import { useDocumentTimelineChart } from "./hooks/use-document-timeline-chart";
-import type { DocumentTimelineChartProps } from "./types";
-import { formatAxisDate, formatMarkerDate, formatPrice } from "./utils/format-price";
-
-const chartConfig = {
-  close: {
-    label: "Close",
-    colors: { light: ["#047857"] },
-  },
-} satisfies ChartConfig;
+import {
+  sortTimelineEvents,
+  type TimelineEventSort,
+} from "./lib/sort-timeline-events";
+import type { DocumentTimelineChartProps, SelectedImpactWindow } from "./types";
 
 function DocumentTimelineChartLoading() {
   return (
-    <EvilLineChart
-      data={[]}
-      config={chartConfig}
-      curveType="monotone"
-      animationType="left-to-right"
-      isLoading
-      className="h-[320px] w-full"
+    <div
+      className="flex w-full items-center justify-center"
+      style={{ height: CHART_VIEWPORT_HEIGHT }}
     >
-      <Grid />
-      <XAxis dataKey="date" />
-      <YAxis width={64} />
-    </EvilLineChart>
+      <p className="text-sm text-zinc-500">Loading price chart…</p>
+    </div>
   );
 }
 
 function DocumentTimelineChartContent({
   cik,
-  timeline,
+  companyName,
+  filings,
   fredEvents = [],
   ticker,
-}: Pick<DocumentTimelineChartProps, "cik" | "timeline" | "fredEvents" | "ticker">) {
-  const {
-    eightKFilings,
-    data,
-    chartData,
-    filingMarkers,
-    fredMarkers,
-    latestPrice,
-    hasChartData,
-  } = useDocumentTimelineChart({ cik, timeline, fredEvents });
-
-  const displayTicker = data.ticker ?? ticker;
-  const filingMarkerDates = useMemo(
-    () => new Set(filingMarkers.map((marker) => marker.snappedDate)),
-    [filingMarkers],
+}: Pick<
+  DocumentTimelineChartProps,
+  "cik" | "companyName" | "filings" | "fredEvents" | "ticker"
+>) {
+  const { chartData, chartMarkers, rankedEvents, hasChartData } = useDocumentTimelineChart({
+    cik,
+    filings,
+    fredEvents,
+  });
+  const [eventSort, setEventSort] = useState<TimelineEventSort>("chronological");
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [hoveredEventId, setHoveredEventId] = useState<string | null>(null);
+  const handleSelectEvent = useCallback((eventId: string) => {
+    setSelectedEventId(eventId);
+  }, []);
+  const handleToggleEvent = useCallback((eventId: string) => {
+    setSelectedEventId((current) => (current === eventId ? null : eventId));
+  }, []);
+  const activeEventId = hoveredEventId ?? selectedEventId;
+  const sortedEvents = useMemo(
+    () => sortTimelineEvents(rankedEvents, eventSort),
+    [rankedEvents, eventSort],
   );
+  const impactChartMarkers = useMemo(() => {
+    const rankedIds = new Set(rankedEvents.map((event) => event.id));
+    return chartMarkers.filter((marker) => rankedIds.has(marker.id));
+  }, [chartMarkers, rankedEvents]);
+  const selectedImpactWindow = useMemo<SelectedImpactWindow | null>(() => {
+    if (!selectedEventId) return null;
+
+    const event = rankedEvents.find((item) => item.id === selectedEventId);
+    if (!event) return null;
+
+    return {
+      startDate: event.snappedDate,
+      endDate: event.impactEndDate,
+      priceImpact: event.priceImpact,
+    };
+  }, [rankedEvents, selectedEventId]);
 
   if (!hasChartData) {
     return (
-      <p className="py-8 text-center text-sm text-zinc-500">
+      <p className="py-12 text-center text-sm text-zinc-500">
         No daily price data available for this range.
       </p>
     );
@@ -77,126 +79,49 @@ function DocumentTimelineChartContent({
 
   return (
     <>
-      {latestPrice != null ? (
-        <div className="mb-4 flex justify-end lg:absolute lg:right-0 lg:top-0">
-          <div>
-            <p className="text-xs uppercase tracking-wide text-zinc-500">Latest close</p>
-            <p className="mt-1 font-mono text-xl font-semibold text-zinc-900">
-              ${formatPrice(latestPrice)}
-            </p>
-          </div>
+      <div className="flex items-center justify-between gap-3 border-b border-zinc-100 px-5 pb-3 pt-4">
+        <div className="flex items-center gap-2.5">
+          <span className="text-base font-semibold text-zinc-900">{companyName}</span>
+          {ticker ? (
+            <span className="font-mono text-sm font-medium text-zinc-500">{ticker}</span>
+          ) : null}
         </div>
-      ) : null}
+        <span className="text-[11px] text-zinc-400">2-month price impact after each event</span>
+      </div>
 
-      <EvilLineChart
-        data={chartData}
-        config={chartConfig}
-        curveType="monotone"
-        animationType="left-to-right"
-        className="h-[320px] w-full"
-      >
-        <Grid />
-        <XAxis
-          dataKey="date"
-          tickFormatter={(value) => formatAxisDate(String(value))}
-          minTickGap={48}
-        />
-        <YAxis tickFormatter={(value) => `$${formatPrice(Number(value))}`} width={64} />
-        <Tooltip />
-        <Line dataKey="close">
-          <Dot variant="default" />
-          <ActiveDot variant="colored-border" />
-        </Line>
-        {filingMarkers.map((marker) => (
-          <ReferenceLine
-            key={marker.filing.accessionNumber ?? `${marker.eventDate}-${marker.filing.type}`}
-            x={marker.snappedDate}
-            stroke={MARKER_COLOR}
-            strokeWidth={1.5}
-            strokeDasharray="5 4"
-            label={{
-              value: `8-K · ${formatMarkerDate(marker.eventDate)}`,
-              position: "insideBottomLeft",
-              fill: MARKER_COLOR,
-              fontSize: 10,
-            }}
+      <div className="flex min-h-0" style={{ height: CHART_VIEWPORT_HEIGHT }}>
+        <div className="relative min-h-0 min-w-0 flex-1 overflow-hidden border-r border-zinc-100 px-2 pb-1 pl-2 pt-1.5">
+          <TimelinePriceChart
+            chartData={chartData}
+            chartMarkers={impactChartMarkers}
+            activeEventId={activeEventId}
+            selectedEventId={selectedEventId}
+            selectedImpactWindow={selectedImpactWindow}
+            onSelectEvent={handleSelectEvent}
+            onHoverEvent={setHoveredEventId}
           />
-        ))}
-        {fredMarkers.map((marker) => (
-          <ReferenceLine
-            key={marker.event.id}
-            x={marker.snappedDate}
-            stroke={FRED_MARKER_COLOR}
-            strokeWidth={1.25}
-            strokeDasharray="3 4"
-            label={{
-              value: `${marker.event.seriesId} · ${formatMarkerDate(marker.eventDate)}`,
-              position: "insideTopLeft",
-              fill: FRED_MARKER_COLOR,
-              fontSize: 10,
-            }}
+        </div>
+
+        <aside className="flex w-[300px] shrink-0 flex-col border-l border-zinc-100">
+          <EventSortOptions sort={eventSort} onSortChange={setEventSort} />
+          <EventImpactList
+            cik={cik}
+            events={sortedEvents}
+            activeEventId={activeEventId}
+            selectedEventId={selectedEventId}
+            onSelectEvent={handleToggleEvent}
+            onHoverEvent={setHoveredEventId}
           />
-        ))}
-      </EvilLineChart>
-
-      {eightKFilings.length === 0 && fredMarkers.length === 0 ? (
-        <p className="mt-3 text-sm text-zinc-500">
-          No 8-K filings or macro releases in range — the price line will appear once events are
-          indexed.
-        </p>
-      ) : (
-        <p className="mt-3 text-xs text-zinc-500">
-          {filingMarkers.length} of {eightKFilings.length} 8-K filing
-          {eightKFilings.length === 1 ? "" : "s"} and {fredMarkers.length} of {fredEvents.length}{" "}
-          macro release{fredEvents.length === 1 ? "" : "s"} plotted on trading days.
-        </p>
-      )}
-
-      {filingMarkers.length > 0 ? (
-        <ul className="mt-4 space-y-2 border-t border-zinc-100 pt-4">
-          {filingMarkers.map((marker) => {
-            const filingHref = resolveFilingPagePath(cik, marker.filing);
-            const filedOnMarkerDay = filingMarkerDates.has(marker.eventDate);
-            return (
-              <li
-                key={marker.filing.accessionNumber ?? `${marker.eventDate}-${marker.filing.type}`}
-                className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-600"
-              >
-                <span className="rounded-md bg-amber-100 px-2 py-0.5 font-mono font-semibold text-amber-800">
-                  8-K
-                </span>
-                <span className="font-medium text-zinc-800">
-                  {formatMarkerDate(marker.eventDate)}
-                </span>
-                {!filedOnMarkerDay ? (
-                  <span className="text-zinc-400">
-                    snapped to {formatMarkerDate(marker.snappedDate)}
-                  </span>
-                ) : null}
-                <span className="text-zinc-500">${formatPrice(marker.close)}</span>
-                <span className="min-w-0 flex-1 truncate text-zinc-600">
-                  {marker.filing.description}
-                </span>
-                {filingHref ? (
-                  <Link
-                    href={filingHref}
-                    className="font-medium text-emerald-700 hover:text-emerald-900"
-                  >
-                    View filing
-                  </Link>
-                ) : null}
-              </li>
-            );
-          })}
-        </ul>
-      ) : null}
+        </aside>
+      </div>
     </>
   );
 }
 
 export function DocumentTimelineChart({
   cik,
-  timeline,
+  companyName,
+  filings,
   fredEvents = [],
   ticker,
   enabled,
@@ -207,37 +132,25 @@ export function DocumentTimelineChart({
 
   if (!ticker) {
     return (
-      <div className="border-b border-zinc-100 px-6 py-5">
-        <h3 className="text-base font-semibold text-zinc-900">Stock price &amp; timeline events</h3>
-        <p className="mt-4 py-8 text-center text-sm text-zinc-500">
+      <section className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
+        <div className="px-5 py-12 text-center text-sm text-zinc-500">
           Stock price chart requires a ticker symbol for this company.
-        </p>
-      </div>
+        </div>
+      </section>
     );
   }
 
   return (
-    <div className="border-b border-zinc-100 px-6 py-5">
-      <div className="relative flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <h3 className="text-base font-semibold text-zinc-900">Stock price &amp; timeline events</h3>
-          <p className="mt-1 max-w-2xl text-sm text-zinc-500">
-            Daily close from Yahoo Finance ({ticker}) with 8-K filings (amber) and macro indicator
-            releases (indigo).
-          </p>
-        </div>
-      </div>
-
-      <div className="relative mt-4">
-        <Suspense fallback={<DocumentTimelineChartLoading />}>
-          <DocumentTimelineChartContent
-            cik={cik}
-            timeline={timeline}
-            fredEvents={fredEvents}
-            ticker={ticker}
-          />
-        </Suspense>
-      </div>
-    </div>
+    <section className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
+      <Suspense fallback={<DocumentTimelineChartLoading />}>
+        <DocumentTimelineChartContent
+          cik={cik}
+          companyName={companyName}
+          filings={filings}
+          fredEvents={fredEvents}
+          ticker={ticker}
+        />
+      </Suspense>
+    </section>
   );
 }

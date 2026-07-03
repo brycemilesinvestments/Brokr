@@ -1,0 +1,35 @@
+{
+  "breakpoints": {
+    "768": {
+      "name": "filings-analysis-progress",
+      "viewportWidth": 654,
+      "width": 654,
+      "height": 20,
+      "bones": [
+        [
+          0,
+          0,
+          100,
+          20,
+          8
+        ]
+      ]
+    },
+    "1280": {
+      "name": "filings-analysis-progress",
+      "viewportWidth": 1166,
+      "width": 1166,
+      "height": 20,
+      "bones": [
+        [
+          0,
+          0,
+          100,
+          20,
+          8
+        ]
+      ]
+    }
+  },
+  "_hash": "b358a36c0b36520b4e536593f5874d46"
+}

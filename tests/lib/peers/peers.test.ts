@@ -12,7 +12,6 @@ import {
   emitPeerComparisonBundle,
   flagDivergences,
   frequencyFromKey,
-  getCuratedPeers,
   isFilingWithinMonths,
   resolvePeers,
   toCalendarKey,
@@ -467,44 +466,6 @@ describe("P1: Peer resolution", () => {
     expect(peerSet.peers.map((p) => p.cik)).toContain(MICRON_CIK);
   });
 
-  it("curated SNDK peer CIKs map to expected SEC entities", () => {
-    const peers = getCuratedPeers(SNDK_CIK);
-    expect(peers.map((p) => p.cik)).toEqual([
-      "0000723125",
-      "0000106040",
-      "0001137789",
-    ]);
-    expect(peers.map((p) => p.entityName)).toEqual([
-      "Micron Technology, Inc.",
-      "WESTERN DIGITAL CORPORATION",
-      "Seagate Technology Holdings plc",
-    ]);
-  });
-
-  it("SNDK uses curated peers (Micron, WDC, Seagate) before SIC fill", async () => {
-    const deps = makePeerDeps({
-      fetchSic: vi.fn().mockResolvedValue("3572"),
-      fetchCompaniesBySic: vi.fn().mockResolvedValue([
-        { cik: "0000350000", entityName: "3PAR Inc." },
-        { cik: "0000350001", entityName: "Air Bearings Inc" },
-      ]),
-    });
-
-    const peerSet = await resolvePeers(
-      { targetCik: SNDK_CIK, targetEntityName: SNDK_ENTITY },
-      deps,
-    );
-
-    expect(peerSet.status).toBe("ok");
-    const ciks = peerSet.peers.map((p) => p.cik);
-    expect(ciks).toContain(MICRON_CIK);
-    expect(ciks).toContain(WDC_CIK);
-    expect(ciks).toContain(SEAGATE_CIK);
-    expect(ciks).not.toContain("0000350000");
-    expect(peerSet.peers.filter((p) => p.selectionMethod === "manual")).toHaveLength(3);
-    expect(getCuratedPeers(SNDK_CIK)).toHaveLength(3);
-  });
-
   it("filters SIC candidates to companies with filing in last 24 months", async () => {
     const deps = makePeerDeps({
       fetchCompaniesBySic: vi.fn().mockResolvedValue([
@@ -557,19 +518,19 @@ describe("P1: Peer resolution", () => {
   it("excludes target itself from peer list", async () => {
     const deps = makePeerDeps({
       fetchCompaniesBySic: vi.fn().mockResolvedValue([
-        { cik: SNDK_CIK, entityName: SNDK_ENTITY }, // Target itself — should be excluded.
+        { cik: "0000999999", entityName: "Test Target" },
         { cik: MICRON_CIK, entityName: MICRON_ENTITY },
+        { cik: SEAGATE_CIK, entityName: "Seagate Technology" },
       ]),
     });
 
     const peerSet = await resolvePeers(
-      { targetCik: SNDK_CIK, targetEntityName: SNDK_ENTITY },
+      { targetCik: "0000999999", targetEntityName: "Test Target" },
       deps,
     );
 
-    expect(peerSet.peers.map((p) => p.cik)).not.toContain(SNDK_CIK);
-    // Curated peers still present; only SIC slot excludes self.
-    expect(peerSet.peers.length).toBeGreaterThanOrEqual(1);
+    expect(peerSet.peers.map((p) => p.cik)).not.toContain("0000999999");
+    expect(peerSet.peers.length).toBeGreaterThanOrEqual(2);
   });
 
   it("reports INSUFFICIENT_PEERS when fewer than 2 peers resolved", async () => {
@@ -603,6 +564,68 @@ describe("P1: Peer resolution", () => {
     expect(peerSet.status).toBe("insufficient_peers");
     expect(peerSet.peers).toHaveLength(0);
     expect(deps.fetchCompaniesBySic).not.toHaveBeenCalled();
+  });
+
+  it("resolves peers from Yahoo compare suggestions before SIC", async () => {
+    const deps = makePeerDeps({
+      fetchComparePeersByTicker: vi.fn().mockResolvedValue([
+        { ticker: "WDC", score: 0.15 },
+        { ticker: "STX", score: 0.13 },
+        { ticker: "MU", score: 0.12 },
+      ]),
+      resolveTickerToCompany: vi.fn().mockImplementation(async (ticker: string) => {
+        const map: Record<string, { cik: string; entityName: string }> = {
+          WDC: { cik: WDC_CIK, entityName: "Western Digital Corporation" },
+          STX: { cik: SEAGATE_CIK, entityName: "Seagate Technology Holdings plc" },
+          MU: { cik: MICRON_CIK, entityName: MICRON_ENTITY },
+        };
+        return map[ticker] ?? null;
+      }),
+      fetchCompaniesBySic: vi.fn().mockResolvedValue([
+        { cik: "0000350000", entityName: "Should Not Be Used" },
+      ]),
+    });
+
+    const peerSet = await resolvePeers(
+      {
+        targetCik: "0000999999",
+        targetEntityName: "Generic Target",
+        ticker: "SNDK",
+      },
+      deps,
+    );
+
+    expect(peerSet.status).toBe("ok");
+    expect(peerSet.peers).toHaveLength(3);
+    expect(peerSet.peers.every((peer) => peer.selectionMethod === "yahoo")).toBe(true);
+    expect(peerSet.peers.map((peer) => peer.cik)).toEqual([WDC_CIK, SEAGATE_CIK, MICRON_CIK]);
+    expect(deps.fetchCompaniesBySic).not.toHaveBeenCalled();
+  });
+
+  it("falls back to SIC when Yahoo suggestions do not resolve enough peers", async () => {
+    const deps = makePeerDeps({
+      fetchComparePeersByTicker: vi.fn().mockResolvedValue([
+        { ticker: "FOREIGN", score: 0.9 },
+      ]),
+      resolveTickerToCompany: vi.fn().mockResolvedValue(null),
+      fetchCompaniesBySic: vi.fn().mockResolvedValue([
+        { cik: MICRON_CIK, entityName: MICRON_ENTITY },
+        { cik: SEAGATE_CIK, entityName: "Seagate Technology" },
+      ]),
+    });
+
+    const peerSet = await resolvePeers(
+      {
+        targetCik: "0000999999",
+        targetEntityName: "Generic Target",
+        ticker: "SNDK",
+      },
+      deps,
+    );
+
+    expect(peerSet.status).toBe("ok");
+    expect(peerSet.peers.every((peer) => peer.selectionMethod === "sic")).toBe(true);
+    expect(deps.fetchCompaniesBySic).toHaveBeenCalled();
   });
 });
 
@@ -818,7 +841,7 @@ describe("Integration: full peer comparison pipeline with synthetic peer data", 
     expect(band.median).not.toBe(series.target.at(-1)!.value);
   });
 
-  it("SNDK curated peers: n>=2 for majority of display metrics with synthetic data", () => {
+  it("peer group with n>=2 for majority of display metrics with synthetic data", () => {
     const targetChart: ChartBundle = {
       gross_margin: [{ x: "2025-06-27", y: 0.36, frequency: "annual" }],
       net_margin: [{ x: "2025-06-27", y: 0.15, frequency: "annual" }],

@@ -6,7 +6,7 @@ type UseCompanyApiResult<T> = {
   data: T | null;
   loading: boolean;
   error: string | null;
-  refetch: () => void;
+  refetch: (options?: { refresh?: boolean }) => Promise<void>;
 };
 
 export function useCompanyApi<T>(url: string | null, enabled: boolean): UseCompanyApiResult<T> {
@@ -14,12 +14,15 @@ export function useCompanyApi<T>(url: string | null, enabled: boolean): UseCompa
   const [loading, setLoading] = useState(() => Boolean(enabled && url));
   const [error, setError] = useState<string | null>(null);
 
-  const refetch = useCallback(async () => {
+  const refetch = useCallback(async (options?: { refresh?: boolean }) => {
     if (!url) return;
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(url);
+      const fetchUrl = options?.refresh
+        ? `${url}${url.includes("?") ? "&" : "?"}refresh=true`
+        : url;
+      const response = await fetch(fetchUrl);
       const payload = (await response.json()) as T & { error?: string };
       if (!response.ok) {
         throw new Error(payload.error ?? "Request failed");

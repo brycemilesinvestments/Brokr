@@ -116,7 +116,26 @@ export function FredDataPanel({
             </p>
           ) : null}
 
-          {status?.inProgressSeries ? (
+          {ingesting && status ? (
+            <p className="mt-3 text-sm text-indigo-800">
+              Refreshing{" "}
+              <span className="font-mono font-semibold">
+                {status.completedSeriesCount + status.failedSeries.length}
+              </span>{" "}
+              of <span className="font-mono font-semibold">{status.targetSeriesCount}</span>{" "}
+              series
+              {status.inProgressSeries ? (
+                <>
+                  {" "}
+                  — current:{" "}
+                  <span className="font-mono font-semibold">{status.inProgressSeries}</span>
+                </>
+              ) : null}
+              …
+            </p>
+          ) : null}
+
+          {status?.inProgressSeries && !ingesting ? (
             <p className="mt-3 text-sm text-indigo-800">
               In progress: <span className="font-mono font-semibold">{status.inProgressSeries}</span>
             </p>

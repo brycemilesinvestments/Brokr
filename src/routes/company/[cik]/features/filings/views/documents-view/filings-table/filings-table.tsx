@@ -1,13 +1,21 @@
 "use client";
 
-import Link from "next/link";
+import { FilingsAnalysisProgress } from "@/components/bones/filings-analysis-progress";
 import { ColumnFilter } from "@/routes/company/[cik]/components/column-filter";
-import { resolveFilingPagePath } from "@/lib/edgar/constants";
+import { FilingTableRow } from "./components/filing-table-row";
 import { useFilingsTableFilters } from "./hooks/use-filings-table-filters";
 import { COLUMNS } from "./lib/columns";
 import type { FilingsTableProps } from "./types";
 
-export function FilingsTable({ cik, filings, totalShown }: FilingsTableProps) {
+export function FilingsTable({
+  cik,
+  filings,
+  totalShown,
+  hasMoreFilings = false,
+  getAnalysisStatus,
+  getAnalysisError,
+  analysisProgress,
+}: FilingsTableProps) {
   const {
     selectedByColumn,
     sortOrderByColumn,
@@ -20,19 +28,37 @@ export function FilingsTable({ cik, filings, totalShown }: FilingsTableProps) {
     isFiltered,
   } = useFilingsTableFilters(filings);
 
+  const countLabel = isFiltered
+    ? `${filteredFilings.length} of ${totalShown} SEC EDGAR submissions shown`
+    : hasMoreFilings
+      ? `${totalShown} recent SEC EDGAR submissions shown (older filings load on demand)`
+      : `${totalShown} SEC EDGAR submissions fetched across all pages`;
+
   return (
     <section className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
       <div className="border-b border-zinc-100 px-6 py-4">
         <h2 className="text-lg font-semibold text-zinc-900">All filings</h2>
-        <p className="mt-1 text-sm text-zinc-500">
-          {isFiltered
-            ? `${filteredFilings.length} of ${totalShown} SEC EDGAR submissions shown`
-            : `${totalShown} SEC EDGAR submissions fetched across all pages`}
-        </p>
+        <p className="mt-1 text-sm text-zinc-500">{countLabel}</p>
+        {analysisProgress.active ? (
+          <FilingsAnalysisProgress
+            complete={analysisProgress.complete}
+            loading={analysisProgress.loading}
+            queued={analysisProgress.queued}
+            error={analysisProgress.error}
+            active={analysisProgress.active}
+          />
+        ) : null}
       </div>
 
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-zinc-100 text-sm">
+        <table className="min-w-full table-fixed divide-y divide-zinc-100 text-sm">
+          <colgroup>
+            <col className="w-[8%]" />
+            <col className="w-[36%]" />
+            <col className="w-[12%]" />
+            <col className="w-[22%]" />
+            <col className="w-[22%]" />
+          </colgroup>
           <thead className="bg-zinc-50 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500">
             <tr>
               {COLUMNS.map((column) => (
@@ -53,45 +79,15 @@ export function FilingsTable({ cik, filings, totalShown }: FilingsTableProps) {
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-100">
-            {displayedFilings.map((filing) => {
-              const filingPageHref = resolveFilingPagePath(cik, filing);
-
-              return (
-              <tr
+            {displayedFilings.map((filing) => (
+              <FilingTableRow
                 key={`${filing.accessionNumber ?? filing.filingDate}-${filing.type}`}
-                className="hover:bg-zinc-50/80"
-              >
-                <td className="px-6 py-4 font-mono font-medium text-zinc-900">{filing.type}</td>
-                <td className="px-6 py-4 text-zinc-700">{filing.description}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-zinc-600">{filing.filingDate}</td>
-                <td className="px-6 py-4 font-mono text-xs text-zinc-500">
-                  {filing.accessionNumber ?? "—"}
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex flex-wrap gap-2">
-                    {filing.documentsUrl ? (
-                      <a
-                        href={filing.documentsUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-700 transition hover:bg-zinc-50"
-                      >
-                        Documents
-                      </a>
-                    ) : null}
-                    {filingPageHref ? (
-                      <Link
-                        href={filingPageHref}
-                        className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-700 transition hover:bg-zinc-50"
-                      >
-                        Filing
-                      </Link>
-                    ) : null}
-                  </div>
-                </td>
-              </tr>
-              );
-            })}
+                cik={cik}
+                filing={filing}
+                analysisStatus={getAnalysisStatus(filing.accessionNumber)}
+                analysisError={getAnalysisError(filing.accessionNumber)}
+              />
+            ))}
           </tbody>
         </table>
       </div>

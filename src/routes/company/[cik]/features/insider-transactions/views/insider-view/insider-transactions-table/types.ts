@@ -5,6 +5,7 @@ export type InsiderTransactionsTableProps = {
   transactions: InsiderTransaction[];
   totalShown: number;
   secUrl: string;
+  ticker?: string;
 };
 
 export type ColumnKey =

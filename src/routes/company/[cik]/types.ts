@@ -29,6 +29,7 @@ export type CompanyFilingsPage = {
   filings: Filing[];
   secUrl: string;
   totalShown: number;
+  hasMoreFilings: boolean;
 };
 
 export type Form10kSyncResponse = {
@@ -65,5 +66,6 @@ export type DocumentsViewProps = {
   cik: string;
   filings: Filing[];
   totalShown: number;
+  hasMoreFilings?: boolean;
   enabled: boolean;
 };

@@ -16,7 +16,7 @@ function buildFilingMarkers(
   const markers: FilingMarker[] = [];
 
   for (const filing of filings) {
-    const snappedDate = snapToTradingDay(filing.filingDate, quoteDates);
+    const snappedDate = snapToTradingDay(filing.timelineDate, quoteDates);
     if (!snappedDate) continue;
 
     const close = closeByDate.get(snappedDate);
@@ -25,7 +25,7 @@ function buildFilingMarkers(
     markers.push({
       kind: "filing",
       filing,
-      eventDate: filing.filingDate,
+      eventDate: filing.timelineDate,
       snappedDate,
       close,
     });
@@ -69,6 +69,8 @@ export function buildDocumentTimelineChartData(
   filingMarkers: FilingMarker[];
   fredMarkers: FredMarker[];
   markers: TimelineMarker[];
+  quoteDates: string[];
+  closeByDate: Map<string, number>;
 } {
   const sortedQuotes = quotes.toSorted((a, b) => a.date.localeCompare(b.date));
   const quoteDates = sortedQuotes.map((quote) => quote.date);
@@ -85,5 +87,12 @@ export function buildDocumentTimelineChartData(
     a.snappedDate.localeCompare(b.snappedDate),
   );
 
-  return { chartData, filingMarkers, fredMarkers, markers };
+  return {
+    chartData,
+    filingMarkers,
+    fredMarkers,
+    markers,
+    quoteDates,
+    closeByDate,
+  };
 }

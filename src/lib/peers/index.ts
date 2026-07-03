@@ -27,9 +27,8 @@ export type {
 } from "@/lib/peers/types";
 
 // P1: Peer resolution
-export { resolvePeers } from "@/lib/peers/resolve-peers";
+export { resolvePeers, MIN_PEER_COUNT } from "@/lib/peers/resolve-peers";
 export type { ResolvePeersInput } from "@/lib/peers/resolve-peers";
-export { getCuratedPeers } from "@/lib/peers/curated-peers";
 export { isFilingWithinMonths, RECENT_FILING_MONTHS } from "@/lib/peers/recent-filing";
 export { filterChartToAnnual } from "@/lib/peers/filter-chart";
 export { assessPeerDataSufficiency } from "@/lib/peers/assess-data-sufficiency";
@@ -41,6 +40,11 @@ export {
   fetchCompaniesBySicFromSec,
   fetchLastFilingDateFromSec,
 } from "@/lib/peers/adapters";
+export {
+  fetchComparePeersFromYahoo,
+  resolveTickerToCompanyFromSec,
+} from "@/lib/peers/yahoo-adapters";
+export type { YahooComparePeer } from "@/lib/peers/yahoo-adapters";
 
 // P2: Peer metric extraction
 export { extractAllPeerMetrics } from "@/lib/peers/extract-peers";

@@ -3,7 +3,8 @@ import type { TimelineFiling } from "@/routes/company/[cik]/features/filings/typ
 
 export type DocumentTimelineChartProps = {
   cik: string;
-  timeline: TimelineFiling[];
+  companyName: string;
+  filings: TimelineFiling[];
   fredEvents?: FredTimelineEvent[];
   ticker?: string;
   enabled: boolean;
@@ -26,6 +27,26 @@ export type FredMarker = {
 };
 
 export type TimelineMarker = FilingMarker | FredMarker;
+
+export type TimelineEvent = {
+  id: string;
+  kind: "filing" | "fred";
+  categoryLabel: string;
+  eventDate: string;
+  snappedDate: string;
+  impactEndDate: string;
+  description: string;
+  color: string;
+  close: number;
+  priceImpact: number;
+  marker: TimelineMarker;
+};
+
+export type SelectedImpactWindow = {
+  startDate: string;
+  endDate: string;
+  priceImpact: number;
+};
 
 export type StockHistoryResponse = {
   ticker: string;

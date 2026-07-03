@@ -1,15 +1,67 @@
 import { formatCik } from "@/lib/edgar/constants";
-import { getCuratedPeers } from "@/lib/peers/curated-peers";
 import { isFilingWithinMonths, RECENT_FILING_MONTHS } from "@/lib/peers/recent-filing";
 import type { PeerEntry, PeerResolveDeps, PeerSet } from "@/lib/peers/types";
 
 const MIN_PEERS = 2;
+export const MIN_PEER_COUNT = MIN_PEERS;
 const DEFAULT_MAX_PEERS = 5;
 const SIC_CANDIDATE_POOL = 40;
+const YAHOO_CANDIDATE_POOL = 10;
+
+async function resolveYahooPeers(
+  input: ResolvePeersInput,
+  deps: PeerResolveDeps,
+  targetCikNorm: string,
+  resolvedCiks: Set<string>,
+  manualPeerCount: number,
+  maxPeers: number,
+): Promise<PeerEntry[]> {
+  const ticker = input.ticker?.trim().toUpperCase();
+  if (
+    !ticker ||
+    !deps.fetchComparePeersByTicker ||
+    !deps.resolveTickerToCompany ||
+    manualPeerCount >= MIN_PEERS ||
+    manualPeerCount >= maxPeers
+  ) {
+    return [];
+  }
+
+  const recommendations = await deps.fetchComparePeersByTicker(ticker);
+  const remaining = maxPeers - manualPeerCount;
+  const yahooPeers: PeerEntry[] = [];
+
+  for (const recommendation of recommendations.slice(0, YAHOO_CANDIDATE_POOL)) {
+    if (yahooPeers.length >= remaining) break;
+    if (recommendation.ticker === ticker) continue;
+
+    const company = await deps.resolveTickerToCompany(recommendation.ticker);
+    if (!company) continue;
+
+    const cik = formatCik(company.cik);
+    if (cik === targetCikNorm || resolvedCiks.has(cik)) continue;
+
+    const lastFiling = await deps.fetchLastFilingDate(cik);
+    if (!lastFiling || !isFilingWithinMonths(lastFiling, RECENT_FILING_MONTHS)) {
+      continue;
+    }
+
+    yahooPeers.push({
+      cik,
+      entityName: company.entityName,
+      selectionMethod: "yahoo",
+    });
+    resolvedCiks.add(cik);
+  }
+
+  return yahooPeers;
+}
 
 export type ResolvePeersInput = {
   targetCik: string;
   targetEntityName: string;
+  /** Target ticker — enables Yahoo Finance compare suggestions before SIC discovery. */
+  ticker?: string;
   /** Explicit peer CIKs that override/supplement SIC discovery. */
   manualPeerCiks?: string[];
   maxPeers?: number;
@@ -54,8 +106,8 @@ async function filterActiveSicCandidates(
  * P1: Resolve a peer set for the target company.
  *
  * Strategy:
- *   1. Curated peer list for known targets (method = "manual").
- *   2. Explicit manualPeerCiks (method = "manual").
+ *   1. Explicit manualPeerCiks (method = "manual").
+ *   2. Yahoo Finance compare suggestions when ticker is known (method = "yahoo").
  *   3. Fetch target's SIC code via deps.fetchSic.
  *   4. Fetch companies sharing that SIC via deps.fetchCompaniesBySic.
  *   5. Keep only SIC candidates with a filing in the last 24 months.
@@ -73,17 +125,6 @@ export async function resolvePeers(
 
   const manualPeers: PeerEntry[] = [];
 
-  for (const curated of getCuratedPeers(targetCikNorm)) {
-    const cik = formatCik(curated.cik);
-    if (cik === targetCikNorm || resolvedCiks.has(cik)) continue;
-    manualPeers.push({
-      cik,
-      entityName: curated.entityName,
-      selectionMethod: "manual",
-    });
-    resolvedCiks.add(cik);
-  }
-
   if (input.manualPeerCiks) {
     for (const rawCik of input.manualPeerCiks) {
       const cik = formatCik(rawCik);
@@ -99,10 +140,21 @@ export async function resolvePeers(
 
   const sic = await deps.fetchSic(input.targetCik);
 
+  const yahooPeers = await resolveYahooPeers(
+    input,
+    deps,
+    targetCikNorm,
+    resolvedCiks,
+    manualPeers.length,
+    maxPeers,
+  );
+
+  const peersBeforeSic = [...manualPeers, ...yahooPeers];
+
   let sicPeers: PeerEntry[] = [];
-  if (sic && manualPeers.length < MIN_PEERS && manualPeers.length < maxPeers) {
+  if (sic && peersBeforeSic.length < MIN_PEERS && peersBeforeSic.length < maxPeers) {
     const candidates = await deps.fetchCompaniesBySic(sic);
-    const remaining = maxPeers - manualPeers.length;
+    const remaining = maxPeers - peersBeforeSic.length;
 
     sicPeers = await filterActiveSicCandidates(
       candidates.slice(0, SIC_CANDIDATE_POOL),
@@ -114,7 +166,7 @@ export async function resolvePeers(
     sicPeers = sicPeers.map((peer) => ({ ...peer, sic }));
   }
 
-  const peers = [...manualPeers, ...sicPeers];
+  const peers = [...manualPeers, ...yahooPeers, ...sicPeers];
 
   return {
     targetCik: targetCikNorm,

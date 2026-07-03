@@ -1,41 +1,50 @@
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { InsiderTransaction } from "@/routes/company/[cik]/features/insider-transactions/types";
-import { buildActivitySeries } from "../lib/build-activity-series";
+import { buildMonthlyVolume } from "../lib/build-monthly-volume";
+import { buildNetPositionRows } from "../lib/build-net-position-rows";
 import {
-  buildActivityBarData,
+  detectVolumeChartExclusions,
+  formatExclusionFootnote,
+} from "../lib/detect-volume-exclusions";
+import {
   buildHoldingsChartConfig,
   buildHoldingsLineData,
 } from "../lib/build-recharts-data";
 import { buildHoldingsSeries } from "../lib/build-holdings-series";
 import { filterByTimeRange, latestTransactionTime } from "../lib/filter-by-time-range";
-import type { ChartMode, TimeRange } from "../types";
+import type { ChartMode, HoldingsView, TimeRange } from "../types";
 import { primarySecurityName } from "../utils/primary-security-name";
 import { uniqueOwners } from "../utils/unique-owners";
 
 export function useInsiderTransactionsChart(transactions: InsiderTransaction[]) {
   const owners = useMemo(() => uniqueOwners(transactions), [transactions]);
   const [chartMode, setChartMode] = useState<ChartMode>("activity");
-  const [timeRange, setTimeRange] = useState<TimeRange>("3M");
-  const [selectedOwners, setSelectedOwners] = useState<Set<string>>(() => new Set(owners));
+  const [holdingsView, setHoldingsView] = useState<HoldingsView>("net-position");
+  const [timeRange, setTimeRange] = useState<TimeRange>("1Y");
 
-  const effectiveSelectedOwners = useMemo(() => {
-    const active = owners.filter((owner) => selectedOwners.has(owner));
-    return active.length > 0 ? active : owners;
-  }, [owners, selectedOwners]);
-
-  const ownerFilteredTransactions = useMemo(
-    () => transactions.filter((transaction) => effectiveSelectedOwners.includes(transaction.reportingOwner)),
-    [transactions, effectiveSelectedOwners],
-  );
-
-  const latestTime = useMemo(
-    () => latestTransactionTime(ownerFilteredTransactions),
-    [ownerFilteredTransactions],
-  );
+  const latestTime = useMemo(() => latestTransactionTime(transactions), [transactions]);
 
   const rangedTransactions = useMemo(
-    () => filterByTimeRange(ownerFilteredTransactions, timeRange, latestTime),
-    [ownerFilteredTransactions, timeRange, latestTime],
+    () => filterByTimeRange(transactions, timeRange, latestTime),
+    [transactions, timeRange, latestTime],
+  );
+
+  const { chartTransactions, exclusionFootnote } = useMemo(() => {
+    const { included, exclusions } = detectVolumeChartExclusions(rangedTransactions);
+    return {
+      chartTransactions: included,
+      exclusionFootnote: formatExclusionFootnote(exclusions),
+    };
+  }, [rangedTransactions]);
+
+  const monthlyVolume = useMemo(
+    () => buildMonthlyVolume(chartTransactions),
+    [chartTransactions],
+  );
+
+  const netPositionRows = useMemo(
+    () => buildNetPositionRows(chartTransactions),
+    [chartTransactions],
   );
 
   const holdingsSecurity = useMemo(
@@ -44,24 +53,18 @@ export function useInsiderTransactionsChart(transactions: InsiderTransaction[]) 
   );
 
   const series = useMemo(() => {
-    if (chartMode === "activity") {
-      return buildActivitySeries(rangedTransactions, timeRange);
+    if (chartMode === "holdings" && holdingsView === "timeline") {
+      return buildHoldingsSeries(rangedTransactions, owners.slice(0, 8), holdingsSecurity);
     }
-    return buildHoldingsSeries(
-      rangedTransactions,
-      effectiveSelectedOwners.slice(0, 8),
-      holdingsSecurity,
-    );
-  }, [chartMode, rangedTransactions, timeRange, effectiveSelectedOwners, holdingsSecurity]);
-
-  const activityData = useMemo(
-    () => (chartMode === "activity" ? buildActivityBarData(series) : []),
-    [chartMode, series],
-  );
+    return [];
+  }, [chartMode, holdingsView, rangedTransactions, owners, holdingsSecurity]);
 
   const holdings = useMemo(
-    () => (chartMode === "holdings" ? buildHoldingsLineData(series) : { data: [], series: [] }),
-    [chartMode, series],
+    () =>
+      chartMode === "holdings" && holdingsView === "timeline"
+        ? buildHoldingsLineData(series)
+        : { data: [], series: [] },
+    [chartMode, holdingsView, series],
   );
 
   const holdingsConfig = useMemo(
@@ -71,53 +74,43 @@ export function useInsiderTransactionsChart(transactions: InsiderTransaction[]) 
 
   const totalBuys = useMemo(
     () =>
-      rangedTransactions
+      chartTransactions
         .filter((transaction) => transaction.acquiredOrDisposed === "A")
         .reduce((sum, transaction) => sum + (transaction.sharesTransacted ?? 0), 0),
-    [rangedTransactions],
+    [chartTransactions],
   );
 
   const totalSells = useMemo(
     () =>
-      rangedTransactions
+      chartTransactions
         .filter((transaction) => transaction.acquiredOrDisposed === "D")
         .reduce((sum, transaction) => sum + (transaction.sharesTransacted ?? 0), 0),
-    [rangedTransactions],
+    [chartTransactions],
   );
-
-  const toggleOwner = useCallback((owner: string) => {
-    setSelectedOwners((current) => {
-      const next = new Set(current);
-      if (next.has(owner)) {
-        next.delete(owner);
-      } else {
-        next.add(owner);
-      }
-      return next;
-    });
-  }, []);
 
   const hasChartData =
     chartMode === "activity"
-      ? activityData.some((row) => row.buys > 0 || row.sells > 0)
-      : holdings.data.length > 0;
+      ? monthlyVolume.some((bucket) => bucket.acquired > 0 || bucket.disposed > 0)
+      : holdingsView === "net-position"
+        ? netPositionRows.length > 0
+        : holdings.data.length > 0;
 
   return {
-    owners,
     chartMode,
     setChartMode,
+    holdingsView,
+    setHoldingsView,
     timeRange,
     setTimeRange,
-    selectedOwners,
-    effectiveSelectedOwners,
     holdingsSecurity,
-    activityData,
+    monthlyVolume,
+    exclusionFootnote,
+    netPositionRows,
     holdingsData: holdings.data,
     holdingsSeries: holdings.series,
     holdingsConfig,
     totalBuys,
     totalSells,
-    toggleOwner,
     hasChartData,
   };
 }

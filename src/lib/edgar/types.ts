@@ -77,6 +77,7 @@ export type CompanyFilingsPage = {
   filings: Filing[];
   secUrl: string;
   totalShown: number;
+  hasMoreFilings?: boolean;
 };
 
 export type ReportingOwner = {

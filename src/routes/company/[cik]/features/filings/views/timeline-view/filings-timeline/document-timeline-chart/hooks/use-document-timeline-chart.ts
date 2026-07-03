@@ -3,43 +3,48 @@ import type { FredTimelineEvent } from "@/lib/fred/types";
 import type { TimelineFiling } from "@/routes/company/[cik]/features/filings/types";
 import { buildStockHistoryRange } from "../lib/build-stock-history-range";
 import { buildDocumentTimelineChartData } from "../lib/build-chart-data";
+import { buildTimelineEvents, buildChartMarkerDisplays } from "../lib/build-timeline-events";
 import { loadStockHistory } from "../lib/load-stock-history-client";
 
 export function useDocumentTimelineChart({
   cik,
-  timeline,
+  filings,
   fredEvents = [],
 }: {
   cik: string;
-  timeline: TimelineFiling[];
+  filings: TimelineFiling[];
   fredEvents?: FredTimelineEvent[];
 }) {
-  const eightKFilings = useMemo(
-    () => timeline.filter((filing) => filing.category === "8-K"),
-    [timeline],
-  );
-
   const { period1, period2 } = useMemo(
-    () => buildStockHistoryRange(eightKFilings),
-    [eightKFilings],
+    () => buildStockHistoryRange(filings, fredEvents),
+    [filings, fredEvents],
   );
 
   const data = use(loadStockHistory(cik, period1, period2));
 
-  const { chartData, filingMarkers, fredMarkers, markers } = useMemo(
-    () => buildDocumentTimelineChartData(data.quotes ?? [], eightKFilings, fredEvents),
-    [data.quotes, eightKFilings, fredEvents],
+  const { chartData, filingMarkers, fredMarkers, markers, quoteDates, closeByDate } = useMemo(
+    () => buildDocumentTimelineChartData(data.quotes ?? [], filings, fredEvents),
+    [data.quotes, filings, fredEvents],
   );
+
+  const rankedEvents = useMemo(
+    () => buildTimelineEvents(markers, quoteDates, closeByDate),
+    [markers, quoteDates, closeByDate],
+  );
+
+  const chartMarkers = useMemo(() => buildChartMarkerDisplays(markers), [markers]);
 
   const latestPrice = chartData[chartData.length - 1]?.close ?? null;
 
   return {
-    eightKFilings,
+    filings,
     data,
     chartData,
     filingMarkers,
     fredMarkers,
     markers,
+    chartMarkers,
+    rankedEvents,
     latestPrice,
     hasChartData: chartData.length > 0,
   };

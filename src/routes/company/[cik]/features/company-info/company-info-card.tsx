@@ -1,102 +1,95 @@
+import type { ReactNode } from "react";
+import type { StockSnapshot } from "@/routes/company/[cik]/lib/compute-stock-snapshot";
 import type { CompanyInfo } from "@/routes/company/[cik]/types";
+import {
+  companyInitials,
+  formatCompanyLocation,
+  formatDisplayCik,
+  formatFiscalYearEnd,
+  formatHeaderChange,
+  formatHeaderPrice,
+} from "./utils/format-company-header";
 
 type CompanyInfoCardProps = {
   info: CompanyInfo;
-  secUrl: string;
-  insiderUrl?: string;
   ticker?: string;
+  stock?: StockSnapshot | null;
 };
 
-export function CompanyInfoCard({ info, secUrl, insiderUrl, ticker }: CompanyInfoCardProps) {
+type HeaderStatProps = {
+  label: string;
+  children: ReactNode;
+  variant?: "price" | "text";
+  valueClassName?: string;
+};
+
+function HeaderStat({ label, children, variant = "text", valueClassName }: HeaderStatProps) {
+  const valueClasses =
+    variant === "price"
+      ? "font-mono text-[15px] font-bold text-zinc-900"
+      : "text-[12.5px] font-medium text-zinc-800";
+
   return (
-    <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div>
-          <p className="text-sm font-medium uppercase tracking-wide text-emerald-700">
-            SEC EDGAR Company
-          </p>
-          <h1 className="mt-1 text-3xl font-semibold tracking-tight text-zinc-900">
-            {info.name}
-          </h1>
-          <div className="mt-3 flex flex-wrap gap-2 text-sm text-zinc-600">
-            {ticker ? (
-              <span className="rounded-full bg-zinc-100 px-3 py-1 font-mono font-medium">
-                {ticker}
-              </span>
-            ) : null}
-            <span className="rounded-full bg-zinc-100 px-3 py-1 font-mono">
-              CIK {info.cik}
-            </span>
-            {info.sic ? (
-              <span className="rounded-full bg-zinc-100 px-3 py-1">
-                SIC {info.sic}
-                {info.sicDescription ? ` · ${info.sicDescription}` : ""}
-              </span>
-            ) : null}
-            {info.state ? (
-              <span className="rounded-full bg-zinc-100 px-3 py-1">
-                {info.state}
-                {info.stateOfIncorporation ? ` · Inc. ${info.stateOfIncorporation}` : ""}
-              </span>
-            ) : null}
-            {info.fiscalYearEnd ? (
-              <span className="rounded-full bg-zinc-100 px-3 py-1">
-                FY end {info.fiscalYearEnd}
-              </span>
-            ) : null}
+    <div className="shrink-0">
+      <div className="text-[8.5px] uppercase tracking-[0.06em] text-zinc-400">{label}</div>
+      <div className={["mt-0.5 whitespace-nowrap", valueClasses, valueClassName].join(" ")}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+export function CompanyInfoCard({ info, ticker, stock }: CompanyInfoCardProps) {
+  const location = formatCompanyLocation(info);
+  const fiscalYearEnd = formatFiscalYearEnd(info.fiscalYearEnd);
+  const changeIsPositive = (stock?.changePercent ?? 0) >= 0;
+
+  return (
+    <section className="w-full border-b border-zinc-200 bg-white">
+      <div className="flex flex-wrap items-center gap-4 px-5 py-3.5 lg:px-6">
+        <div className="flex shrink-0 items-center gap-2.5">
+          <div className="flex size-[38px] shrink-0 items-center justify-center rounded-[10px] border border-emerald-100 bg-emerald-50 font-mono text-[13px] font-bold text-emerald-700">
+            {companyInitials(info.name)}
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-base font-semibold tracking-[-0.01em] text-zinc-900">
+                {info.name}
+              </h1>
+              {ticker ? (
+                <span className="rounded-md bg-zinc-100 px-1.5 py-0.5 font-mono text-[11px] font-semibold tracking-wide text-zinc-600">
+                  {ticker}
+                </span>
+              ) : null}
+            </div>
+            <p className="mt-0.5 font-mono text-[10px] text-zinc-400">
+              CIK {formatDisplayCik(info.cik)}
+              {info.sic ? ` · SIC ${info.sic}` : ""}
+            </p>
           </div>
         </div>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <a
-            href={secUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center rounded-xl border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50"
-          >
-            View on SEC.gov
-          </a>
-          <a
-            href="#analysis"
-            className="inline-flex items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-800 transition hover:bg-emerald-100"
-          >
-            Quarterly analysis
-          </a>
-          {insiderUrl ? (
-            <a
-              href={insiderUrl}
-              className="inline-flex items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-800 transition hover:bg-emerald-100"
-            >
-              Insider transactions
-            </a>
+
+        <div className="hidden h-[34px] w-px shrink-0 bg-zinc-100 sm:block" aria-hidden />
+
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-5 overflow-hidden">
+          {stock ? (
+            <>
+              <HeaderStat label="Last" variant="price">
+                ${formatHeaderPrice(stock.lastPrice)}
+              </HeaderStat>
+              <HeaderStat
+                label="Change"
+                variant="price"
+                valueClassName={changeIsPositive ? "text-emerald-700" : "text-red-600"}
+              >
+                {formatHeaderChange(stock.changePercent)}
+              </HeaderStat>
+            </>
           ) : null}
+          {location ? <HeaderStat label="Location">{location}</HeaderStat> : null}
+          {fiscalYearEnd ? <HeaderStat label="FY end">{fiscalYearEnd}</HeaderStat> : null}
         </div>
       </div>
-
-      {(info.businessAddress.length > 0 || info.phone) && (
-        <div className="mt-6 grid gap-4 border-t border-zinc-100 pt-6 sm:grid-cols-2">
-          {info.businessAddress.length > 0 ? (
-            <div>
-              <h2 className="text-sm font-semibold text-zinc-900">Business address</h2>
-              <address className="mt-2 not-italic text-sm leading-6 text-zinc-600">
-                {info.businessAddress.map((line) => (
-                  <div key={line}>{line}</div>
-                ))}
-                {info.phone ? <div>{info.phone}</div> : null}
-              </address>
-            </div>
-          ) : null}
-          {info.mailingAddress.length > 0 ? (
-            <div>
-              <h2 className="text-sm font-semibold text-zinc-900">Mailing address</h2>
-              <address className="mt-2 not-italic text-sm leading-6 text-zinc-600">
-                {info.mailingAddress.map((line) => (
-                  <div key={line}>{line}</div>
-                ))}
-              </address>
-            </div>
-          ) : null}
-        </div>
-      )}
     </section>
   );
 }

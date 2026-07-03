@@ -1,11 +1,14 @@
 import type { InsiderTransaction } from "@/routes/company/[cik]/features/insider-transactions/types";
+import type { ChartTimeRange } from "@/routes/company/[cik]/components/chart-time-range-switch";
 
 export type InsiderTransactionsChartProps = {
   transactions: InsiderTransaction[];
+  ticker?: string;
 };
 
 export type ChartMode = "activity" | "holdings";
-export type TimeRange = "1D" | "1W" | "1M" | "3M" | "1Y" | "5Y" | "MAX";
+export type HoldingsView = "timeline" | "net-position";
+export type TimeRange = ChartTimeRange;
 export type BucketSize = "day" | "week" | "month";
 
 export type SeriesPoint = {
@@ -32,6 +35,22 @@ export type HoverState = {
   date: string;
   time: number;
   entries: Array<{ label: string; color: string; value: number }>;
+};
+
+export type NetPositionRow = {
+  owner: string;
+  ownerType?: string;
+  netShares: number;
+  transactions: InsiderTransaction[];
+};
+
+export type NetPositionBarGeometry = {
+  owner: string;
+  ownerType?: string;
+  netShares: number;
+  transactions: InsiderTransaction[];
+  direction: "acquired" | "disposed";
+  barHalfFraction: number;
 };
 
 export type ChartGeometry = {
