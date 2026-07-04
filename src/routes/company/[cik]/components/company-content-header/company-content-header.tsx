@@ -4,12 +4,14 @@ import { NavIconBreadcrumbChevron } from "@/routes/company/[cik]/components/comp
 type CompanyContentHeaderProps = {
   ticker?: string;
   title: string;
+  leading?: ReactNode;
   actions?: ReactNode;
 };
 
-export function CompanyContentHeader({ ticker, title, actions }: CompanyContentHeaderProps) {
+export function CompanyContentHeader({ ticker, title, leading, actions }: CompanyContentHeaderProps) {
   return (
     <header className="flex h-[52px] shrink-0 items-center gap-2.5 border-b border-zinc-200 bg-white px-5">
+      {leading}
       {ticker ? (
         <span className="font-mono text-[11px] font-semibold text-zinc-400">{ticker}</span>
       ) : null}

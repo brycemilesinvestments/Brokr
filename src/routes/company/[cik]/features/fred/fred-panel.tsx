@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import {
   ChartTimeRangeSwitch,
@@ -28,6 +28,7 @@ type FredPanelProps = {
   ticker?: string;
   selectedSeriesId?: string | null;
   onSelectedSeriesIdChange?: (seriesId: string | null) => void;
+  headerLeading?: ReactNode;
 };
 
 export function FredPanel({
@@ -35,9 +36,11 @@ export function FredPanel({
   ticker,
   selectedSeriesId: selectedSeriesIdProp = null,
   onSelectedSeriesIdChange,
+  headerLeading,
 }: FredPanelProps) {
   const [internalSeriesId, setInternalSeriesId] = useState<string | null>(selectedSeriesIdProp);
   const [timeRange, setTimeRange] = useState<ChartTimeRange>("MAX");
+  const [seriesSidebarOpen, setSeriesSidebarOpen] = useState(false);
   const selectedSeriesId = selectedSeriesIdProp ?? internalSeriesId;
 
   const setSelectedSeriesId = useCallback(
@@ -95,9 +98,13 @@ export function FredPanel({
 
   if (catalogLoading && !catalog) {
     return (
-      <section className="flex min-h-0 flex-1 flex-col bg-zinc-50">
-        <CompanyContentHeader ticker={ticker} title="FRED macro analytics" />
-        <div className="flex flex-1 items-center justify-center text-sm text-zinc-500">
+      <section className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-zinc-50">
+        <CompanyContentHeader
+          ticker={ticker}
+          title="FRED macro analytics"
+          leading={headerLeading}
+        />
+        <div className="flex min-h-0 flex-1 items-center justify-center text-sm text-zinc-500">
           Loading FRED analytics…
         </div>
       </section>
@@ -106,9 +113,13 @@ export function FredPanel({
 
   if (catalogError) {
     return (
-      <section className="flex min-h-0 flex-1 flex-col bg-zinc-50">
-        <CompanyContentHeader ticker={ticker} title="FRED macro analytics" />
-        <div className="px-6 py-8">
+      <section className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-zinc-50">
+        <CompanyContentHeader
+          ticker={ticker}
+          title="FRED macro analytics"
+          leading={headerLeading}
+        />
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-8">
           <p className="text-sm text-red-700">{catalogError}</p>
           <Button variant="outline" className="mt-3" onClick={() => void refetchCatalog()}>
             Retry
@@ -120,9 +131,13 @@ export function FredPanel({
 
   if (!catalog?.series.length) {
     return (
-      <section className="flex min-h-0 flex-1 flex-col bg-zinc-50">
-        <CompanyContentHeader ticker={ticker} title="FRED macro analytics" />
-        <div className="flex flex-1 items-center justify-center px-6 text-center text-sm text-zinc-500">
+      <section className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-zinc-50">
+        <CompanyContentHeader
+          ticker={ticker}
+          title="FRED macro analytics"
+          leading={headerLeading}
+        />
+        <div className="flex min-h-0 flex-1 items-center justify-center px-6 text-center text-sm text-zinc-500">
           No FRED series in the database yet. Refresh macro data from the timeline admin panel.
         </div>
       </section>
@@ -140,29 +155,47 @@ export function FredPanel({
     : FRED_ANALYTICS_FALLBACK_STYLE;
 
   return (
-    <section className="relative flex min-h-0 flex-1 flex-col bg-zinc-50">
+    <section className="relative flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-zinc-50">
       <CompanyContentHeader
         ticker={ticker}
         title="FRED macro analytics"
+        leading={headerLeading}
         actions={
-          <span className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-2.5 py-1.5 text-[11px] font-medium text-zinc-500">
-            <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden>
-              <path d="M7 3v4l2.5 1.5" />
-              <circle cx="7" cy="7" r="5.2" />
-            </svg>
-            Compare
-          </span>
+          <>
+            <button
+              type="button"
+              onClick={() => setSeriesSidebarOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-2.5 py-1.5 text-[11px] font-medium text-zinc-600 transition-colors hover:bg-zinc-50 hover:text-zinc-900 lg:hidden"
+            >
+              <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden>
+                <rect x="2" y="2" width="4.5" height="10" rx="1" />
+                <line x1="8.5" y1="4.5" x2="12" y2="4.5" />
+                <line x1="8.5" y1="7" x2="12" y2="7" />
+                <line x1="8.5" y1="9.5" x2="12" y2="9.5" />
+              </svg>
+              Series
+            </button>
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-2.5 py-1.5 text-[11px] font-medium text-zinc-500">
+              <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden>
+                <path d="M7 3v4l2.5 1.5" />
+                <circle cx="7" cy="7" r="5.2" />
+              </svg>
+              Compare
+            </span>
+          </>
         }
       />
 
-      <div className="flex min-h-0 flex-1">
+      <div className="flex min-h-0 flex-1 overflow-hidden">
         <FredSeriesSidebar
           series={catalog.series}
           selectedSeriesId={selectedSeriesId}
+          mobileOpen={seriesSidebarOpen}
+          onMobileClose={() => setSeriesSidebarOpen(false)}
           onSelectSeries={setSelectedSeriesId}
         />
 
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-white">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-white">
           {activeSeries && rangeStats ? (
             <>
               <FredSeriesDetailHeader series={activeSeries} stats={rangeStats} />
@@ -209,7 +242,7 @@ export function FredPanel({
               </div>
             </>
           ) : (
-            <div className="flex flex-1 items-center justify-center text-sm text-zinc-500">
+            <div className="flex min-h-0 flex-1 items-center justify-center text-sm text-zinc-500">
               Select a series to view its time series.
             </div>
           )}
