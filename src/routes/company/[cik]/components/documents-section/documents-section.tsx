@@ -18,6 +18,7 @@ type DocumentsSectionProps = {
   fiscalYearEnd?: string;
   enabled: boolean;
   initialView?: "list" | "timeline";
+  headerLeading?: ReactNode;
 };
 
 type DocumentsViewMode = "list" | "timeline";
@@ -33,6 +34,7 @@ export function DocumentsSection({
   fiscalYearEnd,
   enabled,
   initialView = "timeline",
+  headerLeading,
 }: DocumentsSectionProps) {
   const [view, setView] = useState<DocumentsViewMode>(initialView);
 
@@ -40,7 +42,8 @@ export function DocumentsSection({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-white">
-      <div className="flex shrink-0 items-center border-b border-zinc-200 px-5 py-2.5">
+      <div className="flex shrink-0 items-center gap-3 border-b border-zinc-200 px-5 py-2.5">
+        {headerLeading}
         <div className="inline-flex gap-0.5 rounded-[10px] bg-zinc-100 p-0.5">
           <ViewToggle active={view === "list"} onClick={() => setView("list")}>
             List

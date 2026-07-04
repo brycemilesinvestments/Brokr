@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { CompanyNavTab } from "@/routes/company/[cik]/components/company-nav/constants";
 import { CompanySidebarSearch } from "@/routes/company/[cik]/components/company-sidebar-search/company-sidebar-search";
 import { companyInitials } from "@/routes/company/[cik]/features/company-info/utils/format-company-header";
+import { cn } from "@/lib/utils";
 import {
   CompanySidebarAiBadge,
   CompanySidebarNavItem,
@@ -11,6 +12,7 @@ import {
 } from "./company-sidebar-nav-item";
 import {
   NavIconChevronRight,
+  NavIconClose,
   NavIconDocuments,
   NavIconFred,
   NavIconGrid,
@@ -28,6 +30,8 @@ type CompanySidebarProps = {
   ticker?: string;
   activeTab: CompanyNavTab;
   showInsider: boolean;
+  mobileOpen?: boolean;
+  onMobileClose?: () => void;
   onNavigate: (tab: CompanyNavTab) => void;
 };
 
@@ -36,10 +40,41 @@ export function CompanySidebar({
   ticker,
   activeTab,
   showInsider,
+  mobileOpen = false,
+  onMobileClose,
   onNavigate,
 }: CompanySidebarProps) {
   return (
-    <nav className="flex w-[238px] shrink-0 flex-col border-r border-zinc-200 bg-white">
+    <>
+      {mobileOpen ? (
+        <button
+          type="button"
+          className="fixed inset-0 z-40 bg-black/40 lg:hidden"
+          onClick={onMobileClose}
+          aria-label="Close navigation"
+        />
+      ) : null}
+
+      <nav
+        className={cn(
+          "flex w-[238px] shrink-0 flex-col border-r border-zinc-200 bg-white",
+          "fixed inset-y-0 left-0 z-50 h-dvh transition-transform duration-200 ease-in-out",
+          "lg:static lg:z-auto lg:h-full lg:translate-x-0",
+          mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
+        )}
+      >
+      <div className="flex items-center gap-2 border-b border-zinc-100 lg:hidden">
+        <button
+          type="button"
+          onClick={onMobileClose}
+          className="ml-3.5 inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-zinc-50 hover:text-zinc-800"
+          aria-label="Close navigation"
+        >
+          <NavIconClose />
+        </button>
+        <span className="truncate text-[13px] font-semibold text-zinc-900">Navigation</span>
+      </div>
+
       <Link
         href="/"
         className="flex items-center gap-2.5 border-b border-zinc-100 px-3.5 py-3.5 transition-colors hover:bg-zinc-50"
@@ -62,7 +97,7 @@ export function CompanySidebar({
 
       <CompanySidebarSearch />
 
-      <div className="flex-1 overflow-y-auto px-2.5 pb-3 pt-0.5">
+      <div className="min-h-0 flex-1 overflow-y-auto px-2.5 pb-3 pt-0.5">
         <CompanySidebarNavItem
           label="Analysis"
           icon={<NavIconGrid />}
@@ -136,6 +171,7 @@ export function CompanySidebar({
           onClick={() => onNavigate("documents")}
         />
       </div>
-    </nav>
+      </nav>
+    </>
   );
 }

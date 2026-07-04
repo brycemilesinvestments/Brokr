@@ -12,6 +12,7 @@ import {
   type CompanyTabValue,
 } from "@/routes/company/[cik]/components/company-nav/constants";
 import { CompanySidebar } from "@/routes/company/[cik]/components/company-sidebar/company-sidebar";
+import { CompanySidebarMenuButton } from "@/routes/company/[cik]/components/company-sidebar/company-sidebar-menu-button";
 import { DocumentsSection } from "@/routes/company/[cik]/components/documents-section/documents-section";
 import { GuidancePanel } from "@/routes/company/[cik]/features/guidance";
 import { HealthPanel } from "@/routes/company/[cik]/features/health";
@@ -63,6 +64,7 @@ export function CompanyDataTabs({
   const [fredSeriesId, setFredSeriesId] = useState<string | null>(null);
   const [isHashReady, setIsHashReady] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  const [companySidebarOpen, setCompanySidebarOpen] = useState(false);
   const displayedTab = isHashReady ? activeTab : "analysis";
   const sidebarTab: CompanyNavTab = sidebarTabForValue(displayedTab) ?? "analysis";
   const documentsInitialView = displayedTab === "documents" ? "list" : "timeline";
@@ -106,6 +108,7 @@ export function CompanyDataTabs({
     const resolvedTab: CompanyTabValue = tab === "documents" ? "timeline" : tab;
     setActiveTab(resolvedTab);
     setIsHashReady(true);
+    setCompanySidebarOpen(false);
     if (tab !== "fred") {
       setFredSeriesId(null);
     }
@@ -189,6 +192,9 @@ export function CompanyDataTabs({
             ticker={ticker}
             selectedSeriesId={fredSeriesId}
             onSelectedSeriesIdChange={handleFredSeriesChange}
+            headerLeading={
+              <CompanySidebarMenuButton onClick={() => setCompanySidebarOpen(true)} />
+            }
           />
         );
       case "documents":
@@ -206,6 +212,9 @@ export function CompanyDataTabs({
             fiscalYearEnd={fiscalYearEnd}
             enabled
             initialView={documentsInitialView}
+            headerLeading={
+              <CompanySidebarMenuButton onClick={() => setCompanySidebarOpen(true)} />
+            }
           />
         );
       default:
@@ -214,21 +223,29 @@ export function CompanyDataTabs({
   }
 
   return (
-    <div className="flex h-dvh bg-zinc-50">
+    <div className="flex h-dvh overflow-hidden bg-zinc-50">
       <CompanySidebar
         companyName={companyName}
         ticker={ticker}
         activeTab={sidebarTab}
         showInsider={Boolean(insider)}
+        mobileOpen={companySidebarOpen}
+        onMobileClose={() => setCompanySidebarOpen(false)}
         onNavigate={navigateTo}
       />
 
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         {isFredDashboard || isDocumentsPanel ? (
           renderPanel()
         ) : (
           <>
-            <CompanyContentHeader ticker={ticker} title={headerTitle} />
+            <CompanyContentHeader
+              ticker={ticker}
+              title={headerTitle}
+              leading={
+                <CompanySidebarMenuButton onClick={() => setCompanySidebarOpen(true)} />
+              }
+            />
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden">{renderPanel()}</div>
           </>
         )}
