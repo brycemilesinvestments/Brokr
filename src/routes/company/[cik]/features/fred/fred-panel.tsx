@@ -7,27 +7,37 @@ import {
   filterDatedRowsByTimeRange,
   type ChartTimeRange,
 } from "@/routes/company/[cik]/components/chart-time-range-switch";
-import { CHART_VIEWPORT_HEIGHT } from "@/routes/company/[cik]/lib/chart-viewport";
 import { useCompanyApi } from "@/routes/company/[cik]/hooks/use-company-api";
+import type { FredCategory } from "@/lib/fred/constants";
 import { FRED_OBSERVATION_START } from "@/lib/fred";
+import { CompanyContentHeader } from "@/routes/company/[cik]/components/company-content-header/company-content-header";
 import { FredSeriesChart } from "./components/fred-series-chart";
+import { FredSeriesDetailHeader } from "./components/fred-series-detail-header";
 import { FredSeriesSidebar } from "./components/fred-series-sidebar";
+import {
+  FRED_ANALYTICS_CATEGORY_STYLES,
+  FRED_ANALYTICS_FALLBACK_STYLE,
+  FRED_ANALYTICS_TIME_RANGE_OPTIONS,
+} from "./constants";
 import { buildFredChartRows } from "./lib/build-fred-chart-rows";
+import { computeFredRangeStats } from "./lib/compute-fred-range-stats";
 import type { FredSeriesCatalogResponse, FredSeriesObservationsResponse } from "./types";
 
 type FredPanelProps = {
   enabled: boolean;
+  ticker?: string;
   selectedSeriesId?: string | null;
   onSelectedSeriesIdChange?: (seriesId: string | null) => void;
 };
 
 export function FredPanel({
   enabled,
+  ticker,
   selectedSeriesId: selectedSeriesIdProp = null,
   onSelectedSeriesIdChange,
 }: FredPanelProps) {
   const [internalSeriesId, setInternalSeriesId] = useState<string | null>(selectedSeriesIdProp);
-  const [timeRange, setTimeRange] = useState<ChartTimeRange>("5Y");
+  const [timeRange, setTimeRange] = useState<ChartTimeRange>("MAX");
   const selectedSeriesId = selectedSeriesIdProp ?? internalSeriesId;
 
   const setSelectedSeriesId = useCallback(
@@ -77,21 +87,27 @@ export function FredPanel({
     [allChartData, timeRange],
   );
 
+  const rangeStats = useMemo(() => computeFredRangeStats(chartData), [chartData]);
+
   if (!enabled) {
     return null;
   }
 
   if (catalogLoading && !catalog) {
     return (
-      <section className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
-        <div className="px-6 py-12 text-center text-sm text-zinc-500">Loading FRED analytics…</div>
+      <section className="flex min-h-0 flex-1 flex-col bg-zinc-50">
+        <CompanyContentHeader ticker={ticker} title="FRED macro analytics" />
+        <div className="flex flex-1 items-center justify-center text-sm text-zinc-500">
+          Loading FRED analytics…
+        </div>
       </section>
     );
   }
 
   if (catalogError) {
     return (
-      <section className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
+      <section className="flex min-h-0 flex-1 flex-col bg-zinc-50">
+        <CompanyContentHeader ticker={ticker} title="FRED macro analytics" />
         <div className="px-6 py-8">
           <p className="text-sm text-red-700">{catalogError}</p>
           <Button variant="outline" className="mt-3" onClick={() => void refetchCatalog()}>
@@ -104,8 +120,9 @@ export function FredPanel({
 
   if (!catalog?.series.length) {
     return (
-      <section className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
-        <div className="px-6 py-12 text-center text-sm text-zinc-500">
+      <section className="flex min-h-0 flex-1 flex-col bg-zinc-50">
+        <CompanyContentHeader ticker={ticker} title="FRED macro analytics" />
+        <div className="flex flex-1 items-center justify-center px-6 text-center text-sm text-zinc-500">
           No FRED series in the database yet. Refresh macro data from the timeline admin panel.
         </div>
       </section>
@@ -117,43 +134,40 @@ export function FredPanel({
     catalog.series.find((item) => item.series_id === selectedSeriesId) ??
     null;
 
+  const categoryStyle = activeSeries
+    ? (FRED_ANALYTICS_CATEGORY_STYLES[activeSeries.category as FredCategory] ??
+      FRED_ANALYTICS_FALLBACK_STYLE)
+    : FRED_ANALYTICS_FALLBACK_STYLE;
+
   return (
-    <section className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
-      <div className="border-b border-zinc-100 px-5 py-4">
-        <h2 className="text-base font-semibold text-zinc-900">FRED macro analytics</h2>
-        <p className="mt-1 text-sm text-zinc-500">
-          U.S. economic time series from the Federal Reserve Economic Data (FRED) database.
-        </p>
-      </div>
+    <section className="relative flex min-h-0 flex-1 flex-col bg-zinc-50">
+      <CompanyContentHeader
+        ticker={ticker}
+        title="FRED macro analytics"
+        actions={
+          <span className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-2.5 py-1.5 text-[11px] font-medium text-zinc-500">
+            <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden>
+              <path d="M7 3v4l2.5 1.5" />
+              <circle cx="7" cy="7" r="5.2" />
+            </svg>
+            Compare
+          </span>
+        }
+      />
 
-      <div className="flex min-h-0" style={{ height: CHART_VIEWPORT_HEIGHT }}>
-        <aside className="flex w-[280px] shrink-0 flex-col border-r border-zinc-100">
-          <FredSeriesSidebar
-            series={catalog.series}
-            selectedSeriesId={selectedSeriesId}
-            onSelectSeries={setSelectedSeriesId}
-          />
-        </aside>
+      <div className="flex min-h-0 flex-1">
+        <FredSeriesSidebar
+          series={catalog.series}
+          selectedSeriesId={selectedSeriesId}
+          onSelectSeries={setSelectedSeriesId}
+        />
 
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-          {activeSeries ? (
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-white">
+          {activeSeries && rangeStats ? (
             <>
-              <div className="shrink-0 border-b border-zinc-100 px-5 py-3">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="rounded-md bg-indigo-100 px-2 py-0.5 font-mono text-xs font-semibold text-indigo-800">
-                    {activeSeries.series_id}
-                  </span>
-                  {activeSeries.frequency ? (
-                    <span className="text-xs text-zinc-500">{activeSeries.frequency}</span>
-                  ) : null}
-                </div>
-                <h3 className="mt-1 text-sm font-medium text-zinc-900">{activeSeries.name}</h3>
-                {activeSeries.description ? (
-                  <p className="mt-1 text-sm text-zinc-500">{activeSeries.description}</p>
-                ) : null}
-              </div>
+              <FredSeriesDetailHeader series={activeSeries} stats={rangeStats} />
 
-              <div className="relative min-h-0 flex-1 overflow-hidden px-2 pb-1 pl-2 pt-1.5">
+              <div className="relative min-h-0 flex-1 overflow-hidden px-5 pb-1.5 pt-3.5">
                 {observationsLoading && !observations ? (
                   <div className="flex h-full items-center justify-center text-sm text-zinc-500">
                     Loading time series…
@@ -173,12 +187,25 @@ export function FredPanel({
                     </div>
                   </div>
                 ) : (
-                  <FredSeriesChart series={activeSeries} chartData={chartData} />
+                  <FredSeriesChart
+                    series={activeSeries}
+                    chartData={chartData}
+                    lineColor={categoryStyle.color}
+                  />
                 )}
               </div>
 
-              <div className="shrink-0 border-t border-zinc-100 px-5 py-3">
-                <ChartTimeRangeSwitch value={timeRange} onChange={setTimeRange} />
+              <div className="flex shrink-0 items-center gap-2.5 border-t border-zinc-100 px-6 py-3">
+                <ChartTimeRangeSwitch
+                  value={timeRange}
+                  onChange={setTimeRange}
+                  options={[...FRED_ANALYTICS_TIME_RANGE_OPTIONS]}
+                  variant="segmented"
+                />
+                <span className="ml-auto inline-flex items-center gap-1.5 text-[10.5px] text-zinc-300">
+                  <span className="size-1.5 rounded-full bg-zinc-300" aria-hidden />
+                  FRED data · Federal Reserve Economic Data
+                </span>
               </div>
             </>
           ) : (
