@@ -1,8 +1,7 @@
 "use client";
 
 import { Suspense, useCallback, useMemo, useState } from "react";
-import { EventImpactList } from "./components/event-impact-list";
-import { EventSortOptions } from "./components/event-sort-options";
+import { EventImpactSidebar } from "./components/event-impact-sidebar";
 import { TimelinePriceChart } from "./components/timeline-price-chart";
 import { useDocumentTimelineChart } from "./hooks/use-document-timeline-chart";
 import {
@@ -35,6 +34,7 @@ function DocumentTimelineChartContent({
     fredEvents,
   });
   const [eventSort, setEventSort] = useState<TimelineEventSort>("chronological");
+  const [eventsSidebarOpen, setEventsSidebarOpen] = useState(false);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [hoveredEventId, setHoveredEventId] = useState<string | null>(null);
   const handleSelectEvent = useCallback((eventId: string) => {
@@ -82,11 +82,36 @@ function DocumentTimelineChartContent({
             <span className="font-mono text-sm font-medium text-zinc-500">{ticker}</span>
           ) : null}
         </div>
-        <span className="text-[11px] text-zinc-400">2-month price impact after each event</span>
+        <div className="flex items-center gap-2">
+          <span className="hidden text-[11px] text-zinc-400 sm:inline">
+            2-month price impact after each event
+          </span>
+          <button
+            type="button"
+            onClick={() => setEventsSidebarOpen(true)}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-2.5 py-1.5 text-[11px] font-medium text-zinc-600 transition-colors hover:bg-zinc-50 hover:text-zinc-900 lg:hidden"
+          >
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 14 14"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.4"
+              aria-hidden
+            >
+              <rect x="7.5" y="2" width="4.5" height="10" rx="1" />
+              <line x1="2" y1="4.5" x2="5.5" y2="4.5" />
+              <line x1="2" y1="7" x2="5.5" y2="7" />
+              <line x1="2" y1="9.5" x2="5.5" y2="9.5" />
+            </svg>
+            Events
+          </button>
+        </div>
       </div>
 
       <div className="flex min-h-0 flex-1">
-        <div className="relative min-h-0 min-w-0 flex-1 overflow-hidden border-r border-zinc-100 px-2 pb-1 pl-2 pt-1.5">
+        <div className="relative min-h-0 min-w-0 flex-1 overflow-hidden px-2 pb-1 pl-2 pt-1.5 lg:border-r lg:border-zinc-100">
           <TimelinePriceChart
             chartData={chartData}
             chartMarkers={impactChartMarkers}
@@ -98,17 +123,18 @@ function DocumentTimelineChartContent({
           />
         </div>
 
-        <aside className="flex w-[300px] shrink-0 flex-col border-l border-zinc-100">
-          <EventSortOptions sort={eventSort} onSortChange={setEventSort} />
-          <EventImpactList
-            cik={cik}
-            events={sortedEvents}
-            activeEventId={activeEventId}
-            selectedEventId={selectedEventId}
-            onSelectEvent={handleToggleEvent}
-            onHoverEvent={setHoveredEventId}
-          />
-        </aside>
+        <EventImpactSidebar
+          cik={cik}
+          events={sortedEvents}
+          sort={eventSort}
+          activeEventId={activeEventId}
+          selectedEventId={selectedEventId}
+          mobileOpen={eventsSidebarOpen}
+          onMobileClose={() => setEventsSidebarOpen(false)}
+          onSortChange={setEventSort}
+          onSelectEvent={handleToggleEvent}
+          onHoverEvent={setHoveredEventId}
+        />
       </div>
     </div>
   );
