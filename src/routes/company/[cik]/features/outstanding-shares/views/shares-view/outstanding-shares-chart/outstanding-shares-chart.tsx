@@ -35,7 +35,7 @@ export function OutstandingSharesChart({ points }: OutstandingSharesChartProps) 
 
   if (chartData.length === 0) {
     return (
-      <section className="rounded-2xl border border-zinc-200 bg-white shadow-sm">
+      <section className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-white">
         <div className="border-b border-zinc-100 px-6 py-5">
           <h2 className="text-lg font-semibold text-zinc-900">Outstanding shares</h2>
           <p className="mt-1 text-sm text-zinc-500">
@@ -47,7 +47,7 @@ export function OutstandingSharesChart({ points }: OutstandingSharesChartProps) 
   }
 
   return (
-    <section className="rounded-2xl border border-zinc-200 bg-white shadow-sm">
+    <section className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-white">
       <div className="border-b border-zinc-100 px-6 py-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>

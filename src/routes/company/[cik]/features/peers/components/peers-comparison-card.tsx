@@ -47,7 +47,7 @@ export function PeersComparisonCard({
   };
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
+    <section className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-white">
       <header className="border-b border-zinc-100 px-6 pb-4 pt-5">
         <div className="flex items-start justify-between gap-5">
           <div className="min-w-0">

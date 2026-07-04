@@ -5,7 +5,7 @@ import { BONE_NAMES } from "@/components/bones/skeleton-names";
 
 function PeersComparisonLoadingContent() {
   return (
-    <section className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
+    <section className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-white">
       <header className="flex items-start justify-between gap-5 border-b border-zinc-100 px-6 pb-4 pt-5">
         <div className="space-y-2">
           <div className="h-3 w-28 rounded bg-zinc-100" />

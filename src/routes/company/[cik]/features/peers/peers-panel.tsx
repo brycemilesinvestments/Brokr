@@ -24,13 +24,11 @@ export function PeersPanel({ cik, ticker, enabled }: PeersPanelProps) {
 
   if (error) {
     return (
-      <section className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
-        <div className="px-6 py-8">
+      <section className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-white px-6 py-8">
           <p className="text-sm text-red-700">{error}</p>
           <Button variant="outline" className="mt-3" onClick={() => void refetch()}>
             Retry
           </Button>
-        </div>
       </section>
     );
   }
@@ -41,8 +39,7 @@ export function PeersPanel({ cik, ticker, enabled }: PeersPanelProps) {
 
   if (data.status === "insufficient_peers") {
     return (
-      <section className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
-        <div className="px-6 py-8">
+      <section className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-white px-6 py-8">
           <p className="text-sm text-zinc-600">
             {data.reason === "insufficient_peer_data" ? (
               <>
@@ -65,7 +62,6 @@ export function PeersPanel({ cik, ticker, enabled }: PeersPanelProps) {
           >
             Refresh peers
           </Button>
-        </div>
       </section>
     );
   }

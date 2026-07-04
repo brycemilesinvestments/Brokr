@@ -1,7 +1,6 @@
 "use client";
 
 import { Suspense, useCallback, useMemo, useState } from "react";
-import { CHART_VIEWPORT_HEIGHT } from "@/routes/company/[cik]/lib/chart-viewport";
 import { EventImpactList } from "./components/event-impact-list";
 import { EventSortOptions } from "./components/event-sort-options";
 import { TimelinePriceChart } from "./components/timeline-price-chart";
@@ -14,10 +13,7 @@ import type { DocumentTimelineChartProps, SelectedImpactWindow } from "./types";
 
 function DocumentTimelineChartLoading() {
   return (
-    <div
-      className="flex w-full items-center justify-center"
-      style={{ height: CHART_VIEWPORT_HEIGHT }}
-    >
+    <div className="flex flex-1 items-center justify-center">
       <p className="text-sm text-zinc-500">Loading price chart…</p>
     </div>
   );
@@ -71,15 +67,15 @@ function DocumentTimelineChartContent({
 
   if (!hasChartData) {
     return (
-      <p className="py-12 text-center text-sm text-zinc-500">
+      <p className="flex flex-1 items-center justify-center text-sm text-zinc-500">
         No daily price data available for this range.
       </p>
     );
   }
 
   return (
-    <>
-      <div className="flex items-center justify-between gap-3 border-b border-zinc-100 px-5 pb-3 pt-4">
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="flex shrink-0 items-center justify-between gap-3 border-b border-zinc-100 px-5 pb-3 pt-4">
         <div className="flex items-center gap-2.5">
           <span className="text-base font-semibold text-zinc-900">{companyName}</span>
           {ticker ? (
@@ -89,7 +85,7 @@ function DocumentTimelineChartContent({
         <span className="text-[11px] text-zinc-400">2-month price impact after each event</span>
       </div>
 
-      <div className="flex min-h-0" style={{ height: CHART_VIEWPORT_HEIGHT }}>
+      <div className="flex min-h-0 flex-1">
         <div className="relative min-h-0 min-w-0 flex-1 overflow-hidden border-r border-zinc-100 px-2 pb-1 pl-2 pt-1.5">
           <TimelinePriceChart
             chartData={chartData}
@@ -114,7 +110,7 @@ function DocumentTimelineChartContent({
           />
         </aside>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -132,8 +128,8 @@ export function DocumentTimelineChart({
 
   if (!ticker) {
     return (
-      <section className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
-        <div className="px-5 py-12 text-center text-sm text-zinc-500">
+      <section className="flex min-h-0 flex-1 flex-col bg-white">
+        <div className="flex flex-1 items-center justify-center px-5 text-sm text-zinc-500">
           Stock price chart requires a ticker symbol for this company.
         </div>
       </section>
@@ -141,7 +137,7 @@ export function DocumentTimelineChart({
   }
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
+    <section className="flex min-h-0 flex-1 flex-col bg-white">
       <Suspense fallback={<DocumentTimelineChartLoading />}>
         <DocumentTimelineChartContent
           cik={cik}

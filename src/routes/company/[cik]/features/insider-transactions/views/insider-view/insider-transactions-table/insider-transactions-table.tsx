@@ -12,7 +12,7 @@ export function InsiderTransactionsTable({
   return (
     <section
       id="insider-transactions"
-      className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm"
+      className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-white"
     >
       <InsiderTransactionsChart transactions={transactions} ticker={ticker} />
 

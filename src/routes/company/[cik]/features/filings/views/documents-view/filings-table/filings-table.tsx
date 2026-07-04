@@ -35,8 +35,8 @@ export function FilingsTable({
       : `${totalShown} SEC EDGAR submissions fetched across all pages`;
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
-      <div className="border-b border-zinc-100 px-6 py-4">
+    <section className="flex min-h-0 flex-1 flex-col overflow-hidden bg-white">
+      <div className="shrink-0 border-b border-zinc-100 px-6 py-4">
         <h2 className="text-lg font-semibold text-zinc-900">All filings</h2>
         <p className="mt-1 text-sm text-zinc-500">{countLabel}</p>
         {analysisProgress.active ? (
@@ -50,7 +50,7 @@ export function FilingsTable({
         ) : null}
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="min-h-0 flex-1 overflow-auto">
         <table className="min-w-full table-fixed divide-y divide-zinc-100 text-sm">
           <colgroup>
             <col className="w-[8%]" />
