@@ -130,6 +130,43 @@ export function NavIconChat({ className }: { className?: string }) {
   );
 }
 
+export function NavIconMenu({ className }: { className?: string }) {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      className={className}
+      aria-hidden
+    >
+      <line x1="2.5" y1="4" x2="13.5" y2="4" />
+      <line x1="2.5" y1="8" x2="13.5" y2="8" />
+      <line x1="2.5" y1="12" x2="13.5" y2="12" />
+    </svg>
+  );
+}
+
+export function NavIconClose({ className }: { className?: string }) {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      className={className}
+      aria-hidden
+    >
+      <line x1="4" y1="4" x2="12" y2="12" />
+      <line x1="12" y1="4" x2="4" y2="12" />
+    </svg>
+  );
+}
+
 export function NavIconBreadcrumbChevron({ className }: { className?: string }) {
   return (
     <svg
