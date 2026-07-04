@@ -65,7 +65,8 @@ export function CompanyDataTabs({
   const [chatOpen, setChatOpen] = useState(false);
   const displayedTab = isHashReady ? activeTab : "analysis";
   const sidebarTab: CompanyNavTab = sidebarTabForValue(displayedTab) ?? "analysis";
-  const documentsInitialView = displayedTab === "timeline" ? "timeline" : "list";
+  const documentsInitialView = displayedTab === "documents" ? "list" : "timeline";
+  const isDocumentsPanel = displayedTab === "documents" || displayedTab === "timeline";
   const isFredDashboard = displayedTab === "fred";
 
   const [prevInsider, setPrevInsider] = useState(insider);
@@ -102,13 +103,14 @@ export function CompanyDataTabs({
   }, [insider]);
 
   function navigateTo(tab: CompanyNavTab) {
-    setActiveTab(tab);
+    const resolvedTab: CompanyTabValue = tab === "documents" ? "timeline" : tab;
+    setActiveTab(resolvedTab);
     setIsHashReady(true);
     if (tab !== "fred") {
       setFredSeriesId(null);
     }
     setChatOpen(false);
-    const hash = tabToHash(tab);
+    const hash = tab === "documents" ? "#timeline" : tabToHash(tab);
     if (window.location.hash !== hash) {
       window.history.replaceState(null, "", hash);
     }
@@ -162,7 +164,7 @@ export function CompanyDataTabs({
         return financialTrends ? (
           <FinancialTrendsPanel data={financialTrends} />
         ) : (
-          <section className="rounded-2xl border border-zinc-200 bg-white px-6 py-8 shadow-sm">
+          <section className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-white px-6 py-8">
             <h2 className="text-lg font-semibold text-zinc-900">Financial trends</h2>
             <p className="mt-2 text-sm text-zinc-500">
               Could not load time series data from SEC company facts.
@@ -212,7 +214,7 @@ export function CompanyDataTabs({
   }
 
   return (
-    <div className="flex min-h-dvh bg-zinc-50">
+    <div className="flex h-dvh bg-zinc-50">
       <CompanySidebar
         companyName={companyName}
         ticker={ticker}
@@ -222,14 +224,12 @@ export function CompanyDataTabs({
       />
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        {isFredDashboard ? (
+        {isFredDashboard || isDocumentsPanel ? (
           renderPanel()
         ) : (
           <>
             <CompanyContentHeader ticker={ticker} title={headerTitle} />
-            <div className="min-h-0 flex-1 overflow-y-auto">
-              <div className="mx-auto max-w-6xl space-y-6 px-6 py-8">{renderPanel()}</div>
-            </div>
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">{renderPanel()}</div>
           </>
         )}
       </div>

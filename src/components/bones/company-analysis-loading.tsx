@@ -9,7 +9,7 @@ type CompanyAnalysisLoadingProps = {
 
 export function CompanyAnalysisLoadingContent() {
   return (
-    <section className="rounded-2xl border border-zinc-200 bg-white shadow-sm">
+    <section className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-white">
       <div className="border-b border-zinc-100 px-6 py-5">
         <h2 className="text-lg font-semibold text-zinc-900">Company analysis</h2>
         <p className="mt-1 text-sm text-zinc-500">Loading full Chunk 10 analysis…</p>

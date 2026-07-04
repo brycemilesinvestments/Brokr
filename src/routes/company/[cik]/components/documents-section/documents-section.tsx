@@ -32,41 +32,45 @@ export function DocumentsSection({
   timeline,
   fiscalYearEnd,
   enabled,
-  initialView = "list",
+  initialView = "timeline",
 }: DocumentsSectionProps) {
   const [view, setView] = useState<DocumentsViewMode>(initialView);
 
   if (!enabled) return null;
 
   return (
-    <div className="space-y-4">
-      <div className="inline-flex gap-0.5 rounded-[10px] bg-zinc-100 p-0.5">
-        <ViewToggle active={view === "list"} onClick={() => setView("list")}>
-          List
-        </ViewToggle>
-        <ViewToggle active={view === "timeline"} onClick={() => setView("timeline")}>
-          Timeline
-        </ViewToggle>
+    <div className="flex min-h-0 flex-1 flex-col bg-white">
+      <div className="flex shrink-0 items-center border-b border-zinc-200 px-5 py-2.5">
+        <div className="inline-flex gap-0.5 rounded-[10px] bg-zinc-100 p-0.5">
+          <ViewToggle active={view === "list"} onClick={() => setView("list")}>
+            List
+          </ViewToggle>
+          <ViewToggle active={view === "timeline"} onClick={() => setView("timeline")}>
+            Timeline
+          </ViewToggle>
+        </div>
       </div>
 
-      {view === "list" ? (
-        <DocumentsView
-          cik={cik}
-          filings={filings}
-          totalShown={totalShown}
-          hasMoreFilings={hasMoreFilings}
-          enabled={enabled}
-        />
-      ) : (
-        <FilingsTimeline
-          cik={cik}
-          companyName={companyName}
-          timeline={timeline}
-          fiscalYearEnd={fiscalYearEnd}
-          ticker={ticker}
-          enabled={enabled}
-        />
-      )}
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        {view === "list" ? (
+          <DocumentsView
+            cik={cik}
+            filings={filings}
+            totalShown={totalShown}
+            hasMoreFilings={hasMoreFilings}
+            enabled={enabled}
+          />
+        ) : (
+          <FilingsTimeline
+            cik={cik}
+            companyName={companyName}
+            timeline={timeline}
+            fiscalYearEnd={fiscalYearEnd}
+            ticker={ticker}
+            enabled={enabled}
+          />
+        )}
+      </div>
     </div>
   );
 }
