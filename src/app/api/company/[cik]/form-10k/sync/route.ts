@@ -1,5 +1,7 @@
 import { formatCik } from "@/lib/edgar/constants";
+import { maybeCompileCompanyAnalysis } from "@/lib/orchestrate";
 import { runForm10kSync } from "@/lib/orchestrate/form-10k";
+import { createCompanyAnalysisDeps } from "@/routes/company/[cik]/lib/create-company-analysis-deps";
 import { NextResponse } from "next/server";
 
 type RouteParams = {
@@ -12,6 +14,10 @@ export async function POST(_request: Request, { params }: RouteParams) {
 
   try {
     const result = await runForm10kSync(edgarId);
+    await maybeCompileCompanyAnalysis(
+      { cik: edgarId, ticker: result.company.ticker ?? undefined },
+      createCompanyAnalysisDeps(),
+    );
     return NextResponse.json({
       companyId: result.company.id,
       edgarId: result.company.edgar_id,

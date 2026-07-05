@@ -14,7 +14,7 @@ export function CompanySidebarMenuButton({ onClick, className }: CompanySidebarM
       type="button"
       onClick={onClick}
       className={cn(
-        "inline-flex size-8 shrink-0 items-center justify-center rounded-lg border border-zinc-200 text-zinc-600 transition-colors hover:bg-zinc-50 hover:text-zinc-900 lg:hidden",
+        "inline-flex size-8 shrink-0 items-center justify-center rounded-lg border border-zinc-200 text-zinc-600 transition-colors hover:bg-zinc-50 hover:text-zinc-900",
         className,
       )}
       aria-label="Open navigation"

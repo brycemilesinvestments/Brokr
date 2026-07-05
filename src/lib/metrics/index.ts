@@ -82,3 +82,18 @@ export type {
 export { DEFAULT_WEIGHTS, HEALTH_FRAMING, buildHealthScoreBundle } from "@/lib/metrics/health";
 export type { Breakpoint } from "@/lib/metrics/health";
 export { piecewiseScore, weightedAverage, clampScore } from "@/lib/metrics/health";
+
+export type {
+  MetricPolarity,
+  MetricPolarityDefinition,
+  MetricPolarityMap,
+  MetricSentiment,
+} from "@/lib/metrics/polarity";
+
+export {
+  guessPolarityFromMetricKey,
+  deltaToneForPolarity,
+  trendDirectionFromValues,
+  sentimentFromTrend,
+  SENTIMENT_CHART_COLORS,
+} from "@/lib/metrics/polarity";

@@ -7,7 +7,7 @@ import { filterChartPoints } from "@/routes/company/[cik]/features/financial-tre
 import { buildMetricChartData } from "@/routes/company/[cik]/features/financial-trends/views/trends-view/financial-trends-panel/lib/build-metric-chart-geometry";
 import type { MetricChartRow } from "@/routes/company/[cik]/features/financial-trends/views/trends-view/financial-trends-panel/lib/build-metric-chart-geometry";
 import { formatMetricValue } from "@/routes/company/[cik]/features/financial-trends/views/trends-view/financial-trends-panel/utils/format-metric";
-import { humanizeConcept } from "@/routes/company/[cik]/features/financial-trends/utils/humanize-concept";
+import { metricLabel } from "../lib/metric-label";
 
 type MetricGroup = {
   label: string;
@@ -23,13 +23,6 @@ type ChartMetricExplorerProps = {
 };
 
 type FrequencyFilter = "quarterly" | "annual" | "both";
-
-function metricLabel(metric: string): string {
-  if (metric.startsWith("end_market:") || metric.startsWith("geography:")) {
-    return metric.split(":").slice(1).join(":");
-  }
-  return metric.includes("_") ? metric.replace(/_/g, " ") : humanizeConcept(metric);
-}
 
 function availableMetrics(chart: ChartBundle, groups: readonly MetricGroup[]): string[] {
   const fromGroups = groups.flatMap((g) => g.metrics);

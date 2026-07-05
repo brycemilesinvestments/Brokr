@@ -30,8 +30,8 @@ type CompanySidebarProps = {
   ticker?: string;
   activeTab: CompanyNavTab;
   showInsider: boolean;
-  mobileOpen?: boolean;
-  onMobileClose?: () => void;
+  open?: boolean;
+  onClose?: () => void;
   onNavigate: (tab: CompanyNavTab) => void;
 };
 
@@ -40,17 +40,17 @@ export function CompanySidebar({
   ticker,
   activeTab,
   showInsider,
-  mobileOpen = false,
-  onMobileClose,
+  open = false,
+  onClose,
   onNavigate,
 }: CompanySidebarProps) {
   return (
     <>
-      {mobileOpen ? (
+      {open ? (
         <button
           type="button"
           className="fixed inset-0 z-40 bg-black/40 lg:hidden"
-          onClick={onMobileClose}
+          onClick={onClose}
           aria-label="Close navigation"
         />
       ) : null}
@@ -58,15 +58,16 @@ export function CompanySidebar({
       <nav
         className={cn(
           "flex w-[238px] shrink-0 flex-col border-r border-zinc-200 bg-white",
-          "fixed inset-y-0 left-0 z-50 h-dvh transition-transform duration-200 ease-in-out",
-          "lg:static lg:z-auto lg:h-full lg:translate-x-0",
-          mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
+          "transition-transform duration-200 ease-in-out",
+          "max-lg:fixed max-lg:inset-y-0 max-lg:left-0 max-lg:z-50 max-lg:h-dvh",
+          "lg:static lg:z-auto lg:h-full",
+          open ? "max-lg:translate-x-0 lg:flex" : "max-lg:-translate-x-full lg:hidden",
         )}
       >
-      <div className="flex items-center gap-2 border-b border-zinc-100 lg:hidden">
+      <div className="flex items-center gap-2 border-b border-zinc-100">
         <button
           type="button"
-          onClick={onMobileClose}
+          onClick={onClose}
           className="ml-3.5 inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-zinc-50 hover:text-zinc-800"
           aria-label="Close navigation"
         >

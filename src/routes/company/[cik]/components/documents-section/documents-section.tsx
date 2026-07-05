@@ -58,6 +58,7 @@ export function DocumentsSection({
         {view === "list" ? (
           <DocumentsView
             cik={cik}
+            ticker={ticker}
             filings={filings}
             totalShown={totalShown}
             hasMoreFilings={hasMoreFilings}

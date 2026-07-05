@@ -1,38 +1,11 @@
 import { NextResponse } from "next/server";
-import { createEdgarClient } from "@/lib/edgar";
-import { buildFilingDateLookup, toEventStudyTransactions } from "@/lib/insider";
 import {
-  wireHandlers,
+  compileCompanyAnalysisIfNeeded,
+  getStoredCompanyAnalysisByCik,
   isValidCik,
   normalizeCik,
-  fetchLatestIxbrlFacts,
 } from "@/lib/orchestrate";
-import { createAdminClient } from "@/lib/supabase/admin";
-import { fetchInsiderTransactions } from "@/routes/company/[cik]/features/insider-transactions/lib/fetch-insider-transactions";
-
-async function loadEventStudyTransactions(cik: string) {
-  const edgar = createEdgarClient({ supabaseClient: createAdminClient() ?? undefined });
-
-  const [page, submissions] = await Promise.all([
-    fetchInsiderTransactions(cik).catch(() => null),
-    edgar.getSubmissions(cik).catch(() => null),
-  ]);
-
-  if (!page) return [];
-
-  const filingDateByAccession = buildFilingDateLookup(submissions?.filings ?? []);
-  return toEventStudyTransactions(page.transactions, filingDateByAccession);
-}
-
-function createAnalyzeHandlers() {
-  const edgar = createEdgarClient({ supabaseClient: createAdminClient() ?? undefined });
-
-  return wireHandlers({
-    edgar,
-    fetchInsiderTransactions: loadEventStudyTransactions,
-    fetchIxbrlFacts: (cik) => fetchLatestIxbrlFacts(cik, edgar),
-  });
-}
+import { createCompanyAnalysisDeps } from "@/routes/company/[cik]/lib/create-company-analysis-deps";
 
 export async function GET(
   _request: Request,
@@ -47,12 +20,21 @@ export async function GET(
   const cik = normalizeCik(rawCik);
 
   try {
-    const { analyzeQuarter } = createAnalyzeHandlers();
-    const result = await analyzeQuarter({ cik });
+    const stored = await getStoredCompanyAnalysisByCik(cik);
+    if (!stored) {
+      return NextResponse.json(
+        {
+          status: "missing",
+          message:
+            "No compiled analysis yet. Open the Documents tab to ingest filings, then analysis will compile automatically.",
+        },
+        { status: 404 },
+      );
+    }
 
-    return NextResponse.json(result);
+    return NextResponse.json(stored);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Analysis failed";
+    const message = error instanceof Error ? error.message : "Failed to load analysis";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
@@ -70,17 +52,19 @@ export async function POST(
   const cik = normalizeCik(rawCik);
   const body = (await request.json().catch(() => ({}))) as {
     ticker?: string;
-    fiscalYear?: number;
-    fiscalPeriod?: string;
+    force?: boolean;
   };
 
   try {
-    const { analyzeCompany } = createAnalyzeHandlers();
-    const result = await analyzeCompany({ cik, ticker: body.ticker });
+    const deps = createCompanyAnalysisDeps();
+    const result = await compileCompanyAnalysisIfNeeded(
+      { cik, ticker: body.ticker, force: body.force === true },
+      deps,
+    );
 
-    return NextResponse.json(result);
+    return NextResponse.json(result.output);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Analysis failed";
+    const message = error instanceof Error ? error.message : "Analysis compile failed";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

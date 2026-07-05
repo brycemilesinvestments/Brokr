@@ -1,7 +1,7 @@
 import type { ContractValidation, TimeSeriesBundle } from "@/lib/analysis";
 import type { ExplainResponse } from "@/lib/ai";
 import type { EventStudyResult } from "@/lib/insider";
-import type { ExtendedMetricsBundle } from "@/lib/metrics";
+import type { ExtendedMetricsBundle, MetricPolarityMap } from "@/lib/metrics";
 import type { ValuationBundle } from "@/lib/valuation";
 
 /** C10.5 — Anomaly flagged across one or more analysis layers, chart-markable. */
@@ -77,6 +77,8 @@ export type CompanyAnalysisOutput = {
   insider: EventStudyResult;
   crossAnomalies: CrossLayerAnomaly[];
   anomalyExplanations: AnomalyExplanation[];
+  /** Cached investor-facing polarity per metric key (shared across companies). */
+  metricPolarities: MetricPolarityMap;
   coverage: CoverageReport;
   contract: MasterContractValidation;
   completed: boolean;

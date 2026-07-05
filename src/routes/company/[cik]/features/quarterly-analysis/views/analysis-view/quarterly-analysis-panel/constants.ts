@@ -59,3 +59,27 @@ export const VALUATION_METRIC_GROUPS = [
     metrics: ["pe", "p_fcf", "ev_sales", "ev_ebitda"],
   },
 ] as const;
+
+export type AnalysisCategory = "fundamentals" | "extended" | "valuation";
+
+export const ANALYSIS_CATEGORY_LABELS: Record<AnalysisCategory, string> = {
+  fundamentals: "Fundamentals",
+  extended: "Extended",
+  valuation: "Valuation",
+};
+
+export type MetricGroup = {
+  label: string;
+  metrics: readonly string[];
+};
+
+export type CategorizedMetricGroups = {
+  category: AnalysisCategory;
+  groups: readonly MetricGroup[];
+};
+
+export const ANALYSIS_METRIC_SECTIONS: readonly CategorizedMetricGroups[] = [
+  { category: "fundamentals", groups: FUNDAMENTALS_METRIC_GROUPS },
+  { category: "extended", groups: EXTENDED_METRIC_GROUPS },
+  { category: "valuation", groups: VALUATION_METRIC_GROUPS },
+];

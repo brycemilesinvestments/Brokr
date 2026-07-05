@@ -64,6 +64,7 @@ export type Form8kSyncResponse = {
 
 export type DocumentsViewProps = {
   cik: string;
+  ticker?: string;
   filings: Filing[];
   totalShown: number;
   hasMoreFilings?: boolean;

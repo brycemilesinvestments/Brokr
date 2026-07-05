@@ -42,6 +42,7 @@ export function useFilingAnalysisQueue(
   cik: string,
   filings: Filing[],
   enabled: boolean,
+  ticker?: string,
 ): UseFilingAnalysisQueueResult {
   const [statusByAccession, setStatusByAccession] = useState<Record<string, FilingAnalysisStatus>>({});
   const [errorsByAccession, setErrorsByAccession] = useState<Record<string, string>>({});
@@ -137,6 +138,17 @@ export function useFilingAnalysisQueue(
 
     return { total, complete, loading, queued, error, remaining, active };
   }, [analyzableFilings, statusByAccession]);
+
+  useEffect(() => {
+    if (!enabled || progress.active) return;
+    if (progress.complete === 0) return;
+
+    void fetch(`/api/analyze/${encodeURIComponent(cik)}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ticker }),
+    });
+  }, [cik, enabled, progress.active, progress.complete, ticker]);
 
   return {
     getStatus: (accessionNumber) => {

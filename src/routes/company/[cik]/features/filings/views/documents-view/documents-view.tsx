@@ -6,12 +6,13 @@ import type { DocumentsViewProps } from "@/routes/company/[cik]/types";
 
 export function DocumentsView({
   cik,
+  ticker,
   filings,
   totalShown,
   hasMoreFilings = false,
   enabled,
 }: DocumentsViewProps) {
-  const { getStatus, getError, progress } = useFilingAnalysisQueue(cik, filings, enabled);
+  const { getStatus, getError, progress } = useFilingAnalysisQueue(cik, filings, enabled, ticker);
 
   return (
     <FilingsTable

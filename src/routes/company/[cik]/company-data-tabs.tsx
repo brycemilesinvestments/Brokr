@@ -65,11 +65,18 @@ export function CompanyDataTabs({
   const [isHashReady, setIsHashReady] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [companySidebarOpen, setCompanySidebarOpen] = useState(false);
+
+  useEffect(() => {
+    if (window.matchMedia("(min-width: 1024px)").matches) {
+      setCompanySidebarOpen(true);
+    }
+  }, []);
   const displayedTab = isHashReady ? activeTab : "analysis";
   const sidebarTab: CompanyNavTab = sidebarTabForValue(displayedTab) ?? "analysis";
   const documentsInitialView = displayedTab === "documents" ? "list" : "timeline";
   const isDocumentsPanel = displayedTab === "documents" || displayedTab === "timeline";
   const isFredDashboard = displayedTab === "fred";
+  const isAnalysisDashboard = displayedTab === "analysis";
 
   const [prevInsider, setPrevInsider] = useState(insider);
   if (insider !== prevInsider) {
@@ -151,10 +158,23 @@ export function CompanyDataTabs({
       ? TAB_TITLES.documents
       : TAB_TITLES[displayedTab];
 
+  const sidebarMenuButton = !companySidebarOpen ? (
+    <CompanySidebarMenuButton onClick={() => setCompanySidebarOpen(true)} />
+  ) : null;
+
   function renderPanel() {
     switch (displayedTab) {
       case "analysis":
-        return <QuarterlyAnalysisPanel cik={cik} ticker={ticker} />;
+        return (
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            {!companySidebarOpen ? (
+              <div className="flex h-[52px] shrink-0 items-center gap-2.5 border-b border-zinc-200 bg-white px-5">
+                {sidebarMenuButton}
+              </div>
+            ) : null}
+            <QuarterlyAnalysisPanel cik={cik} ticker={ticker} />
+          </div>
+        );
       case "peers":
         return <PeersPanel cik={cik} ticker={ticker} enabled />;
       case "health":
@@ -192,9 +212,7 @@ export function CompanyDataTabs({
             ticker={ticker}
             selectedSeriesId={fredSeriesId}
             onSelectedSeriesIdChange={handleFredSeriesChange}
-            headerLeading={
-              <CompanySidebarMenuButton onClick={() => setCompanySidebarOpen(true)} />
-            }
+            headerLeading={sidebarMenuButton}
           />
         );
       case "documents":
@@ -212,9 +230,7 @@ export function CompanyDataTabs({
             fiscalYearEnd={fiscalYearEnd}
             enabled
             initialView={documentsInitialView}
-            headerLeading={
-              <CompanySidebarMenuButton onClick={() => setCompanySidebarOpen(true)} />
-            }
+            headerLeading={sidebarMenuButton}
           />
         );
       default:
@@ -229,22 +245,20 @@ export function CompanyDataTabs({
         ticker={ticker}
         activeTab={sidebarTab}
         showInsider={Boolean(insider)}
-        mobileOpen={companySidebarOpen}
-        onMobileClose={() => setCompanySidebarOpen(false)}
+        open={companySidebarOpen}
+        onClose={() => setCompanySidebarOpen(false)}
         onNavigate={navigateTo}
       />
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-        {isFredDashboard || isDocumentsPanel ? (
+        {isFredDashboard || isDocumentsPanel || isAnalysisDashboard ? (
           renderPanel()
         ) : (
           <>
             <CompanyContentHeader
               ticker={ticker}
               title={headerTitle}
-              leading={
-                <CompanySidebarMenuButton onClick={() => setCompanySidebarOpen(true)} />
-              }
+              leading={sidebarMenuButton}
             />
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden">{renderPanel()}</div>
           </>

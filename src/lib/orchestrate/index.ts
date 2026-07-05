@@ -6,6 +6,15 @@ export {
 export type { AnalyzeQuarterInput, AnalyzeQuarterResult, OrchestrateDeps } from "@/lib/orchestrate/analyze";
 
 export {
+  compileCompanyAnalysisIfNeeded,
+  getStoredCompanyAnalysisByCik,
+  maybeCompileCompanyAnalysis,
+} from "@/lib/orchestrate/compile-company-analysis";
+export type { CompileCompanyAnalysisResult } from "@/lib/orchestrate/compile-company-analysis";
+
+export { buildSourceFingerprint } from "@/lib/orchestrate/company-analysis-fingerprint";
+
+export {
   analyzeCompany,
   analyzeCompanyOffline,
   priceBarsFromYahooFixture,

@@ -17,6 +17,7 @@ import {
 import { buildValuationBundle } from "@/lib/valuation";
 import { collectUnsatisfied, validateMasterContract } from "@/lib/orchestrate/contract";
 import { buildCoverageReport } from "@/lib/orchestrate/coverage-report";
+import { resolveMetricPolarities } from "@/lib/orchestrate/resolve-metric-polarities";
 import {
   buildAnomalyExcerpt,
   detectCrossLayerAnomalies,
@@ -224,6 +225,7 @@ function finalizeOutput(input: {
   layers: BuiltLayers;
   crossAnomalies: ReturnType<typeof detectCrossLayerAnomalies>;
   anomalyExplanations: AnomalyExplanation[];
+  metricPolarities: CompanyAnalysisOutput["metricPolarities"];
   iterations: number;
   costUsd: number;
   terminatedReason: CompanyAnalysisOutput["terminatedReason"];
@@ -286,6 +288,7 @@ function finalizeOutput(input: {
     insider: input.layers.insider,
     crossAnomalies: input.crossAnomalies,
     anomalyExplanations: input.anomalyExplanations,
+    metricPolarities: input.metricPolarities,
     coverage,
     contract,
     completed,
@@ -349,14 +352,20 @@ export async function analyzeCompany(
     config,
   });
 
+  const polarityResult = await resolveMetricPolarities(
+    [layers.timeSeries.chart, layers.metrics.chart, layers.valuation?.chart ?? {}],
+    deps.ai,
+  );
+
   return finalizeOutput({
     cik: input.cik,
     ticker: input.ticker,
     layers,
     crossAnomalies,
     anomalyExplanations: explainResult.explanations,
+    metricPolarities: polarityResult.polarities,
     iterations: explainResult.iterations,
-    costUsd: explainResult.costUsd,
+    costUsd: explainResult.costUsd + polarityResult.costUsd,
     terminatedReason: explainResult.terminatedReason,
     aiAvailable: Boolean(deps.ai),
   });
@@ -400,14 +409,19 @@ export async function analyzeCompanyOffline(
     });
   }
 
+  const polarityResult = await resolveMetricPolarities(
+    [layers.timeSeries.chart, layers.metrics.chart, layers.valuation?.chart ?? {}],
+  );
+
   return finalizeOutput({
     cik: input.cik,
     ticker: input.ticker,
     layers,
     crossAnomalies,
     anomalyExplanations: prefilled,
+    metricPolarities: polarityResult.polarities,
     iterations: 0,
-    costUsd: 0,
+    costUsd: polarityResult.costUsd,
     terminatedReason: "complete",
     aiAvailable: Boolean(fixtures.explanation),
   });
