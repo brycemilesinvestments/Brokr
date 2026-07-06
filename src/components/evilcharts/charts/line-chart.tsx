@@ -461,7 +461,7 @@ export function Grid({ vertical = false, strokeDasharray = "3 3", ...props }: Gr
   return <CartesianGrid vertical={vertical} strokeDasharray={strokeDasharray} {...props} />;
 }
 
-export function ReferenceLine(props: ComponentProps<typeof RechartsReferenceLine>) {
+function ReferenceLine(props: ComponentProps<typeof RechartsReferenceLine>) {
   const { ReferenceLine: RechartsReferenceLineComponent } = useRecharts();
 
   return <RechartsReferenceLineComponent {...props} />;

@@ -1,9 +1,11 @@
 "use client";
 
-import { FilingsAnalysisProgress } from "@/components/bones/filings-analysis-progress";
+import { FilingsAnalysisProgress, Form345FilingsProgress } from "@/components/bones/filings-analysis-progress";
 import { ColumnFilter } from "@/routes/company/[cik]/components/column-filter";
 import { FilingTableRow } from "./components/filing-table-row";
+import { FilingsTablePagination } from "./components/filings-table-pagination";
 import { useFilingsTableFilters } from "./hooks/use-filings-table-filters";
+import { ANALYSIS_FILTER_OPTIONS } from "./lib/analysis-filter";
 import { COLUMNS } from "./lib/columns";
 import type { FilingsTableProps } from "./types";
 
@@ -12,41 +14,66 @@ export function FilingsTable({
   filings,
   totalShown,
   hasMoreFilings = false,
+  isLoadingMore = false,
+  loadError = null,
+  loadRemainingFilings,
   getAnalysisStatus,
   getAnalysisError,
-  analysisProgress,
+  pipelineProgress,
+  form345Progress,
 }: FilingsTableProps) {
   const {
     selectedByColumn,
+    selectedAnalysisStatus,
     sortOrderByColumn,
     activeSortColumn,
     optionsByColumn,
     filteredFilings,
     displayedFilings,
+    sortedFilingsCount,
+    pageIndex,
+    totalPages,
+    pageStart,
+    pageEnd,
+    canGoPrevious,
+    canGoNext,
+    goToPreviousPage,
+    goToNextPage,
     updateSelected,
+    updateAnalysisStatusSelected,
+    filterToAnalysisStatuses,
     updateSortOrder,
     isFiltered,
-  } = useFilingsTableFilters(filings);
+  } = useFilingsTableFilters(filings, { getAnalysisStatus });
 
   const countLabel = isFiltered
-    ? `${filteredFilings.length} of ${totalShown} SEC EDGAR submissions shown`
-    : hasMoreFilings
-      ? `${totalShown} recent SEC EDGAR submissions shown (older filings load on demand)`
-      : `${totalShown} SEC EDGAR submissions fetched across all pages`;
+    ? `${filteredFilings.length} of ${totalShown} SEC EDGAR submissions match filters`
+    : isLoadingMore
+      ? `Loading all SEC EDGAR submissions (${filings.length} loaded so far)…`
+      : hasMoreFilings
+        ? `${filings.length} of ${totalShown}+ SEC EDGAR submissions loaded`
+        : `${totalShown} SEC EDGAR submissions fetched across all pages`;
 
   return (
     <section className="flex min-h-0 flex-1 flex-col overflow-hidden bg-white">
       <div className="shrink-0 border-b border-zinc-100 px-6 py-4">
         <h2 className="text-lg font-semibold text-zinc-900">All filings</h2>
         <p className="mt-1 text-sm text-zinc-500">{countLabel}</p>
-        {analysisProgress.active ? (
+        {loadError ? (
+          <p className="mt-1 text-sm text-red-600">{loadError}</p>
+        ) : null}
+        {pipelineProgress.active || pipelineProgress.error > 0 ? (
           <FilingsAnalysisProgress
-            complete={analysisProgress.complete}
-            loading={analysisProgress.loading}
-            queued={analysisProgress.queued}
-            error={analysisProgress.error}
-            active={analysisProgress.active}
+            progress={pipelineProgress}
+            onViewFailed={
+              pipelineProgress.error > 0
+                ? () => filterToAnalysisStatuses(["Failed"])
+                : undefined
+            }
           />
+        ) : null}
+        {form345Progress && (form345Progress.active || form345Progress.error > 0) ? (
+          <Form345FilingsProgress progress={form345Progress} />
         ) : null}
       </div>
 
@@ -59,7 +86,7 @@ export function FilingsTable({
             <col className="w-[22%]" />
             <col className="w-[22%]" />
           </colgroup>
-          <thead className="bg-zinc-50 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500">
+          <thead className="sticky top-0 z-10 bg-zinc-50 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500">
             <tr>
               {COLUMNS.map((column) => (
                 <th key={column.key} className="px-6 py-3 align-bottom">
@@ -72,6 +99,16 @@ export function FilingsTable({
                     onSortOrderChange={(sortOrder) => updateSortOrder(column.key, sortOrder)}
                     sortMode={column.sortMode}
                     isActiveSort={activeSortColumn === column.key}
+                    secondaryFilter={
+                      column.key === "description"
+                        ? {
+                            label: "Analysis status",
+                            options: ANALYSIS_FILTER_OPTIONS,
+                            selected: selectedAnalysisStatus,
+                            onSelectedChange: updateAnalysisStatusSelected,
+                          }
+                        : undefined
+                    }
                   />
                 </th>
               ))}
@@ -86,11 +123,34 @@ export function FilingsTable({
                 filing={filing}
                 analysisStatus={getAnalysisStatus(filing.accessionNumber)}
                 analysisError={getAnalysisError(filing.accessionNumber)}
+                analysisLabelFormType={filing.type}
               />
             ))}
           </tbody>
         </table>
       </div>
+
+      <FilingsTablePagination
+        pageIndex={pageIndex}
+        totalPages={totalPages}
+        pageStart={pageStart}
+        pageEnd={pageEnd}
+        totalCount={sortedFilingsCount}
+        view={{
+          showMoreTotal: hasMoreFilings,
+          hasResults: sortedFilingsCount > 0,
+        }}
+        navigation={{
+          canGoPrevious,
+          canGoNext,
+          hasMoreFilings,
+          isLoadingMore,
+        }}
+        loadError={loadError}
+        onPreviousPage={goToPreviousPage}
+        onNextPage={goToNextPage}
+        onLoadRemainingFilings={loadRemainingFilings}
+      />
 
       {displayedFilings.length === 0 ? (
         <div className="px-6 py-10 text-center text-sm text-zinc-500">

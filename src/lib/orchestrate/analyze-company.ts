@@ -345,17 +345,18 @@ export async function analyzeCompany(
     insider: layers.insider,
   });
 
-  const explainResult = await explainAnomaliesInLoop({
-    anomalies: crossAnomalies,
-    timeSeries: layers.timeSeries,
-    ai: deps.ai,
-    config,
-  });
-
-  const polarityResult = await resolveMetricPolarities(
-    [layers.timeSeries.chart, layers.metrics.chart, layers.valuation?.chart ?? {}],
-    deps.ai,
-  );
+  const [explainResult, polarityResult] = await Promise.all([
+    explainAnomaliesInLoop({
+      anomalies: crossAnomalies,
+      timeSeries: layers.timeSeries,
+      ai: deps.ai,
+      config,
+    }),
+    resolveMetricPolarities(
+      [layers.timeSeries.chart, layers.metrics.chart, layers.valuation?.chart ?? {}],
+      deps.ai,
+    ),
+  ]);
 
   return finalizeOutput({
     cik: input.cik,
@@ -427,7 +428,7 @@ export async function analyzeCompanyOffline(
   });
 }
 
-export function priceBarsFromYahooFixture(
+function priceBarsFromYahooFixture(
   json: Parameters<typeof parseYahooChartResponse>[0],
   symbol: string,
 ): NormalizedBar[] {

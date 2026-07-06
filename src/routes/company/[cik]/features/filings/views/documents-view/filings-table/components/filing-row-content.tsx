@@ -6,9 +6,15 @@ type FilingRowContentProps = {
   cik: string;
   filing: Filing;
   analysisLabel?: string | null;
+  analysisLabelTone?: "default" | "error" | "muted";
 };
 
-export function FilingRowContent({ cik, filing, analysisLabel }: FilingRowContentProps) {
+export function FilingRowContent({
+  cik,
+  filing,
+  analysisLabel,
+  analysisLabelTone = "default",
+}: FilingRowContentProps) {
   const filingPageHref = resolveFilingPagePath(cik, filing);
 
   return (
@@ -18,7 +24,17 @@ export function FilingRowContent({ cik, filing, analysisLabel }: FilingRowConten
         <div className="flex flex-col gap-1">
           <span>{filing.description}</span>
           {analysisLabel ? (
-            <span className="text-xs font-medium text-emerald-700">{analysisLabel}</span>
+            <span
+              className={
+                analysisLabelTone === "error"
+                  ? "text-xs font-medium text-red-700"
+                  : analysisLabelTone === "muted"
+                    ? "text-xs font-medium text-zinc-500"
+                    : "text-xs font-medium text-emerald-700"
+              }
+            >
+              {analysisLabel}
+            </span>
           ) : null}
         </div>
       </div>
@@ -51,11 +67,3 @@ export function FilingRowContent({ cik, filing, analysisLabel }: FilingRowConten
     </div>
   );
 }
-
-export const FILING_ROW_FIXTURE: Filing = {
-  type: "8-K",
-  description: "Current report pursuant to Section 13 or 15(d)",
-  documentsUrl: "https://www.sec.gov/",
-  filingDate: "2025-01-15",
-  accessionNumber: "0001193125-25-012345",
-};

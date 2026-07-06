@@ -6,7 +6,7 @@ import { useCompanyAnalysis } from "@/routes/company/[cik]/features/quarterly-an
 import type { CompanyAnalysisPanelProps } from "@/routes/company/[cik]/features/quarterly-analysis/types";
 import { AnalysisDashboard } from "./components/analysis-dashboard";
 
-function CompanyAnalysisPanel({ cik, ticker }: CompanyAnalysisPanelProps) {
+function CompanyAnalysisPanel({ cik, filings, ticker }: CompanyAnalysisPanelProps) {
   const { data, loading, error, missing, refetch, compile } = useCompanyAnalysis(cik, true, ticker);
 
   if (loading) {
@@ -38,7 +38,7 @@ function CompanyAnalysisPanel({ cik, ticker }: CompanyAnalysisPanelProps) {
     return null;
   }
 
-  return <AnalysisDashboard data={data} ticker={ticker} />;
+  return <AnalysisDashboard cik={cik} filings={filings} data={data} ticker={ticker} />;
 }
 
 /** @deprecated Use CompanyAnalysisPanel */

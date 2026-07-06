@@ -3,8 +3,14 @@ import {
   filingDocumentUrl,
   filingIndexUrl,
   formatCik,
+  type EdgarClient,
   type FilingRef,
 } from "@/lib/edgar";
+import {
+  ensureUnavailableDocument,
+  isUnavailableDocument,
+} from "@/lib/orchestrate/company-filings/ensure-unavailable-document";
+import { UNAVAILABLE_8K_NO_DOCUMENT_REASON } from "@/lib/orchestrate/company-filings/unavailable-filings";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   getDocumentByAccession,
@@ -39,14 +45,13 @@ async function uploadToBucket(path: string, content: string): Promise<void> {
 }
 
 async function downloadFilingHtml(
+  client: EdgarClient,
   edgarId: string,
   accessionNumber: string,
   filename: string,
 ): Promise<string> {
-  const client = createEdgarClient({ supabaseClient: createAdminClient() ?? undefined });
   const url = filingDocumentUrl(edgarId, accessionNumber, filename);
   return client.fetchText(url, {
-    useCache: false,
     cik: edgarId,
     accession: accessionNumber,
     filename,
@@ -62,6 +67,15 @@ export async function fetchAndStore8k(
 ): Promise<Stored8kDocument> {
   const existing = await getDocumentByAccession(company.id, filing.accessionNumber);
   if (existing) {
+    if (isUnavailableDocument(existing)) {
+      return {
+        document: existing,
+        form8kHtml: "",
+        exhibit991Html: null,
+        skipped: true,
+      };
+    }
+
     const supabase = createAdminClient();
     let form8kHtml = "";
     if (supabase) {
@@ -91,7 +105,6 @@ export async function fetchAndStore8k(
   const edgarId = formatCik(company.edgar_id);
   const client = createEdgarClient({ supabaseClient: createAdminClient() ?? undefined });
   const indexHtml = await client.fetchText(filingIndexUrl(edgarId, filing.accessionNumber), {
-    useCache: false,
     cik: edgarId,
     accession: filing.accessionNumber,
     filename: `${filing.accessionNumber}-index.htm`,
@@ -100,18 +113,28 @@ export async function fetchAndStore8k(
 
   const primaryFilename = form8k?.name ?? filing.primaryDocument;
   if (!primaryFilename) {
-    throw new Error(`No 8-K document found in filing index for ${filing.accessionNumber}`);
+    const document = await ensureUnavailableDocument(
+      company,
+      filing,
+      UNAVAILABLE_8K_NO_DOCUMENT_REASON,
+    );
+    return {
+      document,
+      form8kHtml: "",
+      exhibit991Html: null,
+      skipped: true,
+    };
   }
 
   const eventDate = form8kEventDate(filing);
   const primaryPath = form8kStoragePath(company.id, eventDate);
-  const form8kHtml = await downloadFilingHtml(edgarId, filing.accessionNumber, primaryFilename);
+  const form8kHtml = await downloadFilingHtml(client, edgarId, filing.accessionNumber, primaryFilename);
   await uploadToBucket(primaryPath, form8kHtml);
 
   let exhibit991Html: string | null = null;
   if (exhibit991?.name) {
     const ex99Path = form8kStoragePath(company.id, eventDate, "ex99");
-    exhibit991Html = await downloadFilingHtml(edgarId, filing.accessionNumber, exhibit991.name);
+    exhibit991Html = await downloadFilingHtml(client, edgarId, filing.accessionNumber, exhibit991.name);
     await uploadToBucket(ex99Path, exhibit991Html);
   }
 
@@ -130,6 +153,15 @@ export async function fetchAndStore8k(
   });
 
   if (!document) {
+    const raced = await getDocumentByAccession(company.id, filing.accessionNumber);
+    if (raced) {
+      return {
+        document: raced,
+        form8kHtml,
+        exhibit991Html,
+        skipped: true,
+      };
+    }
     throw new Error(`Failed to upsert company_documents for ${filing.accessionNumber}`);
   }
 

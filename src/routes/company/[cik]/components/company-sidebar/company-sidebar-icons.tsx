@@ -111,25 +111,6 @@ export function NavIconChevronRight({ className }: { className?: string }) {
   );
 }
 
-export function NavIconChat({ className }: { className?: string }) {
-  return (
-    <svg
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      className={className}
-      aria-hidden
-    >
-      <path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7a2.5 2.5 0 0 1-2.5 2.5H9l-4 3.2V16H6.5A2.5 2.5 0 0 1 4 13.5z" />
-      <line x1="8.5" y1="9" x2="15.5" y2="9" />
-      <line x1="8.5" y1="12" x2="13" y2="12" />
-    </svg>
-  );
-}
-
 export function NavIconMenu({ className }: { className?: string }) {
   return (
     <svg
@@ -183,5 +164,3 @@ export function NavIconBreadcrumbChevron({ className }: { className?: string }) 
     </svg>
   );
 }
-
-export type NavIconComponent = () => ReactNode;

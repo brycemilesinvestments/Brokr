@@ -1,4 +1,4 @@
-export function isIndexedFilingForm(formType: string): boolean {
+function isIndexedFilingForm(formType: string): boolean {
   return /^8-K/i.test(formType) || /^10-K/i.test(formType) || /^DEF\s*14A/i.test(formType);
 }
 

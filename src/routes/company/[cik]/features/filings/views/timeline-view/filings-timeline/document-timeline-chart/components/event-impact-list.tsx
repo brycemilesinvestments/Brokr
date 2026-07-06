@@ -25,7 +25,14 @@ export function EventImpactList({
   onHoverEvent,
 }: EventImpactListProps) {
   const listRef = useRef<HTMLDivElement>(null);
-  const itemRefs = useRef(new Map<string, HTMLDivElement>());
+  const itemRefs = useRef<Map<string, HTMLDivElement> | null>(null);
+
+  function getItemRefMap() {
+    if (!itemRefs.current) {
+      itemRefs.current = new Map();
+    }
+    return itemRefs.current;
+  }
 
   useLayoutEffect(() => {
     if (!selectedEventId) return;
@@ -34,7 +41,7 @@ export function EventImpactList({
 
     const scrollToSelected = () => {
       const container = listRef.current;
-      const selectedItem = itemRefs.current.get(selectedEventId);
+      const selectedItem = getItemRefMap().get(selectedEventId);
       if (!container || !selectedItem) return false;
 
       scrollItemIntoContainer(container, selectedItem);
@@ -72,10 +79,11 @@ export function EventImpactList({
           <div
             key={event.id}
             ref={(node) => {
+              const refs = getItemRefMap();
               if (node) {
-                itemRefs.current.set(event.id, node);
+                refs.set(event.id, node);
               } else {
-                itemRefs.current.delete(event.id);
+                refs.delete(event.id);
               }
             }}
             onMouseEnter={() => onHoverEvent(event.id)}

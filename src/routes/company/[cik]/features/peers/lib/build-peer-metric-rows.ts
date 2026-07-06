@@ -46,20 +46,20 @@ function distributionPercentile(value: number, values: number[]): number {
 }
 
 /** Map a metric value onto 0–100 using the observed min/max (supports negative ranges). */
-export function valueScalePosition(value: number, min: number, max: number): number {
+function valueScalePosition(value: number, min: number, max: number): number {
   if (max === min) return 50;
   return ((value - min) / (max - min)) * 100;
 }
 
 /** Position of zero on the value scale, when the range crosses zero. */
-export function zeroScalePosition(min: number, max: number): number | null {
+function zeroScalePosition(min: number, max: number): number | null {
   if (min >= 0 || max <= 0) return null;
   return valueScalePosition(0, min, max);
 }
 
 function medianValue(values: number[]): number | null {
   if (values.length === 0) return null;
-  const sorted = [...values].sort((a, b) => a - b);
+  const sorted = values.toSorted((a, b) => a - b);
   const mid = Math.floor(sorted.length / 2);
   return sorted.length % 2 === 0
     ? (sorted[mid - 1]! + sorted[mid]!) / 2
@@ -87,11 +87,14 @@ export function buildPeerMetricRows(
   calendarKey: string;
 } {
   const peerColorByCik = buildPeerColorByCik(buildPeerChips(bundle, targetTicker));
+  const seriesByKey = new Map(
+    bundle.relativeMetrics.map((entry) => [entry.metricKey, entry] as const),
+  );
   const rows: PeerMetricRowModel[] = [];
   let calendarKey = "";
 
   for (const metricKey of PEER_DISPLAY_METRICS) {
-    const series = bundle.relativeMetrics.find((entry) => entry.metricKey === metricKey);
+    const series = seriesByKey.get(metricKey);
     if (!series) continue;
 
     const comparableBand = [...series.peerBand]

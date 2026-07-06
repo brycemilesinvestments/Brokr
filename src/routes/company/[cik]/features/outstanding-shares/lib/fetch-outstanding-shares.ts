@@ -1,5 +1,4 @@
-import { companyFactsUrl, submissionsUrl } from "@/lib/edgar";
-import { formatCik, SEC_USER_AGENT } from "@/lib/edgar/constants";
+import { companyFactsUrl, fetchSec, formatCik } from "@/lib/edgar";
 import type { OutstandingSharePoint } from "@/routes/company/[cik]/features/outstanding-shares/types";
 import { filingPagePath } from "@/lib/edgar/constants";
 
@@ -94,8 +93,7 @@ export async function fetchOutstandingShares(
   cikInput: string | number,
 ): Promise<OutstandingSharePoint[]> {
   const cik = formatCik(cikInput);
-  const response = await fetch(companyFactsUrl(cik), {
-    headers: { "User-Agent": SEC_USER_AGENT },
+  const response = await fetchSec(companyFactsUrl(cik), {
     next: { revalidate: 300 },
   });
 

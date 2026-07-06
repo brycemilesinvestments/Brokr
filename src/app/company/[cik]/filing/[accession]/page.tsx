@@ -2,8 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FilingDetail } from "@/routes/company/[cik]/filing/[accession]";
 import { fetchFilingDetail } from "@/routes/company/[cik]/filing/[accession]/lib/fetch-filing-detail";
-import { fetchFilingDiscovery } from "@/routes/company/[cik]/filing/[accession]/lib/fetch-filing-discovery";
 import { resolveCompanyByCik } from "@/lib/edgar/resolve-company";
+import { companyAnalysisPath } from "@/routes/company/[cik]/lib/company-tab-paths";
 
 type PageProps = {
   params: Promise<{ cik: string; accession: string }>;
@@ -16,10 +16,7 @@ export default async function FilingPage({ params }: PageProps) {
   const filing = await fetchFilingDetail(cik, accessionNumber).catch(() => null);
   if (!filing) notFound();
 
-  const [companyMeta, discovery] = await Promise.all([
-    resolveCompanyByCik(cik),
-    fetchFilingDiscovery(filing).catch(() => undefined),
-  ]);
+  const companyMeta = await resolveCompanyByCik(cik);
 
   return (
     <div className="min-h-full bg-zinc-50">
@@ -29,7 +26,7 @@ export default async function FilingPage({ params }: PageProps) {
             ← Edgar Review
           </Link>
           <Link
-            href={`/company/${cik}`}
+            href={companyAnalysisPath(cik)}
             className="text-sm font-medium text-zinc-600 transition hover:text-zinc-900"
           >
             {companyMeta?.title ?? `CIK ${cik}`}
@@ -38,7 +35,7 @@ export default async function FilingPage({ params }: PageProps) {
       </header>
 
       <main className="mx-auto max-w-6xl px-6 py-8">
-        <FilingDetail filing={filing} companyName={companyMeta?.title} discovery={discovery} />
+        <FilingDetail filing={filing} companyName={companyMeta?.title} />
       </main>
     </div>
   );

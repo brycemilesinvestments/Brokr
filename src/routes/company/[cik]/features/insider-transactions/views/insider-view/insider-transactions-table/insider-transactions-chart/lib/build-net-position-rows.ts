@@ -31,9 +31,12 @@ export function buildNetPositionRows(transactions: InsiderTransaction[]): NetPos
     byOwner.set(transaction.reportingOwner, entry);
   }
 
-  return [...byOwner.entries()]
-    .filter(([, entry]) => entry.netShares !== 0)
-    .map(([owner, entry]) => ({
+  const rows: NetPositionRow[] = [];
+
+  for (const [owner, entry] of byOwner.entries()) {
+    if (entry.netShares === 0) continue;
+
+    rows.push({
       owner,
       ownerType: entry.ownerType,
       netShares: entry.netShares,
@@ -42,6 +45,8 @@ export function buildNetPositionRows(transactions: InsiderTransaction[]): NetPos
           parseTransactionDate(b.transactionDate) - parseTransactionDate(a.transactionDate) ||
           (b.lineNumber ?? 0) - (a.lineNumber ?? 0),
       ),
-    }))
-    .toSorted((a, b) => Math.abs(b.netShares) - Math.abs(a.netShares));
+    });
+  }
+
+  return rows.toSorted((a, b) => Math.abs(b.netShares) - Math.abs(a.netShares));
 }

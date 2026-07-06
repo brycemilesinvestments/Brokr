@@ -2,10 +2,10 @@ import * as cheerio from "cheerio";
 import {
   companyFilingsUrl,
   DEFAULT_FILING_COUNT,
+  fetchSec,
   formatCik,
   parseAccessionNumber,
-  SEC_USER_AGENT,
-} from "@/lib/edgar/constants";
+} from "@/lib/edgar";
 import type { CompanyFilingsPage, CompanyInfo, Filing } from "@/routes/company/[cik]/types";
 import { toAbsoluteSecUrl } from "@/lib/edgar/resolve-company";
 
@@ -80,13 +80,15 @@ function parseFilings($: cheerio.CheerioAPI): Filing[] {
 }
 
 function hasNextPage($: cheerio.CheerioAPI): boolean {
-  return $('input[type="button"][value="Next100"]').length > 0;
+  return (
+    $('input[type="button"][value="Next100"]').length > 0 ||
+    $('input[type="button"][value*="Next"]').length > 0
+  );
 }
 
 async function fetchFilingsPage(cik: string, start: number, count: number): Promise<string> {
   const url = companyFilingsUrl(cik, count, start);
-  const response = await fetch(url, {
-    headers: { "User-Agent": SEC_USER_AGENT },
+  const response = await fetchSec(url, {
     next: { revalidate: 300 },
   });
 

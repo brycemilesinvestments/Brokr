@@ -33,7 +33,7 @@ export {
   buildFilingDiffCacheKey,
   type DiffCacheCheckResult,
 } from "@/lib/filing-diff/check_diff_cache";
-export { diffProse, DEFAULT_PROSE_SECTION_CHAR_LIMIT } from "@/lib/filing-diff/prose_diff";
+export { diffProse } from "@/lib/filing-diff/prose_diff";
 export { writeDiffCache } from "@/lib/filing-diff/write_cache";
 export { rankSeverity } from "@/lib/filing-diff/rank_severity";
 export { routeFilingDiffAction, runFilingDiffRouter } from "@/lib/filing-diff/router";

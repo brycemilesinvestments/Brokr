@@ -12,22 +12,7 @@ export type CompanyNavTab =
 
 export type CompanyTabValue = CompanyNavTab | "chat" | "timeline";
 
-export const TAB_TITLES: Record<CompanyTabValue, string> = {
-  analysis: "Analysis",
-  chat: "Ask filings",
-  peers: "Peers",
-  shares: "Outstanding shares",
-  insider: "Insider transactions",
-  fred: "FRED macro analytics",
-  health: "Health",
-  patterns: "Patterns",
-  guidance: "Guidance",
-  trends: "SEC trends",
-  documents: "Documents",
-  timeline: "Document timeline",
-};
-
-export const HASH_TO_TAB: Record<string, CompanyTabValue> = {
+const HASH_TO_TAB: Record<string, CompanyTabValue> = {
   "#analysis": "analysis",
   "#chat": "chat",
   "#ask": "chat",
@@ -46,35 +31,6 @@ export const HASH_TO_TAB: Record<string, CompanyTabValue> = {
   "#fred": "fred",
 };
 
-export function tabToHash(tab: CompanyTabValue, fredSeriesId?: string | null): string {
-  switch (tab) {
-    case "analysis":
-      return "#analysis";
-    case "chat":
-      return "#chat";
-    case "peers":
-      return "#peers";
-    case "health":
-      return "#health";
-    case "patterns":
-      return "#patterns";
-    case "guidance":
-      return "#guidance";
-    case "trends":
-      return "#financial-trends";
-    case "insider":
-      return "#insider-transactions";
-    case "documents":
-      return "#documents";
-    case "timeline":
-      return "#timeline";
-    case "fred":
-      return fredSeriesId ? `#fred/${encodeURIComponent(fredSeriesId)}` : "#fred";
-    case "shares":
-      return "#outstanding-shares";
-  }
-}
-
 export function parseLocationHash(hash: string): {
   tab: CompanyTabValue | null;
   fredSeriesId: string | null;
@@ -86,10 +42,4 @@ export function parseLocationHash(hash: string): {
   }
 
   return { tab: HASH_TO_TAB[hash] ?? null, fredSeriesId: null };
-}
-
-export function sidebarTabForValue(tab: CompanyTabValue): CompanyNavTab | null {
-  if (tab === "timeline") return "documents";
-  if (tab === "chat") return null;
-  return tab;
 }

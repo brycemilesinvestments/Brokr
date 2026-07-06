@@ -1,0 +1,162 @@
+[
+  {
+    "code": "P",
+    "category": "general",
+    "description": "Open market or private purchase of non-derivative or derivative security",
+    "is_routine_default": false,
+    "notes": "Discretionary — genuine signal",
+    "source_url": "https://www.sec.gov/edgar/searchedgar/ownershipformcodes.html"
+  },
+  {
+    "code": "S",
+    "category": "general",
+    "description": "Open market or private sale of non-derivative or derivative security",
+    "is_routine_default": false,
+    "notes": "Discretionary unless paired with 10b5-1 checkbox",
+    "source_url": "https://www.sec.gov/edgar/searchedgar/ownershipformcodes.html"
+  },
+  {
+    "code": "V",
+    "category": "general",
+    "description": "Transaction voluntarily reported earlier than required",
+    "is_routine_default": true,
+    "notes": "Modifier flag, not a transaction character",
+    "source_url": "https://www.sec.gov/edgar/searchedgar/ownershipformcodes.html"
+  },
+  {
+    "code": "A",
+    "category": "rule_16b-3",
+    "description": "Grant, award or other acquisition pursuant to Rule 16b-3(d)",
+    "is_routine_default": true,
+    "notes": "Compensatory grant",
+    "source_url": "https://www.sec.gov/edgar/searchedgar/ownershipformcodes.html"
+  },
+  {
+    "code": "D",
+    "category": "rule_16b-3",
+    "description": "Disposition to the issuer of issuer equity securities pursuant to Rule 16b-3(e)",
+    "is_routine_default": true,
+    "notes": "Shares surrendered back to company",
+    "source_url": "https://www.sec.gov/edgar/searchedgar/ownershipformcodes.html"
+  },
+  {
+    "code": "F",
+    "category": "rule_16b-3",
+    "description": "Payment of exercise price or tax liability by delivering or withholding securities incident to receipt, exercise, or vesting under Rule 16b-3",
+    "is_routine_default": true,
+    "notes": "Tax withholding on vesting — often pairs with code A same-day",
+    "source_url": "https://www.sec.gov/edgar/searchedgar/ownershipformcodes.html"
+  },
+  {
+    "code": "I",
+    "category": "rule_16b-3",
+    "description": "Discretionary transaction in accordance with Rule 16b-3(f)",
+    "is_routine_default": true,
+    "notes": "Benefit-plan election",
+    "source_url": "https://www.sec.gov/edgar/searchedgar/ownershipformcodes.html"
+  },
+  {
+    "code": "M",
+    "category": "rule_16b-3",
+    "description": "Exercise or conversion of derivative security exempted pursuant to Rule 16b-3",
+    "is_routine_default": true,
+    "notes": "",
+    "source_url": "https://www.sec.gov/edgar/searchedgar/ownershipformcodes.html"
+  },
+  {
+    "code": "C",
+    "category": "derivative",
+    "description": "Conversion of derivative security",
+    "is_routine_default": true,
+    "notes": "",
+    "source_url": "https://www.sec.gov/edgar/searchedgar/ownershipformcodes.html"
+  },
+  {
+    "code": "E",
+    "category": "derivative",
+    "description": "Expiration of short derivative position",
+    "is_routine_default": true,
+    "notes": "",
+    "source_url": "https://www.sec.gov/edgar/searchedgar/ownershipformcodes.html"
+  },
+  {
+    "code": "H",
+    "category": "derivative",
+    "description": "Expiration (or cancellation) of long derivative position with value received",
+    "is_routine_default": true,
+    "notes": "",
+    "source_url": "https://www.sec.gov/edgar/searchedgar/ownershipformcodes.html"
+  },
+  {
+    "code": "O",
+    "category": "derivative",
+    "description": "Exercise of out-of-the-money derivative security",
+    "is_routine_default": true,
+    "notes": "",
+    "source_url": "https://www.sec.gov/edgar/searchedgar/ownershipformcodes.html"
+  },
+  {
+    "code": "X",
+    "category": "derivative",
+    "description": "Exercise of in-the-money or at-the-money derivative security",
+    "is_routine_default": true,
+    "notes": "",
+    "source_url": "https://www.sec.gov/edgar/searchedgar/ownershipformcodes.html"
+  },
+  {
+    "code": "G",
+    "category": "exempt_small",
+    "description": "Bona fide gift",
+    "is_routine_default": true,
+    "notes": "No market view expressed",
+    "source_url": "https://www.sec.gov/edgar/searchedgar/ownershipformcodes.html"
+  },
+  {
+    "code": "L",
+    "category": "exempt_small",
+    "description": "Small acquisition under Rule 16a-6",
+    "is_routine_default": true,
+    "notes": "",
+    "source_url": "https://www.sec.gov/edgar/searchedgar/ownershipformcodes.html"
+  },
+  {
+    "code": "W",
+    "category": "exempt_small",
+    "description": "Acquisition or disposition by will or the laws of descent and distribution",
+    "is_routine_default": true,
+    "notes": "",
+    "source_url": "https://www.sec.gov/edgar/searchedgar/ownershipformcodes.html"
+  },
+  {
+    "code": "Z",
+    "category": "exempt_small",
+    "description": "Deposit into or withdrawal from voting trust",
+    "is_routine_default": true,
+    "notes": "",
+    "source_url": "https://www.sec.gov/edgar/searchedgar/ownershipformcodes.html"
+  },
+  {
+    "code": "J",
+    "category": "catch_all",
+    "description": "Other acquisition or disposition (must be described in footnote)",
+    "is_routine_default": false,
+    "notes": "ALWAYS route to Tier 3 / manual review regardless of footnote content",
+    "source_url": "https://www.sec.gov/edgar/searchedgar/ownershipformcodes.html"
+  },
+  {
+    "code": "K",
+    "category": "catch_all",
+    "description": "Transaction in equity swap or instrument with similar characteristics",
+    "is_routine_default": false,
+    "notes": "Situational — read footnote",
+    "source_url": "https://www.sec.gov/edgar/searchedgar/ownershipformcodes.html"
+  },
+  {
+    "code": "U",
+    "category": "catch_all",
+    "description": "Disposition pursuant to a tender of shares in a change-of-control transaction",
+    "is_routine_default": false,
+    "notes": "Situational — read footnote",
+    "source_url": "https://www.sec.gov/edgar/searchedgar/ownershipformcodes.html"
+  }
+]

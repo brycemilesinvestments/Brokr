@@ -1,0 +1,24 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": [
+    "scripts/**/*.{ts,mjs,js}",
+    "tests/**/*.{test,spec}.{ts,tsx}"
+  ],
+  "project": [
+    "src/**/*.{ts,tsx}",
+    "scripts/**/*.{ts,mjs,js}",
+    "tests/**/*.{ts,tsx}"
+  ],
+  "ignoreBinaries": ["python3"],
+  "ignoreDependencies": ["shadcn", "tw-animate-css", "tailwindcss"],
+  "ignoreIssues": {
+    "src/lib/**/index.ts": ["exports", "types"],
+    "src/lib/**/types.ts": ["types"],
+    "src/lib/**/*.ts": ["types"],
+    "src/components/**/*.{ts,tsx}": ["types"],
+    "src/routes/**/index.ts": ["exports", "types"],
+    "src/routes/**/types.ts": ["types"],
+    "src/routes/company/**/*.{ts,tsx}": ["types"],
+    "src/components/ui/**/*.tsx": ["exports", "types"]
+  }
+}

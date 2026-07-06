@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   EdgarClient,
   extractIxbrl,
@@ -8,9 +8,10 @@ import {
   resolveDocumentUrl,
   assertUserAgent,
   EdgarUserAgentError,
-  MIN_REQUEST_INTERVAL_MS,
+  SEC_MIN_REQUEST_INTERVAL_MS,
   toFinancials,
 } from "@/lib/edgar";
+import { getSecRequestQueue, resetSecRequestQueue } from "@/lib/edgar/sec-request";
 import sndkCompanyFacts from "../../fixtures/sndk-companyfacts.json";
 import sndkGolden from "../../fixtures/sndk-golden-data.json";
 
@@ -20,6 +21,11 @@ const ixbrlFixture = readFileSync(
 );
 
 describe("Edgar chunk", () => {
+  afterEach(() => {
+    resetSecRequestQueue();
+    vi.unstubAllGlobals();
+  });
+
   it("companyfacts → 148089758 shares outstanding", () => {
     const shares = getLatestSharesOutstanding(sndkCompanyFacts as never);
     expect(shares).toBe(sndkGolden.shares);
@@ -30,16 +36,18 @@ describe("Edgar chunk", () => {
     expect(facts.length).toBe(sndkGolden.ixbrlMetrics.factCount);
   });
 
-  it("throttle interval ≥ 110ms", async () => {
-    const times: number[] = [];
+  it("throttle interval ≥ SEC_MIN_REQUEST_INTERVAL_MS", async () => {
     let now = 0;
-    const client = new EdgarClient({
-      userAgent: "test-agent",
-      minIntervalMs: MIN_REQUEST_INTERVAL_MS,
+    getSecRequestQueue({
+      minIntervalMs: SEC_MIN_REQUEST_INTERVAL_MS,
       now: () => now,
       sleep: async (ms) => {
         now += ms;
       },
+    });
+
+    const client = new EdgarClient({
+      userAgent: "test-agent",
     });
 
     const mockFetch = vi.fn(async () => new Response('{"ok":true}', { status: 200 }));
@@ -48,8 +56,7 @@ describe("Edgar chunk", () => {
     await client.fetchJson("https://data.sec.gov/test-1.json", { useCache: false });
     await client.fetchJson("https://data.sec.gov/test-2.json", { useCache: false });
 
-    expect(now).toBeGreaterThanOrEqual(MIN_REQUEST_INTERVAL_MS);
-    vi.unstubAllGlobals();
+    expect(now).toBeGreaterThanOrEqual(SEC_MIN_REQUEST_INTERVAL_MS);
   });
 
   it("throws when User-Agent missing", () => {

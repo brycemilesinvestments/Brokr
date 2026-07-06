@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useMemo, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import {
   ChartTimeRangeSwitch,
@@ -38,10 +38,9 @@ export function FredPanel({
   onSelectedSeriesIdChange,
   headerLeading,
 }: FredPanelProps) {
-  const [internalSeriesId, setInternalSeriesId] = useState<string | null>(selectedSeriesIdProp);
+  const [internalSeriesId, setInternalSeriesId] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState<ChartTimeRange>("MAX");
   const [seriesSidebarOpen, setSeriesSidebarOpen] = useState(false);
-  const selectedSeriesId = selectedSeriesIdProp ?? internalSeriesId;
 
   const setSelectedSeriesId = useCallback(
     (seriesId: string | null) => {
@@ -51,12 +50,6 @@ export function FredPanel({
     [onSelectedSeriesIdChange],
   );
 
-  useEffect(() => {
-    if (selectedSeriesIdProp) {
-      setInternalSeriesId(selectedSeriesIdProp);
-    }
-  }, [selectedSeriesIdProp]);
-
   const {
     data: catalog,
     loading: catalogLoading,
@@ -64,8 +57,12 @@ export function FredPanel({
     refetch: refetchCatalog,
   } = useCompanyApi<FredSeriesCatalogResponse>(enabled ? "/api/fred/series" : null, enabled);
 
-  const observationsUrl = selectedSeriesId
-    ? `/api/fred/series/${encodeURIComponent(selectedSeriesId)}?from=${FRED_OBSERVATION_START}`
+  const selectedSeriesId = selectedSeriesIdProp ?? internalSeriesId;
+  const effectiveSeriesId =
+    selectedSeriesId ?? (catalog?.series[0]?.series_id ?? null);
+
+  const observationsUrl = effectiveSeriesId
+    ? `/api/fred/series/${encodeURIComponent(effectiveSeriesId)}?from=${FRED_OBSERVATION_START}`
     : null;
 
   const {
@@ -73,12 +70,10 @@ export function FredPanel({
     loading: observationsLoading,
     error: observationsError,
     refetch: refetchObservations,
-  } = useCompanyApi<FredSeriesObservationsResponse>(observationsUrl, enabled && Boolean(selectedSeriesId));
-
-  useEffect(() => {
-    if (!enabled || !catalog?.series.length || selectedSeriesId) return;
-    setSelectedSeriesId(catalog.series[0]?.series_id ?? null);
-  }, [catalog?.series, enabled, selectedSeriesId, setSelectedSeriesId]);
+  } = useCompanyApi<FredSeriesObservationsResponse>(
+    observationsUrl,
+    enabled && Boolean(effectiveSeriesId),
+  );
 
   const allChartData = useMemo(
     () => buildFredChartRows(observations?.observations ?? []),
@@ -146,7 +141,7 @@ export function FredPanel({
 
   const activeSeries =
     observations?.series ??
-    catalog.series.find((item) => item.series_id === selectedSeriesId) ??
+    catalog.series.find((item) => item.series_id === effectiveSeriesId) ??
     null;
 
   const categoryStyle = activeSeries
@@ -189,7 +184,7 @@ export function FredPanel({
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <FredSeriesSidebar
           series={catalog.series}
-          selectedSeriesId={selectedSeriesId}
+          selectedSeriesId={effectiveSeriesId}
           mobileOpen={seriesSidebarOpen}
           onMobileClose={() => setSeriesSidebarOpen(false)}
           onSelectSeries={setSelectedSeriesId}

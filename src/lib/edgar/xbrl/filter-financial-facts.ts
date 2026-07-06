@@ -315,7 +315,7 @@ function buildRow(
   };
 }
 
-export function filterFinancialStatements(facts: XbrlFact[]): FinancialStatementRow[] {
+function filterFinancialStatements(facts: XbrlFact[]): FinancialStatementRow[] {
   const canonical = detectCanonicalContexts(facts);
   const scoped = facts.filter(
     (fact) => isWhitelistedFact(fact) && canonical.allowedContextRefs.has(fact.contextRef),

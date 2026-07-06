@@ -259,4 +259,3 @@ export function runEventStudy(input: EventStudyInput): EventStudyResult {
   return complete;
 }
 
-export { MINIMUM_SIGNAL_EVENTS };

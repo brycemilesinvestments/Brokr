@@ -314,15 +314,12 @@ export async function embedAndStore(
     embedding: embeddings[index],
   }));
 
-  await store.deleteChunksForAccession(input.companyId, input.accession);
-  await Promise.all([
-    store.insertChunks(withEmbeddings),
-    store.upsertIngestStatus({
-      companyId: input.companyId,
-      accession: input.accession,
-      embeddedDone: true,
-    }),
-  ]);
+  await store.insertChunks(withEmbeddings);
+  await store.upsertIngestStatus({
+    companyId: input.companyId,
+    accession: input.accession,
+    embeddedDone: true,
+  });
 
   return {
     stored: withEmbeddings.length,

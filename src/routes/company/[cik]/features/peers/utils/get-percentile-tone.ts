@@ -9,14 +9,6 @@ export function getPercentileTone(rank: number): PercentileTone {
   return "mid";
 }
 
-export function isFloorPercentile(rank: number): boolean {
-  return rank <= FLOOR_THRESHOLD;
-}
-
-export function isLeadPercentile(rank: number): boolean {
-  return rank >= LEAD_THRESHOLD;
-}
-
 export const PERCENTILE_TONE_STYLES: Record<
   PercentileTone,
   { dot: string; value: string }

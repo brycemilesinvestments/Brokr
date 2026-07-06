@@ -17,7 +17,7 @@ export function isXbrlFactDocument(document: FilingDocument): boolean {
   return false;
 }
 
-export function isXbrlTaxonomyDocument(document: FilingDocument): boolean {
+function isXbrlTaxonomyDocument(document: FilingDocument): boolean {
   const type = document.type?.trim() ?? "";
   if (/^EX-101\.(CAL|DEF|LAB|PRE|SCH)$/i.test(type)) return true;
   return XBRL_FILENAME_PATTERN.test(document.documentName) && !isXbrlFactDocument(document);

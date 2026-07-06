@@ -91,26 +91,22 @@ export function MetricAnomalyPopover({ anomalies, explanations }: MetricAnomalyP
   const panelId = useId();
   const rootRef = useRef<HTMLSpanElement>(null);
 
+  function setPopoverOpen(nextOpen: boolean) {
+    setOpen(nextOpen);
+  }
+
   useEffect(() => {
     if (!open) return;
 
     function handlePointerDown(event: MouseEvent) {
       if (!rootRef.current?.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    }
-
-    function handleEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setOpen(false);
+        setPopoverOpen(false);
       }
     }
 
     document.addEventListener("mousedown", handlePointerDown);
-    document.addEventListener("keydown", handleEscape);
     return () => {
       document.removeEventListener("mousedown", handlePointerDown);
-      document.removeEventListener("keydown", handleEscape);
     };
   }, [open]);
 
@@ -127,7 +123,7 @@ export function MetricAnomalyPopover({ anomalies, explanations }: MetricAnomalyP
         aria-label={`${anomalies.length} anomal${anomalies.length === 1 ? "y" : "ies"} flagged — view details`}
         onClick={(event) => {
           event.stopPropagation();
-          setOpen((value) => !value);
+          setPopoverOpen(!open);
         }}
         className={cn(
           "inline-flex size-5 shrink-0 items-center justify-center rounded-md transition-colors",
@@ -145,12 +141,12 @@ export function MetricAnomalyPopover({ anomalies, explanations }: MetricAnomalyP
       </button>
 
       {open ? (
-        <div
+        <dialog
+          open
           id={panelId}
-          role="dialog"
           aria-label="Anomaly details"
-          className="absolute left-0 top-[calc(100%+6px)] z-20 w-[min(22rem,calc(100vw-2rem))] rounded-xl border border-zinc-200 bg-white p-3 shadow-lg"
-          onClick={(event) => event.stopPropagation()}
+          className="absolute left-0 top-[calc(100%+6px)] z-20 m-0 w-[min(22rem,calc(100vw-2rem))] rounded-xl border border-zinc-200 bg-white p-3 shadow-lg"
+          onClose={() => setPopoverOpen(false)}
         >
           <p className="font-mono text-[9px] font-semibold uppercase tracking-[0.08em] text-rose-600">
             Flagged anomal{anomalies.length === 1 ? "y" : "ies"}
@@ -164,7 +160,7 @@ export function MetricAnomalyPopover({ anomalies, explanations }: MetricAnomalyP
               />
             ))}
           </ul>
-        </div>
+        </dialog>
       ) : null}
     </span>
   );

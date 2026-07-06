@@ -88,8 +88,8 @@ export type CompanyAnalysisOutput = {
   costUsd: number;
 };
 
-export const DEFAULT_MASTER_MAX_ITERATIONS = 20;
-export const DEFAULT_MASTER_MAX_COST_USD = 0.5;
+const DEFAULT_MASTER_MAX_ITERATIONS = 20;
+const DEFAULT_MASTER_MAX_COST_USD = 0.5;
 
 export type MasterOrchestrationConfig = {
   maxIterations: number;

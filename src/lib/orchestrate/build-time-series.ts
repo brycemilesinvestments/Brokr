@@ -22,7 +22,7 @@ export async function buildCompanyTimeSeries(
   return buildTimeSeriesFromFacts(rawFacts as CompanyFactsResponse);
 }
 
-export function buildTimeSeriesFromFacts(
+function buildTimeSeriesFromFacts(
   rawFacts: CompanyFactsResponse,
 ): BuildTimeSeriesResult {
   const state = buildTimeSeriesState(rawFacts);

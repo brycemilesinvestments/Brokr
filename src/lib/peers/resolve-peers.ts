@@ -27,21 +27,37 @@ async function resolveYahooPeers(
     return [];
   }
 
+  const resolveTickerToCompany = deps.resolveTickerToCompany;
   const recommendations = await deps.fetchComparePeersByTicker(ticker);
   const remaining = maxPeers - manualPeerCount;
+  const candidates = recommendations
+    .slice(0, YAHOO_CANDIDATE_POOL)
+    .filter((recommendation) => recommendation.ticker !== ticker);
+
+  const companies = await Promise.all(
+    candidates.map((recommendation) => resolveTickerToCompany(recommendation.ticker)),
+  );
+
+  const filingDates = await Promise.all(
+    companies.map((company) => {
+      if (!company) return Promise.resolve(null);
+      const cik = formatCik(company.cik);
+      if (cik === targetCikNorm || resolvedCiks.has(cik)) return Promise.resolve(null);
+      return deps.fetchLastFilingDate(cik);
+    }),
+  );
+
   const yahooPeers: PeerEntry[] = [];
-
-  for (const recommendation of recommendations.slice(0, YAHOO_CANDIDATE_POOL)) {
+  for (let index = 0; index < candidates.length; index += 1) {
     if (yahooPeers.length >= remaining) break;
-    if (recommendation.ticker === ticker) continue;
 
-    const company = await deps.resolveTickerToCompany(recommendation.ticker);
+    const company = companies[index];
     if (!company) continue;
 
     const cik = formatCik(company.cik);
     if (cik === targetCikNorm || resolvedCiks.has(cik)) continue;
 
-    const lastFiling = await deps.fetchLastFilingDate(cik);
+    const lastFiling = filingDates[index];
     if (!lastFiling || !isFilingWithinMonths(lastFiling, RECENT_FILING_MONTHS)) {
       continue;
     }
@@ -138,16 +154,17 @@ export async function resolvePeers(
     }
   }
 
-  const sic = await deps.fetchSic(input.targetCik);
-
-  const yahooPeers = await resolveYahooPeers(
-    input,
-    deps,
-    targetCikNorm,
-    resolvedCiks,
-    manualPeers.length,
-    maxPeers,
-  );
+  const [sic, yahooPeers] = await Promise.all([
+    deps.fetchSic(input.targetCik),
+    resolveYahooPeers(
+      input,
+      deps,
+      targetCikNorm,
+      resolvedCiks,
+      manualPeers.length,
+      maxPeers,
+    ),
+  ]);
 
   const peersBeforeSic = [...manualPeers, ...yahooPeers];
 

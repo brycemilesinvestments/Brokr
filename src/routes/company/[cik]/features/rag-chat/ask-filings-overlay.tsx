@@ -97,10 +97,11 @@ export function AskFilingsOverlay({
   return (
     <div className="pointer-events-none fixed right-6 bottom-6 z-50 flex flex-col items-end gap-3.5">
       {open ? (
-        <div
-          className="pointer-events-auto flex h-[428px] w-[330px] flex-col overflow-hidden rounded-[18px] border border-zinc-200 bg-white shadow-[0_20px_50px_-12px_rgba(0,0,0,0.32)]"
-          role="dialog"
+        <dialog
+          open
           aria-label="Ask filings"
+          className="pointer-events-auto fixed right-6 bottom-[calc(1.5rem+3.5rem+3.5rem)] m-0 flex h-[428px] w-[330px] flex-col overflow-hidden rounded-[18px] border border-zinc-200 bg-white p-0 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.32)]"
+          onClose={() => setOpen(false)}
         >
           <div className="flex items-center gap-2.5 bg-emerald-600 px-4 py-3.5 text-white">
             <div className="flex h-[26px] w-[26px] items-center justify-center rounded-lg bg-white/20">
@@ -167,7 +168,7 @@ export function AskFilingsOverlay({
               <SendIcon />
             </button>
           </div>
-        </div>
+        </dialog>
       ) : null}
 
       <button

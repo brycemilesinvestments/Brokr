@@ -1,8 +1,7 @@
 import type { SortMode } from "@/routes/company/[cik]/components/column-filter";
-import type {
-  FilingAnalysisProgress,
-  FilingAnalysisStatus,
-} from "@/routes/company/[cik]/hooks/use-filing-analysis-queue";
+import type { FilingPipelineProgress } from "@/routes/company/[cik]/hooks/use-filing-pipeline";
+import type { FilingWorkStatus } from "@/routes/company/[cik]/hooks/use-filing-pipeline";
+import type { Form345PipelineProgress } from "@/routes/company/[cik]/hooks/use-form345-pipeline";
 import type { Filing } from "@/routes/company/[cik]/types";
 
 export type FilingsTableProps = {
@@ -10,9 +9,13 @@ export type FilingsTableProps = {
   filings: Filing[];
   totalShown: number;
   hasMoreFilings?: boolean;
-  getAnalysisStatus: (accessionNumber: string | undefined) => FilingAnalysisStatus;
+  isLoadingMore?: boolean;
+  loadError?: string | null;
+  loadRemainingFilings?: () => void;
+  getAnalysisStatus: (accessionNumber: string | undefined) => FilingWorkStatus;
   getAnalysisError: (accessionNumber: string | undefined) => string | null;
-  analysisProgress: FilingAnalysisProgress;
+  pipelineProgress: FilingPipelineProgress;
+  form345Progress?: Form345PipelineProgress;
 };
 
 export type ColumnKey = "type" | "description" | "filingDate" | "accessionNumber";

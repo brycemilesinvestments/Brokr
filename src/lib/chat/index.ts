@@ -41,7 +41,6 @@ export {
   extractFpHint,
   extractMetricHints,
   formatMetricForContext,
-  formatValue,
   groundedGenerate,
   pullMetrics,
   routeQuestion,

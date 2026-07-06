@@ -4,6 +4,7 @@ import {
   SEC_USER_AGENT,
   formatCik,
 } from "@/lib/edgar/constants";
+import { fetchSec } from "@/lib/edgar/sec-request";
 
 export class EdgarUserAgentError extends Error {
   constructor() {
@@ -71,17 +72,19 @@ export function resolveDocumentUrl(
   return `${baseUrl}/${documentPath}`;
 }
 
-export async function fetchJson<T>(
+async function fetchJson<T>(
   url: string,
   options?: RequestInit & { userAgent?: string },
 ): Promise<T> {
   const userAgent = assertUserAgent(options?.userAgent);
-  const response = await fetch(url, {
-    ...options,
+  const init: RequestInit = { ...(options ?? {}) };
+  delete (init as RequestInit & { userAgent?: string }).userAgent;
+  const response = await fetchSec(url, {
+    ...init,
+    userAgent,
     headers: {
-      "User-Agent": userAgent,
       Accept: "application/json",
-      ...options?.headers,
+      ...init.headers,
     },
   });
 
@@ -92,17 +95,19 @@ export async function fetchJson<T>(
   return response.json() as Promise<T>;
 }
 
-export async function fetchText(
+async function fetchText(
   url: string,
   options?: RequestInit & { userAgent?: string },
 ): Promise<string> {
   const userAgent = assertUserAgent(options?.userAgent);
-  const response = await fetch(url, {
-    ...options,
+  const init: RequestInit = { ...(options ?? {}) };
+  delete (init as RequestInit & { userAgent?: string }).userAgent;
+  const response = await fetchSec(url, {
+    ...init,
+    userAgent,
     headers: {
-      "User-Agent": userAgent,
       Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-      ...options?.headers,
+      ...init.headers,
     },
   });
 

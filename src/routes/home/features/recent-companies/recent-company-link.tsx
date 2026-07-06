@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { companyAnalysisPath } from "@/routes/company/[cik]/lib/company-tab-paths";
 
 export function RecentCompanyLink({
   cik,
@@ -11,7 +12,7 @@ export function RecentCompanyLink({
 }) {
   return (
     <Link
-      href={`/company/${cik}#analysis`}
+      href={companyAnalysisPath(cik)}
       className="rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm transition hover:border-emerald-300 hover:bg-emerald-50/40"
     >
       <div className="font-medium text-zinc-900">{name}</div>

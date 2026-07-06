@@ -1,7 +1,7 @@
 import {
   SEC_COMPANY_TICKERS_URL,
-  SEC_USER_AGENT,
 } from "@/lib/edgar/constants";
+import { fetchSec } from "@/lib/edgar";
 import type { CompanyTicker } from "@/lib/edgar/types";
 
 type SecTickerEntry = {
@@ -15,8 +15,7 @@ let cacheLoadedAt = 0;
 const CACHE_TTL_MS = 1000 * 60 * 60 * 24;
 
 async function fetchTickersFromSec(): Promise<CompanyTicker[]> {
-  const response = await fetch(SEC_COMPANY_TICKERS_URL, {
-    headers: { "User-Agent": SEC_USER_AGENT },
+  const response = await fetchSec(SEC_COMPANY_TICKERS_URL, {
     next: { revalidate: 86400 },
   });
 

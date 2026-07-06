@@ -17,7 +17,6 @@ export { buildSourceFingerprint } from "@/lib/orchestrate/company-analysis-finge
 export {
   analyzeCompany,
   analyzeCompanyOffline,
-  priceBarsFromYahooFixture,
 } from "@/lib/orchestrate/analyze-company";
 export type {
   AnalyzeCompanyDeps,
@@ -35,7 +34,6 @@ export { buildCoverageReport } from "@/lib/orchestrate/coverage-report";
 export {
   analyzeFilingDiscovery,
   createSignalCache,
-  parseFilingDiscoveryConfig,
 } from "@/lib/orchestrate/filing-discovery";
 export type { FilingDiscoveryOutput } from "@/lib/orchestrate/filing-discovery";
 
@@ -55,8 +53,6 @@ export type {
 } from "@/lib/orchestrate/types";
 
 export {
-  DEFAULT_MASTER_MAX_ITERATIONS,
-  DEFAULT_MASTER_MAX_COST_USD,
   parseMasterConfigFromEnv,
 } from "@/lib/orchestrate/types";
 
@@ -68,7 +64,6 @@ export type { WireHandlersDeps } from "@/lib/orchestrate/wire-handlers";
 
 export {
   buildCompanyTimeSeries,
-  buildTimeSeriesFromFacts,
 } from "@/lib/orchestrate/build-time-series";
 export type { BuildTimeSeriesResult } from "@/lib/orchestrate/build-time-series";
 

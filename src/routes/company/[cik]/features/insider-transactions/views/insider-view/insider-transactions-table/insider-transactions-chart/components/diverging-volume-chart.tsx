@@ -186,16 +186,18 @@ export function DivergingVolumeChart({ buckets }: DivergingVolumeChartProps) {
                   fill={DIVERGING_COLORS.disposed}
                 />
               ) : null}
-              <text
-                x={bar.centerX}
-                y={DIVERGING_CHART_HEIGHT - 14}
-                textAnchor="middle"
-                fontFamily="system-ui, sans-serif"
-                fontSize={9.5}
-                fill={DIVERGING_COLORS.monthLabel}
-              >
-                {bar.label}
-              </text>
+              {bar.axisLabel ? (
+                <text
+                  x={bar.centerX}
+                  y={DIVERGING_CHART_HEIGHT - 14}
+                  textAnchor="middle"
+                  fontFamily="system-ui, sans-serif"
+                  fontSize={9.5}
+                  fill={DIVERGING_COLORS.monthLabel}
+                >
+                  {bar.axisLabel}
+                </text>
+              ) : null}
             </g>
           );
         })}

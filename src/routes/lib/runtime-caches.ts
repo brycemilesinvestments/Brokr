@@ -7,7 +7,7 @@ import {
 import type { GuidanceCache, GuidanceCacheRecord } from "@/lib/guidance";
 
 /** Process-local filing diff prose cache (persists for dev server lifetime). */
-export function createFilingDiffCache(): FilingDiffCache {
+function createFilingDiffCache(): FilingDiffCache {
   const store = new Map<string, ProseDiffResult>();
   return {
     async read(key: FilingDiffCacheKey) {
@@ -20,7 +20,7 @@ export function createFilingDiffCache(): FilingDiffCache {
 }
 
 /** Process-local guidance extraction cache. */
-export function createGuidanceCache(): GuidanceCache {
+function createGuidanceCache(): GuidanceCache {
   const store = new Map<string, GuidanceCacheRecord>();
   const cacheKey = (cik: string, accession: string) => `${cik}:${accession}`;
 

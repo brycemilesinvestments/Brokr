@@ -3,11 +3,14 @@
 import type { MetricPolarityMap } from "@/lib/metrics/polarity/types";
 import type { ChartBundle } from "@/lib/analysis";
 import type { AnomalyExplanation, CrossLayerAnomaly } from "@/lib/orchestrate";
+import type { Filing } from "@/routes/company/[cik]/types";
 import type { MetricSeriesSection } from "../lib/chart-helpers";
 import { ExpandedMetricPanel } from "./expanded-metric-panel";
 import { MetricSeriesCard } from "./metric-series-card";
 
 type MetricSeriesGridProps = {
+  cik: string;
+  filings: Filing[];
   sections: MetricSeriesSection[];
   chart: ChartBundle;
   anomalies: CrossLayerAnomaly[];
@@ -18,6 +21,8 @@ type MetricSeriesGridProps = {
 };
 
 export function MetricSeriesGrid({
+  cik,
+  filings,
   sections,
   chart,
   anomalies,
@@ -28,12 +33,10 @@ export function MetricSeriesGrid({
 }: MetricSeriesGridProps) {
   return (
     <div className="px-6 pb-2 pt-5">
-      <p className="mb-3.5 font-mono text-[9px] font-semibold uppercase tracking-[0.08em] text-zinc-300">
-        All series · click to expand
-      </p>
-
       {expandedMetric ? (
         <ExpandedMetricPanel
+          cik={cik}
+          filings={filings}
           metric={expandedMetric}
           chart={chart}
           onClose={() => onSelectMetric(null)}

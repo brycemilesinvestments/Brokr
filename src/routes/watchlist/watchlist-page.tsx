@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
+import { companyAnalysisPath } from "@/routes/company/[cik]/lib/company-tab-paths";
 import type { StructuredAlert, WatchlistEntry } from "@/lib/watchlist/types";
 
 type EvaluateOutput = {
@@ -139,7 +140,7 @@ export function WatchlistPage() {
                   className="flex items-center justify-between rounded-lg border border-zinc-100 px-4 py-3"
                 >
                   <div>
-                    <Link href={`/company/${entry.cik}`} className="font-medium text-emerald-700 hover:underline">
+                    <Link href={companyAnalysisPath(entry.cik)} className="font-medium text-emerald-700 hover:underline">
                       CIK {entry.cik}
                     </Link>
                     <p className="text-xs text-zinc-500">

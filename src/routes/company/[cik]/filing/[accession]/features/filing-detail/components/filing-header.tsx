@@ -1,4 +1,3 @@
-import Link from "next/link";
 import type { FilingDetailPage } from "@/routes/company/[cik]/filing/[accession]/types";
 
 type FilingHeaderProps = {
@@ -61,7 +60,7 @@ export function FilingHeader({ filing, companyName }: FilingHeaderProps) {
         ) : null}
       </dl>
 
-      <div className="mt-6 flex flex-wrap gap-2">
+      <div className="mt-6">
         <a
           href={filing.secUrl}
           target="_blank"
@@ -70,12 +69,6 @@ export function FilingHeader({ filing, companyName }: FilingHeaderProps) {
         >
           View on SEC.gov
         </a>
-        <Link
-          href={`/company/${filing.cik}`}
-          className="inline-flex items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-800 transition hover:bg-emerald-100"
-        >
-          Back to company filings
-        </Link>
       </div>
     </section>
   );

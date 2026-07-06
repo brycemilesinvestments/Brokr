@@ -3,11 +3,13 @@
 import { Skeleton } from "boneyard-js/react";
 import { BONE_NAMES } from "./skeleton-names";
 
+const COMPANY_ANALYSIS_LOADING_FIXTURE = <CompanyAnalysisLoadingContent />;
+
 type CompanyAnalysisLoadingProps = {
   loading?: boolean;
 };
 
-export function CompanyAnalysisLoadingContent() {
+function CompanyAnalysisLoadingContent() {
   return (
     <section className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-white">
       <div className="border-b border-zinc-100 px-6 py-5">
@@ -33,8 +35,8 @@ export function CompanyAnalysisLoading({ loading = true }: CompanyAnalysisLoadin
       loading={loading}
       transition
       animate="shimmer"
-      fixture={<CompanyAnalysisLoadingContent />}
-      fallback={<CompanyAnalysisLoadingContent />}
+      fixture={COMPANY_ANALYSIS_LOADING_FIXTURE}
+      fallback={COMPANY_ANALYSIS_LOADING_FIXTURE}
     >
       <CompanyAnalysisLoadingContent />
     </Skeleton>

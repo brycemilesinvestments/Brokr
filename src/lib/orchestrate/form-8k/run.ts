@@ -1,25 +1,12 @@
-import { classifyForm8k } from "@/lib/agent/form-8k";
-import { formatCik, createEdgarClient, type FilingRef } from "@/lib/edgar";
-import {
-  fetchAndStore8k,
-  filter8kFilings,
-  type Stored8kDocument,
-} from "@/lib/orchestrate/form-8k/fetch-and-store";
-import {
-  combinedDocumentText,
-  ingest8kDocument,
-  type Ingest8kResult,
-} from "@/lib/orchestrate/form-8k/ingest-document";
-import {
-  getCompanyByEdgarId,
-  upsertCompanyProfile,
-  type CompanyRow,
-} from "@/lib/supabase/companies";
-import {
-  getDocumentAnalysis,
-  upsertDocumentAnalysis,
-  type CompanyDocumentAnalysisRow,
-} from "@/lib/supabase/company-documents";
+import { createEdgarClient, type FilingRef } from "@/lib/edgar";
+import { analyzeStored8k } from "@/lib/orchestrate/company-filings/analyze-8k";
+import { ensureCompany } from "@/lib/orchestrate/company-filings/ensure-company";
+import { loadStored8kContent } from "@/lib/orchestrate/company-filings/load-stored-document";
+import { storeCompanyFiling } from "@/lib/orchestrate/company-filings/store-filing";
+import { type Ingest8kResult } from "@/lib/orchestrate/form-8k/ingest-document";
+import { filter8kFilings, type Stored8kDocument } from "@/lib/orchestrate/form-8k/fetch-and-store";
+import type { CompanyDocumentAnalysisRow } from "@/lib/supabase/company-documents";
+import type { CompanyRow } from "@/lib/supabase/companies";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export type Form8kSyncResult = {
@@ -35,69 +22,27 @@ export type Form8kSyncResult = {
   errors: Array<{ accessionNumber: string; message: string }>;
 };
 
-async function ensureCompany(edgarId: string): Promise<CompanyRow> {
-  const formatted = formatCik(edgarId);
-  const existing = await getCompanyByEdgarId(formatted);
-  if (existing) return existing;
-
-  const client = createEdgarClient({ supabaseClient: createAdminClient() ?? undefined });
-  const submissions = await client.getSubmissions(formatted);
-  const created = await upsertCompanyProfile({
-    edgarId: formatted,
-    name: submissions.entityName,
-  });
-
-  if (!created) {
-    throw new Error(`Unable to create company record for CIK ${formatted}`);
-  }
-
-  return created;
-}
-
 async function processFiling(
   company: CompanyRow,
   filing: FilingRef,
 ): Promise<Form8kSyncResult["processed"][number]> {
-  const stored = await fetchAndStore8k(company, filing);
-  const ingest = await ingest8kDocument({
-    company,
-    document: stored.document,
-    form8kHtml: stored.form8kHtml,
-    exhibit991Html: stored.exhibit991Html,
-  });
-
-  const documentText = combinedDocumentText(stored.form8kHtml, stored.exhibit991Html);
-  const existingAnalysis = await getDocumentAnalysis(stored.document.id);
-  if (existingAnalysis) {
-    return {
-      accessionNumber: filing.accessionNumber,
-      stored,
-      ingest,
-      analysis: existingAnalysis,
-      classification: existingAnalysis.result,
-      costUsd: 0,
-    };
-  }
-
-  const { classification, costUsd } = await classifyForm8k({
-    accessionNumber: filing.accessionNumber,
-    items: filing.items,
-    formType: filing.form,
-    documentText,
-  });
-
-  const analysis = await upsertDocumentAnalysis({
-    documentId: stored.document.id,
-    result: classification as unknown as Record<string, unknown>,
-  });
+  const { document, skipped } = await storeCompanyFiling(company, filing);
+  const content = await loadStored8kContent(document);
+  const stored: Stored8kDocument = {
+    document,
+    form8kHtml: content.form8kHtml,
+    exhibit991Html: content.exhibit991Html,
+    skipped,
+  };
+  const analyzed = await analyzeStored8k(company, document, filing);
 
   return {
     accessionNumber: filing.accessionNumber,
     stored,
-    ingest,
-    analysis,
-    classification: classification as unknown as Record<string, unknown>,
-    costUsd,
+    ingest: analyzed.ingest,
+    analysis: analyzed.analysis,
+    classification: analyzed.classification,
+    costUsd: analyzed.costUsd,
   };
 }
 

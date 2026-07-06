@@ -24,6 +24,8 @@ export type ChartPoint = {
   delta_qoq?: number;
   delta_yoy?: number;
   anomaly?: boolean;
+  /** SEC accession for the filing that reported this value. */
+  accessionNumber?: string;
 };
 
 export type ChartBundle = Record<string, ChartPoint[]>;

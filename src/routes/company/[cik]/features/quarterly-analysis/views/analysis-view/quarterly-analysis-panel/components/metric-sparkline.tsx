@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import type { ChartPoint } from "@/lib/analysis";
 import type { MetricPolarity } from "@/lib/metrics/polarity/types";
 import {
@@ -35,6 +35,34 @@ type SparklineSize = {
   width: number;
   height: number;
 };
+
+const EMPTY_SPARKLINE_SIZE: SparklineSize = { width: 0, height: 0 };
+const elementSizeCache = new WeakMap<HTMLElement, SparklineSize>();
+
+function subscribeToElementSize(element: HTMLElement | null, onStoreChange: () => void) {
+  if (!element) return () => {};
+
+  const observer = new ResizeObserver(onStoreChange);
+  observer.observe(element);
+  return () => observer.disconnect();
+}
+
+function readElementSize(element: HTMLElement | null): SparklineSize {
+  if (!element) return EMPTY_SPARKLINE_SIZE;
+
+  const rect = element.getBoundingClientRect();
+  const width = Math.max(0, Math.round(rect.width));
+  const height = Math.max(0, Math.round(rect.height));
+  const cached = elementSizeCache.get(element);
+
+  if (cached && cached.width === width && cached.height === height) {
+    return cached;
+  }
+
+  const next = { width, height };
+  elementSizeCache.set(element, next);
+  return next;
+}
 
 function buildSparklineGeometry(points: ChartPoint[], width: number, height: number): SparklineGeometry {
   if (points.length === 0 || width <= 0 || height <= 0) {
@@ -78,9 +106,13 @@ export function MetricSparkline({
   interactive = false,
   className,
 }: MetricSparklineProps) {
-  const rootRef = useRef<HTMLDivElement>(null);
-  const [size, setSize] = useState<SparklineSize>({ width: 0, height: 0 });
+  const [rootElement, setRootElement] = useState<HTMLDivElement | null>(null);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const size = useSyncExternalStore(
+    (onStoreChange) => subscribeToElementSize(rootElement, onStoreChange),
+    () => readElementSize(rootElement),
+    () => EMPTY_SPARKLINE_SIZE,
+  );
 
   const chartColor = useMemo(() => {
     const resolvedPolarity = polarity ?? (metric ? guessPolarityFromMetricKey(metric) : "neutral");
@@ -89,36 +121,17 @@ export function MetricSparkline({
     return SENTIMENT_CHART_COLORS[sentiment];
   }, [metric, polarity, points]);
 
-  useEffect(() => {
-    const element = rootRef.current;
-    if (!element) return;
-
-    const updateSize = () => {
-      const rect = element.getBoundingClientRect();
-      const width = Math.max(0, Math.round(rect.width));
-      const height = Math.max(0, Math.round(rect.height));
-      setSize((current) =>
-        current.width === width && current.height === height ? current : { width, height },
-      );
-    };
-
-    updateSize();
-    const observer = new ResizeObserver(updateSize);
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, []);
-
   const { linePath, areaPath, coords } = buildSparklineGeometry(points, size.width, size.height);
   const activePoint = activeIndex !== null ? points[activeIndex] : null;
   const activeCoord = activeIndex !== null ? coords[activeIndex] : null;
 
   const handlePointerMove = useCallback(
     (event: React.PointerEvent<HTMLDivElement>) => {
-      if (!interactive || !rootRef.current || points.length === 0) return;
-      const rect = rootRef.current.getBoundingClientRect();
+      if (!interactive || !rootElement || points.length === 0) return;
+      const rect = rootElement.getBoundingClientRect();
       setActiveIndex(nearestPointIndex(event.clientX, rect, points.length));
     },
-    [interactive, points.length],
+    [interactive, points.length, rootElement],
   );
 
   const handlePointerLeave = useCallback(() => {
@@ -126,12 +139,12 @@ export function MetricSparkline({
   }, []);
 
   if (!linePath) {
-    return <div ref={rootRef} className={cn("h-20 w-full rounded bg-zinc-50", className)} />;
+    return <div ref={setRootElement} className={cn("h-20 w-full rounded bg-zinc-50", className)} />;
   }
 
   return (
     <div
-      ref={rootRef}
+      ref={setRootElement}
       className={cn("relative h-20 w-full", interactive && "touch-none", className)}
       onPointerMove={interactive ? handlePointerMove : undefined}
       onPointerLeave={interactive ? handlePointerLeave : undefined}

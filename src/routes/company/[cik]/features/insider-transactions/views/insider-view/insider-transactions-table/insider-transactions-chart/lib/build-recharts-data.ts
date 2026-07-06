@@ -2,32 +2,11 @@ import type { ChartConfig } from "@/components/evilcharts/ui/chart";
 import { OWNER_COLORS } from "../constants";
 import type { LineSeries } from "../types";
 
-export type ActivityBarRow = {
-  date: string;
-  buys: number;
-  sells: number;
-};
-
 export type HoldingsSeriesMeta = {
   key: string;
   label: string;
   color: string;
 };
-
-export function buildActivityBarData(series: LineSeries[]): ActivityBarRow[] {
-  const buysSeries = series.find((line) => line.id === "buys");
-  const sellsSeries = series.find((line) => line.id === "sells");
-  const dates = new Set<string>();
-
-  for (const point of buysSeries?.points ?? []) dates.add(point.date);
-  for (const point of sellsSeries?.points ?? []) dates.add(point.date);
-
-  return [...dates].toSorted().map((date) => ({
-    date,
-    buys: buysSeries?.points.find((point) => point.date === date)?.value ?? 0,
-    sells: sellsSeries?.points.find((point) => point.date === date)?.value ?? 0,
-  }));
-}
 
 export function buildHoldingsLineData(series: LineSeries[]): {
   data: Array<Record<string, string | number>>;

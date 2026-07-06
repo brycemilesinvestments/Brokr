@@ -6,10 +6,12 @@ import {
   DIVERGING_ZERO_Y,
 } from "../constants";
 import type { MonthlyVolumeBucket } from "./build-monthly-volume";
+import { buildMonthAxisLabels } from "../utils/build-month-axis-labels";
 
 export type DivergingBarGeometry = {
   monthKey: string;
   label: string;
+  axisLabel: string | null;
   acquired: number;
   disposed: number;
   centerX: number;
@@ -79,6 +81,10 @@ export function buildDivergingGeometry(
   const slotWidth = buckets.length > 0 ? plotWidth / buckets.length : plotWidth;
   const barWidth = Math.min(28, slotWidth * 0.56);
   const hitWidth = slotWidth;
+  const axisLabels = buildMonthAxisLabels(
+    buckets.map((bucket) => bucket.monthKey),
+    plotWidth,
+  );
 
   const bars = buckets.map((bucket, index) => {
     const centerX = plotLeft + (index + 0.5) * slotWidth;
@@ -89,6 +95,7 @@ export function buildDivergingGeometry(
     return {
       monthKey: bucket.monthKey,
       label: bucket.label,
+      axisLabel: axisLabels[index] ?? null,
       acquired: bucket.acquired,
       disposed: bucket.disposed,
       centerX,
@@ -139,5 +146,3 @@ export function buildDivergingGeometry(
     zeroY: DIVERGING_ZERO_Y,
   };
 }
-
-export { DIVERGING_COLORS };

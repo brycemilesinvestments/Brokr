@@ -13,6 +13,7 @@ export type CompanyDocumentRow = {
   items: string | null;
   size_bytes: number | null;
   documents_url: string | null;
+  unavailable_reason: string | null;
   created_at: string;
 };
 
@@ -28,6 +29,7 @@ export type CompanyDocumentInput = {
   items?: string | null;
   sizeBytes?: number | null;
   documentsUrl?: string | null;
+  unavailableReason?: string | null;
 };
 
 export type CompanyDocumentAnalysisRow = {
@@ -52,6 +54,7 @@ function mapDocument(row: Record<string, unknown>): CompanyDocumentRow {
     items: (row.items as string | null) ?? null,
     size_bytes: row.size_bytes != null ? Number(row.size_bytes) : null,
     documents_url: (row.documents_url as string | null) ?? null,
+    unavailable_reason: (row.unavailable_reason as string | null) ?? null,
     created_at: String(row.created_at),
   };
 }
@@ -105,13 +108,22 @@ export async function upsertDocument(input: CompanyDocumentInput): Promise<Compa
         items: input.items ?? null,
         size_bytes: input.sizeBytes ?? null,
         documents_url: input.documentsUrl ?? null,
+        unavailable_reason: input.unavailableReason ?? null,
       },
       { onConflict: "company_id,accession_number" },
     )
     .select("*")
     .single();
 
-  if (error || !data) return null;
+  if (error) {
+    console.error("upsertDocument failed:", error.message, {
+      accessionNumber: input.accessionNumber,
+      companyId: input.companyId,
+    });
+    return null;
+  }
+
+  if (!data) return null;
   return mapDocument(data);
 }
 

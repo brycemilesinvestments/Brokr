@@ -1,10 +1,11 @@
 "use client";
 
 import { CompanyAnalysisLoading } from "./company-analysis-loading";
-import { FilingsAnalysisProgress, FILINGS_ANALYSIS_PROGRESS_FIXTURE } from "./filings-analysis-progress";
+import { FilingsAnalysisProgress } from "./filings-analysis-progress";
+import { FILINGS_ANALYSIS_PROGRESS_FIXTURE } from "./filings-analysis-progress-fixture";
 import { PeersComparisonLoading } from "./peers-comparison-loading";
 import { FilingTableRow } from "@/routes/company/[cik]/features/filings/views/documents-view/filings-table/components/filing-table-row";
-import { FILING_ROW_FIXTURE } from "@/routes/company/[cik]/features/filings/views/documents-view/filings-table/components/filing-row-content";
+import { FILING_ROW_FIXTURE } from "@/routes/company/[cik]/features/filings/views/documents-view/filings-table/components/filing-row-fixture";
 
 /** Renders every registered skeleton in loading state for `npm run bones:build`. */
 export function BonesGallery() {
@@ -19,13 +20,13 @@ export function BonesGallery() {
             <FilingTableRow
               cik="0000789019"
               filing={FILING_ROW_FIXTURE}
-              analysisStatus="loading"
+              analysisStatus="analyzing"
               analysisError={null}
             />
             <FilingTableRow
               cik="0000789019"
               filing={{ ...FILING_ROW_FIXTURE, type: "10-K" }}
-              analysisStatus="queued"
+              analysisStatus="queued-analyze"
               analysisError={null}
             />
           </tbody>
@@ -37,7 +38,7 @@ export function BonesGallery() {
           Analysis progress
         </h2>
         <div className="rounded-2xl border border-zinc-200 bg-white px-6 py-4 shadow-sm">
-          <FilingsAnalysisProgress {...FILINGS_ANALYSIS_PROGRESS_FIXTURE} active />
+          <FilingsAnalysisProgress progress={FILINGS_ANALYSIS_PROGRESS_FIXTURE} />
         </div>
       </section>
 

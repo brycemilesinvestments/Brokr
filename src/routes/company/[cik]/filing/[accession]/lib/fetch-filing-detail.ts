@@ -1,5 +1,5 @@
 import * as cheerio from "cheerio";
-import { filingIndexUrl, formatCik, SEC_USER_AGENT } from "@/lib/edgar/constants";
+import { filingIndexUrl, fetchSec, formatCik } from "@/lib/edgar";
 import type {
   FilingDetailPage,
   FilingDocument,
@@ -136,8 +136,7 @@ export async function fetchFilingDetail(
   const cik = formatCik(cikInput);
   const secUrl = filingIndexUrl(cik, accessionNumber);
 
-  const response = await fetch(secUrl, {
-    headers: { "User-Agent": SEC_USER_AGENT },
+  const response = await fetchSec(secUrl, {
     next: { revalidate: 300 },
   });
 

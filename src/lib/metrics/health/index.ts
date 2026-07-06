@@ -30,8 +30,6 @@ export {
 } from "@/lib/metrics/health/subscores";
 
 export {
-  DEFAULT_HEALTH_WEIGHTS,
-  FRAMING_LABEL,
   computeHealthScore,
   computeHealthScore as buildHealthScoreBundle,
 } from "@/lib/metrics/health/pipeline";

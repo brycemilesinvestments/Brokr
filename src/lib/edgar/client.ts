@@ -5,12 +5,11 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { formatCik, SEC_USER_AGENT } from "@/lib/edgar/constants";
 import {
   companyFactsUrl,
-  fetchJson,
-  fetchText,
   filingIndexJsonUrl,
   resolveDocumentUrl,
   submissionsUrl,
 } from "@/lib/edgar/endpoints";
+import { fetchSec } from "@/lib/edgar/sec-request";
 import type { FilingDocument } from "@/lib/edgar/types";
 import type {
   CompanyFactsResponse,
@@ -20,8 +19,6 @@ import type {
 import { fetchFilingXbrl } from "@/lib/edgar/xbrl/fetch-filing-xbrl";
 import type { FilingXbrlExtraction } from "@/lib/edgar/xbrl/types";
 
-export const MIN_REQUEST_INTERVAL_MS = 110;
-const MAX_429_RETRIES = 5;
 export const EDGAR_BUCKET = "edgar";
 
 type SecSubmissionsResponse = {
@@ -44,14 +41,7 @@ export type EdgarClientOptions = {
   supabaseClient?: SupabaseClient;
   bucketName?: string;
   diskCacheDir?: string;
-  minIntervalMs?: number;
-  now?: () => number;
-  sleep?: (ms: number) => Promise<void>;
 };
-
-function defaultSleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 function hashUrl(url: string): string {
   return createHash("sha256").update(url).digest("hex");
@@ -62,18 +52,14 @@ function storagePath(cik: string | number, accession: string, filename: string):
 }
 
 /**
- * EdgarClient — throttled SEC EDGAR access with Supabase bucket + disk cache.
- * Respects SEC rate limit (≤9 req/s) and requires User-Agent header.
+ * EdgarClient — SEC EDGAR access with Supabase bucket + disk cache.
+ * Network requests go through the process-wide SEC rate limiter.
  */
 export class EdgarClient {
   private userAgent: string;
   private supabaseClient?: SupabaseClient;
   private bucketName: string;
   private diskCacheDir: string;
-  private minIntervalMs: number;
-  private lastRequestAt = 0;
-  private now: () => number;
-  private sleep: (ms: number) => Promise<void>;
 
   constructor(options: EdgarClientOptions = {}) {
     this.userAgent = options.userAgent ?? SEC_USER_AGENT;
@@ -83,49 +69,6 @@ export class EdgarClient {
     this.supabaseClient = options.supabaseClient;
     this.bucketName = options.bucketName ?? EDGAR_BUCKET;
     this.diskCacheDir = options.diskCacheDir ?? join(process.cwd(), ".cache", "edgar");
-    this.minIntervalMs = options.minIntervalMs ?? MIN_REQUEST_INTERVAL_MS;
-    this.now = options.now ?? (() => Date.now());
-    this.sleep = options.sleep ?? defaultSleep;
-  }
-
-  getMinIntervalMs(): number {
-    return this.minIntervalMs;
-  }
-
-  private async throttle(): Promise<void> {
-    const elapsed = this.now() - this.lastRequestAt;
-    if (elapsed < this.minIntervalMs) {
-      await this.sleep(this.minIntervalMs - elapsed);
-    }
-    this.lastRequestAt = this.now();
-  }
-
-  private async fetchWithRetry(url: string, accept: string): Promise<Response> {
-    let backoffMs = this.minIntervalMs;
-
-    for (let attempt = 0; attempt <= MAX_429_RETRIES; attempt++) {
-      await this.throttle();
-
-      const response = await fetch(url, {
-        headers: {
-          "User-Agent": this.userAgent,
-          Accept: accept,
-        },
-      });
-
-      if (response.status !== 429) {
-        return response;
-      }
-
-      if (attempt === MAX_429_RETRIES) {
-        return response;
-      }
-
-      await this.sleep(backoffMs);
-      backoffMs *= 2;
-    }
-
-    throw new Error(`Failed to fetch ${url}`);
   }
 
   private diskCachePath(url: string): string {
@@ -191,7 +134,10 @@ export class EdgarClient {
       }
     }
 
-    const response = await this.fetchWithRetry(url, "application/json");
+    const response = await fetchSec(url, {
+      userAgent: this.userAgent,
+      headers: { Accept: "application/json" },
+    });
     if (!response.ok) {
       throw new Error(`HTTP ${response.status} from ${url}`);
     }
@@ -223,7 +169,10 @@ export class EdgarClient {
       if (fromDisk) return fromDisk;
     }
 
-    const response = await this.fetchWithRetry(resolvedUrl, "text/html,application/xhtml+xml,*/*");
+    const response = await fetchSec(resolvedUrl, {
+      userAgent: this.userAgent,
+      headers: { Accept: "text/html,application/xhtml+xml,*/*" },
+    });
     if (!response.ok) {
       throw new Error(`HTTP ${response.status} from ${resolvedUrl}`);
     }

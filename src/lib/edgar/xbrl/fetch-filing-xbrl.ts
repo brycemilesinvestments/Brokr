@@ -1,4 +1,5 @@
-import { formatCik, SEC_USER_AGENT } from "@/lib/edgar/constants";
+import { formatCik } from "@/lib/edgar/constants";
+import { fetchSec } from "@/lib/edgar/sec-request";
 import type { FilingDocument } from "@/lib/edgar/types";
 import { resolveSecDocumentUrl } from "@/lib/edgar/resolve-company";
 import { isXbrlFactDocument } from "@/lib/edgar/xbrl/document-kind";
@@ -9,8 +10,7 @@ import type {
 } from "@/lib/edgar/xbrl/types";
 
 async function defaultFetchMarkup(url: string): Promise<string> {
-  const response = await fetch(url, {
-    headers: { "User-Agent": SEC_USER_AGENT },
+  const response = await fetchSec(url, {
     next: { revalidate: 300 },
   });
 

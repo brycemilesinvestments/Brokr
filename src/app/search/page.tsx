@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { CompanySearch } from "@/components/company-search";
 import { formatCik } from "@/lib/edgar/constants";
+import { companyAnalysisPath } from "@/routes/company/[cik]/lib/company-tab-paths";
 import { resolveCompany } from "@/lib/edgar/resolve-company";
 
 type PageProps = {
@@ -23,7 +24,7 @@ export default async function SearchResultsPage({ searchParams }: PageProps) {
   const result = await resolveCompany(query);
 
   if (result.kind === "single") {
-    redirect(`/company/${formatCik(result.company.cik)}#analysis`);
+    redirect(companyAnalysisPath(result.company.cik));
   }
 
   if (result.kind === "none") {
@@ -60,7 +61,7 @@ export default async function SearchResultsPage({ searchParams }: PageProps) {
           {result.matches.map((match) => (
             <li key={match.cik}>
               <Link
-                href={`/company/${formatCik(match.cik)}#analysis`}
+                href={companyAnalysisPath(match.cik)}
                 className="block rounded-xl border border-zinc-200 bg-white px-5 py-4 transition hover:border-emerald-300 hover:bg-emerald-50/40"
               >
                 <div className="font-medium text-zinc-900">{match.title}</div>

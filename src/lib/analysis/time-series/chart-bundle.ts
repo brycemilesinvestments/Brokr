@@ -33,6 +33,7 @@ export function toChartBundle(
           x: point.periodEnd,
           y: point.value,
           frequency,
+          accessionNumber: point.accn,
           delta_qoq: frequency === "quarterly" ? point.deltaQoq : undefined,
           delta_yoy: point.deltaYoy,
         };

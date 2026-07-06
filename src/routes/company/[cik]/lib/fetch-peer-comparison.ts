@@ -33,7 +33,6 @@ import {
 } from "@/lib/supabase/company-peers";
 
 export type { PeerComparisonPayload } from "@/routes/company/[cik]/features/peers/types";
-export { PEER_DISPLAY_METRICS } from "@/routes/company/[cik]/features/peers/types";
 
 export type FetchPeerComparisonOptions = {
   /** When true, bypass stored peers and re-resolve from Yahoo/SIC. */

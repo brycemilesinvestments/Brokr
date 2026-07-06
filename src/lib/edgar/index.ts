@@ -5,14 +5,11 @@
 export {
   EdgarClient,
   createEdgarClient,
-  MIN_REQUEST_INTERVAL_MS,
   EDGAR_BUCKET,
 } from "@/lib/edgar/client";
 export type { EdgarClientOptions } from "@/lib/edgar/client";
 
 export {
-  fetchJson,
-  fetchText,
   submissionsUrl,
   companyFactsUrl,
   filingIndexJsonUrl,
@@ -26,7 +23,13 @@ export {
   getLatestSharesOutstanding,
 } from "@/lib/edgar/map-financials";
 
-export { type FinancialConcept } from "@/lib/edgar/concepts";
+export {
+  fetchSec,
+  getSecRequestQueue,
+  parseRetryAfterMs,
+  resetSecRequestQueue,
+  SEC_MIN_REQUEST_INTERVAL_MS,
+} from "@/lib/edgar/sec-request";
 
 export {
   type ParsedFinancialStatement,

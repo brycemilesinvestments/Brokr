@@ -295,21 +295,27 @@ async function upsertObservations(
   seriesId: string,
   observations: Array<{ observation_date: string; value: number }>,
 ): Promise<void> {
-  for (let i = 0; i < observations.length; i += BATCH_SIZE) {
-    const batch = observations.slice(i, i + BATCH_SIZE).map((row) => ({
-      series_id: seriesId,
-      observation_date: row.observation_date,
-      value: row.value,
-    }));
+  const batchCount = Math.ceil(observations.length / BATCH_SIZE);
+  await Promise.all(
+    Array.from({ length: batchCount }, (_, batchIndex) => {
+      const batch = observations
+        .slice(batchIndex * BATCH_SIZE, (batchIndex + 1) * BATCH_SIZE)
+        .map((row) => ({
+          series_id: seriesId,
+          observation_date: row.observation_date,
+          value: row.value,
+        }));
 
-    const { error } = await supabase
-      .from("fred_observations")
-      .upsert(batch, { onConflict: "series_id,observation_date" });
-
-    if (error) {
-      throw new Error(`fred_observations upsert failed: ${error.message}`);
-    }
-  }
+      return supabase
+        .from("fred_observations")
+        .upsert(batch, { onConflict: "series_id,observation_date" })
+        .then(({ error }) => {
+          if (error) {
+            throw new Error(`fred_observations upsert failed: ${error.message}`);
+          }
+        });
+    }),
+  );
 }
 
 async function ingestSeries(
@@ -319,13 +325,17 @@ async function ingestSeries(
   state: IngestionState,
 ): Promise<{ observationCount: number }> {
   state.in_progress = target.id;
-  await persistState(supabase, state);
 
-  const metadata = await fetchSeriesMetadata(target, fredApiKey);
-  const observations = await fetchObservations(target.id, fredApiKey);
+  const [, metadata, observations] = await Promise.all([
+    persistState(supabase, state),
+    fetchSeriesMetadata(target, fredApiKey),
+    fetchObservations(target.id, fredApiKey),
+  ]);
 
-  await upsertSeries(supabase, target, metadata);
-  await upsertObservations(supabase, target.id, observations);
+  await Promise.all([
+    upsertSeries(supabase, target, metadata),
+    upsertObservations(supabase, target.id, observations),
+  ]);
 
   state.completed = [...new Set([...state.completed, target.id])];
   state.failed = state.failed.filter((id) => id !== target.id);
@@ -392,6 +402,38 @@ async function getTableCounts(supabase: SupabaseClient): Promise<{
   };
 }
 
+async function ingestSeriesIdsSequentially(
+  supabase: SupabaseClient,
+  fredApiKey: string | null,
+  state: IngestionState,
+  seriesIds: string[],
+  permanentFailures: Map<string, string>,
+  startIndex = 0,
+): Promise<void> {
+  if (startIndex >= seriesIds.length) return;
+
+  const targetsById = new Map(FRED_TARGET_SERIES.map((target) => [target.id, target]));
+  const seriesId = seriesIds[startIndex]!;
+  const target = targetsById.get(seriesId);
+
+  if (target) {
+    const result = await ingestSeriesSafe(supabase, target, fredApiKey, state);
+    if (!result.ok) {
+      permanentFailures.set(seriesId, result.reason);
+    }
+    await sleep(INTER_SERIES_DELAY_MS);
+  }
+
+  return ingestSeriesIdsSequentially(
+    supabase,
+    fredApiKey,
+    state,
+    seriesIds,
+    permanentFailures,
+    startIndex + 1,
+  );
+}
+
 async function runIngestionLoop(
   supabase: SupabaseClient,
   fredApiKey: string | null,
@@ -399,19 +441,39 @@ async function runIngestionLoop(
   seriesIds: string[],
   permanentFailures: Map<string, string>,
 ): Promise<void> {
-  const targetsById = new Map(FRED_TARGET_SERIES.map((target) => [target.id, target]));
+  await ingestSeriesIdsSequentially(supabase, fredApiKey, state, seriesIds, permanentFailures);
+}
 
-  for (const seriesId of seriesIds) {
-    const target = targetsById.get(seriesId);
-    if (!target) continue;
+async function runRetryPasses(
+  supabase: SupabaseClient,
+  fredApiKey: string | null,
+  state: IngestionState,
+  allIds: string[],
+  permanentFailures: Map<string, string>,
+  pass = 1,
+): Promise<void> {
+  if (pass > MAX_RETRY_PASSES) return;
 
-    const result = await ingestSeriesSafe(supabase, target, fredApiKey, state);
-    if (!result.ok) {
-      permanentFailures.set(seriesId, result.reason);
-    }
+  const allIdSet = new Set(allIds);
+  const retryIds = state.failed.filter((id) => allIdSet.has(id));
+  if (retryIds.length === 0) return;
 
-    await sleep(INTER_SERIES_DELAY_MS);
-  }
+  await sleep(RETRY_PASS_DELAY_MS);
+  await runIngestionLoop(supabase, fredApiKey, state, retryIds, permanentFailures);
+  return runRetryPasses(supabase, fredApiKey, state, allIds, permanentFailures, pass + 1);
+}
+
+async function runIngestionWithRetries(
+  supabase: SupabaseClient,
+  fredApiKey: string | null,
+  state: IngestionState,
+  allIds: string[],
+  permanentFailures: Map<string, string>,
+): Promise<void> {
+  const completedSet = new Set(state.completed);
+  const pending = allIds.filter((id) => !completedSet.has(id));
+  await runIngestionLoop(supabase, fredApiKey, state, pending, permanentFailures);
+  await runRetryPasses(supabase, fredApiKey, state, allIds, permanentFailures);
 }
 
 export async function runFredIngestion(
@@ -440,19 +502,9 @@ export async function runFredIngestion(
     await persistState(supabase, state);
   }
 
-  const completedSet = new Set(state.completed);
-  const pending = allIds.filter((id) => !completedSet.has(id));
   const permanentFailures = new Map<string, string>();
 
-  await runIngestionLoop(supabase, fredApiKey, state, pending, permanentFailures);
-
-  for (let pass = 1; pass <= MAX_RETRY_PASSES; pass += 1) {
-    const retryIds = state.failed.filter((id) => allIds.includes(id));
-    if (retryIds.length === 0) break;
-
-    await sleep(RETRY_PASS_DELAY_MS);
-    await runIngestionLoop(supabase, fredApiKey, state, retryIds, permanentFailures);
-  }
+  await runIngestionWithRetries(supabase, fredApiKey, state, allIds, permanentFailures);
 
   const counts = await getTableCounts(supabase);
   const failedSeries = [...permanentFailures.entries()].map(([seriesId, reason]) => ({

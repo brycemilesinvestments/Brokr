@@ -119,25 +119,24 @@ export async function replaceStoredPeersForCik(input: {
   });
   if (!sourceCompany) return;
 
-  const peerCompanyIds: Array<{
-    peerCompanyId: number;
-    peer: PeerEntry;
-    sortOrder: number;
-  }> = [];
+  const peerCompanyResults = await Promise.all(
+    input.peers.map(async (peer, index) => {
+      const peerCompany = await ensureCompanyRow({
+        edgarId: peer.cik,
+        name: peer.entityName,
+      });
+      if (!peerCompany) return null;
 
-  for (const [index, peer] of input.peers.entries()) {
-    const peerCompany = await ensureCompanyRow({
-      edgarId: peer.cik,
-      name: peer.entityName,
-    });
-    if (!peerCompany) continue;
-
-    peerCompanyIds.push({
-      peerCompanyId: peerCompany.id,
-      peer,
-      sortOrder: index,
-    });
-  }
+      return {
+        peerCompanyId: peerCompany.id,
+        peer,
+        sortOrder: index,
+      };
+    }),
+  );
+  const peerCompanyIds = peerCompanyResults.filter(
+    (result): result is NonNullable<typeof result> => result !== null,
+  );
 
   const { error: deleteError } = await supabase
     .from("company_peers")

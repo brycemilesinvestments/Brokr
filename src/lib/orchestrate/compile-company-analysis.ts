@@ -39,8 +39,10 @@ export async function compileCompanyAnalysisIfNeeded(
     throw new Error(`Company not found for CIK ${input.cik}`);
   }
 
-  const sourceFingerprint = await resolveSourceFingerprint(company.id);
-  const stored = await getCompanyAnalysis(company.id);
+  const [sourceFingerprint, stored] = await Promise.all([
+    resolveSourceFingerprint(company.id),
+    getCompanyAnalysis(company.id),
+  ]);
 
   if (!input.force && stored && stored.source_fingerprint === sourceFingerprint) {
     return {

@@ -28,10 +28,10 @@ import { DEFAULT_WEIGHTS, HEALTH_FRAMING } from "@/lib/metrics/health/constants"
 import { clampScore, weightedAverage } from "@/lib/metrics/health/score-utils";
 
 /** @deprecated Use DEFAULT_WEIGHTS from constants. */
-export const DEFAULT_HEALTH_WEIGHTS = DEFAULT_WEIGHTS;
+const DEFAULT_HEALTH_WEIGHTS = DEFAULT_WEIGHTS;
 
 /** @deprecated Use HEALTH_FRAMING from constants. */
-export const FRAMING_LABEL = HEALTH_FRAMING;
+const FRAMING_LABEL = HEALTH_FRAMING;
 
 // ── Period collection (H4) ────────────────────────────────────────────────────
 

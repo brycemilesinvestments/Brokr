@@ -102,4 +102,3 @@ export async function diffProse(input: DiffProseInput): Promise<ProseDiffResult>
   }
 }
 
-export { DEFAULT_PROSE_SECTION_CHAR_LIMIT };

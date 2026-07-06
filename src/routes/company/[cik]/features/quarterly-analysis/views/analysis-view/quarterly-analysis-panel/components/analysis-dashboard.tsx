@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { CompanyAnalysisOutput } from "@/lib/orchestrate";
 import { companyInitials } from "@/routes/company/[cik]/features/company-info/utils/format-company-header";
+import type { Filing } from "@/routes/company/[cik]/types";
 import { AnalysisStatusFooter } from "./analysis-status-footer";
 import { InsiderSignalBar } from "./insider-signal-bar";
 import { MetricSeriesGrid } from "./metric-series-grid";
@@ -10,11 +11,13 @@ import { buildAnalysisVerdict, strengthClass } from "../lib/build-analysis-summa
 import { buildMetricSeriesSections, mergeAnalysisCharts } from "../lib/chart-helpers";
 
 type AnalysisDashboardProps = {
+  cik: string;
+  filings: Filing[];
   data: CompanyAnalysisOutput;
   ticker?: string;
 };
 
-export function AnalysisDashboard({ data, ticker }: AnalysisDashboardProps) {
+export function AnalysisDashboard({ cik, filings, data, ticker }: AnalysisDashboardProps) {
   const [expandedMetric, setExpandedMetric] = useState<string | null>(null);
 
   const extendedChart = useMemo(
@@ -94,6 +97,8 @@ export function AnalysisDashboard({ data, ticker }: AnalysisDashboardProps) {
       </div>
 
       <MetricSeriesGrid
+        cik={cik}
+        filings={filings}
         sections={sections}
         chart={allCharts}
         anomalies={data.crossAnomalies}

@@ -58,7 +58,9 @@ export function NetInsiderPositionDetailPanel({
               <th className="px-2 py-2 font-medium">A/D</th>
               <th className="px-2 py-2 text-right font-medium">Owned after</th>
               <th className="px-2 py-2 text-right font-medium">Movement</th>
-              <th className="px-4 py-2 font-medium"> </th>
+              <th className="px-4 py-2 font-medium" aria-label="Filing link">
+                {" "}
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-100 bg-white">

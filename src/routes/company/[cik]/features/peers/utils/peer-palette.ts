@@ -4,7 +4,7 @@ export type PeerPalette = {
   bar: string;
 };
 
-export const PEER_CHART_COLORS: PeerPalette[] = [
+const PEER_CHART_COLORS: PeerPalette[] = [
   { chipText: "text-blue-600", chipBorder: "border-zinc-200", bar: "bg-blue-600" },
   { chipText: "text-violet-600", chipBorder: "border-zinc-200", bar: "bg-violet-600" },
   { chipText: "text-teal-600", chipBorder: "border-zinc-200", bar: "bg-teal-600" },

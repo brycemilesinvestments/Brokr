@@ -1,4 +1,4 @@
-import { formatCik, SEC_USER_AGENT } from "@/lib/edgar/constants";
+import { formatCik, fetchSec } from "@/lib/edgar";
 import { submissionsUrl } from "@/lib/edgar/endpoints";
 
 type SecSubmissionsShape = {
@@ -60,9 +60,7 @@ function parseSecEdgarCompanyList(html: string): SecEdgarCompanyRow[] {
 export async function fetchLastFilingDateFromSec(cik: string): Promise<string | null> {
   const url = submissionsUrl(cik);
   try {
-    const response = await fetch(url, {
-      headers: { "User-Agent": SEC_USER_AGENT },
-    });
+    const response = await fetchSec(url);
     if (!response.ok) return null;
     const data = (await response.json()) as SecSubmissionsShape;
     const dates = data.filings?.recent?.filingDate;
@@ -75,9 +73,7 @@ export async function fetchLastFilingDateFromSec(cik: string): Promise<string | 
 export async function fetchSicFromSec(cik: string): Promise<string | null> {
   const url = submissionsUrl(cik);
   try {
-    const response = await fetch(url, {
-      headers: { "User-Agent": SEC_USER_AGENT },
-    });
+    const response = await fetchSec(url);
     if (!response.ok) return null;
     const data = (await response.json()) as SecSubmissionsShape;
     return data.sic ?? null;
@@ -95,9 +91,7 @@ export async function fetchCompaniesBySicFromSec(
 ): Promise<Array<{ cik: string; entityName: string }>> {
   const url = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&SIC=${encodeURIComponent(sic)}&type=10-K&dateb=&owner=include&count=40&search_text=`;
   try {
-    const response = await fetch(url, {
-      headers: { "User-Agent": SEC_USER_AGENT },
-    });
+    const response = await fetchSec(url);
     if (!response.ok) return [];
     const html = await response.text();
     return parseSecEdgarCompanyList(html);

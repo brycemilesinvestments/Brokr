@@ -1,4 +1,4 @@
-export const FUNDAMENTALS_METRIC_GROUPS = [
+const FUNDAMENTALS_METRIC_GROUPS = [
   {
     label: "Income statement",
     metrics: [
@@ -34,7 +34,7 @@ export const FUNDAMENTALS_METRIC_GROUPS = [
   },
 ] as const;
 
-export const EXTENDED_METRIC_GROUPS = [
+const EXTENDED_METRIC_GROUPS = [
   {
     label: "Cash flow quality",
     metrics: ["free_cash_flow", "fcf_margin", "capex_intensity"],
@@ -53,7 +53,7 @@ export const EXTENDED_METRIC_GROUPS = [
   },
 ] as const;
 
-export const VALUATION_METRIC_GROUPS = [
+const VALUATION_METRIC_GROUPS = [
   {
     label: "Valuation multiples",
     metrics: ["pe", "p_fcf", "ev_sales", "ev_ebitda"],

@@ -1,5 +1,4 @@
-import { submissionsUrl } from "@/lib/edgar";
-import { SEC_USER_AGENT } from "@/lib/edgar/constants";
+import { fetchSec, submissionsUrl } from "@/lib/edgar";
 import type { SubmissionFilingMeta } from "@/routes/company/[cik]/features/filings/types";
 
 type SecSubmissionsResponse = {
@@ -20,8 +19,7 @@ export async function fetchSubmissionMetadata(
   cik: string | number,
 ): Promise<Map<string, SubmissionFilingMeta>> {
   const url = submissionsUrl(cik);
-  const response = await fetch(url, {
-    headers: { "User-Agent": SEC_USER_AGENT },
+  const response = await fetchSec(url, {
     next: { revalidate: 300 },
   });
 

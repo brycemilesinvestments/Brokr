@@ -4,8 +4,8 @@ import {
   companySearchUrl,
   formatCik,
   SEC_BASE_URL,
-  SEC_USER_AGENT,
 } from "@/lib/edgar/constants";
+import { fetchSec } from "@/lib/edgar/sec-request";
 import { getCompanyTickers, normalizeQuery } from "@/lib/edgar/tickers";
 import type {
   CompanyMatch,
@@ -95,8 +95,7 @@ function rankTickerMatches(query: string, tickers: CompanyTicker[]): CompanyMatc
 }
 
 async function fetchSecHtml(url: string): Promise<string> {
-  const response = await fetch(url, {
-    headers: { "User-Agent": SEC_USER_AGENT },
+  const response = await fetchSec(url, {
     next: { revalidate: 300 },
   });
 

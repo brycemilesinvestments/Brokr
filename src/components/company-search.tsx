@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
+import { navigateToCompanyAnalysis } from "@/routes/company/[cik]/lib/navigate-to-company-analysis";
 
 type CompanySearchProps = {
   autoFocus?: boolean;
@@ -34,7 +35,7 @@ export function CompanySearch({
       }
 
       if (data.kind === "single") {
-        router.push(`/company/${data.company.cik}#analysis`);
+        navigateToCompanyAnalysis(data.company.cik, { router });
         return;
       }
 

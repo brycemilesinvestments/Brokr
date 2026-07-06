@@ -30,10 +30,16 @@ export function detectVolumeChartExclusions(
   included: InsiderTransaction[];
   exclusions: VolumeChartExclusion[];
 } {
-  const shareCounts = transactions
-    .map((transaction) => transaction.sharesTransacted ?? 0)
-    .filter((shares) => shares > 0)
-    .toSorted((a, b) => a - b);
+  const shareCounts: number[] = [];
+
+  for (const transaction of transactions) {
+    const shares = transaction.sharesTransacted ?? 0;
+    if (shares > 0) {
+      shareCounts.push(shares);
+    }
+  }
+
+  shareCounts.sort((a, b) => a - b);
 
   const medianShares =
     shareCounts.length > 0

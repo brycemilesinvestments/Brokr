@@ -28,11 +28,11 @@ export function companyInitials(name: string): string {
   return `${words[0][0] ?? ""}${words[1][0] ?? ""}`.toUpperCase();
 }
 
-export function formatDisplayCik(cik: string): string {
+function formatDisplayCik(cik: string): string {
   return cik.replace(/\D/g, "").padStart(10, "0");
 }
 
-export function formatFiscalYearEnd(mmd?: string): string | undefined {
+function formatFiscalYearEnd(mmd?: string): string | undefined {
   if (!mmd || mmd.length !== 4) return mmd;
 
   const month = Number.parseInt(mmd.slice(0, 2), 10) - 1;
@@ -62,12 +62,12 @@ function parseCityState(addressLines: string[]): { city?: string; state?: string
   };
 }
 
-export function formatIncorporationState(state?: string): string | undefined {
+function formatIncorporationState(state?: string): string | undefined {
   if (!state) return undefined;
   return INCORP_STATE_LABELS[state] ?? state;
 }
 
-export function formatCompanyLocation(info: CompanyInfo): string | undefined {
+function formatCompanyLocation(info: CompanyInfo): string | undefined {
   const { city, state: addressState } = parseCityState(info.businessAddress);
   const state = addressState ?? info.state;
   const incorporation = formatIncorporationState(info.stateOfIncorporation);
@@ -79,19 +79,13 @@ export function formatCompanyLocation(info: CompanyInfo): string | undefined {
   return `${cityState} · ${incorporation}`;
 }
 
-export function formatBusinessAddressLine(addressLines: string[]): string | undefined {
-  const lines = addressLines.filter(Boolean);
-  if (lines.length === 0) return undefined;
-  return lines.join(", ");
-}
-
-export function formatHeaderPrice(value: number): string {
+function formatHeaderPrice(value: number): string {
   if (value >= 1000) return value.toFixed(0);
   if (value >= 100) return value.toFixed(1);
   return value.toFixed(2);
 }
 
-export function formatHeaderChange(value: number): string {
+function formatHeaderChange(value: number): string {
   const sign = value >= 0 ? "+" : "";
   return `${sign}${value.toFixed(1)}%`;
 }

@@ -3,6 +3,8 @@
 import { Skeleton } from "boneyard-js/react";
 import { BONE_NAMES } from "@/components/bones/skeleton-names";
 
+const PEERS_COMPARISON_LOADING_FIXTURE = <PeersComparisonLoadingContent />;
+
 function PeersComparisonLoadingContent() {
   return (
     <section className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-white">
@@ -53,12 +55,11 @@ export function PeersComparisonLoading({ loading = true }: PeersComparisonLoadin
       loading={loading}
       transition
       animate="shimmer"
-      fixture={<PeersComparisonLoadingContent />}
-      fallback={<PeersComparisonLoadingContent />}
+      fixture={PEERS_COMPARISON_LOADING_FIXTURE}
+      fallback={PEERS_COMPARISON_LOADING_FIXTURE}
     >
       <PeersComparisonLoadingContent />
     </Skeleton>
   );
 }
 
-export { PeersComparisonLoadingContent };

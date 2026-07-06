@@ -1,7 +1,5 @@
 /** Filing detail page domain types — /company/[cik]/filing/[accession] */
 
-import type { FilingDiscoveryOutput } from "@/lib/orchestrate/filing-discovery";
-
 export type FilingDocument = {
   sequence?: string;
   description: string;
@@ -39,5 +37,4 @@ export type FilingDetailPage = {
 export type FilingDetailProps = {
   filing: FilingDetailPage;
   companyName?: string;
-  discovery?: FilingDiscoveryOutput;
 };

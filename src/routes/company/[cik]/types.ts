@@ -68,5 +68,8 @@ export type DocumentsViewProps = {
   filings: Filing[];
   totalShown: number;
   hasMoreFilings?: boolean;
+  isLoadingMore?: boolean;
+  loadError?: string | null;
+  loadRemainingFilings?: () => void;
   enabled: boolean;
 };

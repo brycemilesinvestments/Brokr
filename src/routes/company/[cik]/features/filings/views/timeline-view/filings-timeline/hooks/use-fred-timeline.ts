@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
 import type { FredTimelineEvent, FredTimelineResponse } from "@/lib/fred/types";
+import { useCompanyApi } from "@/routes/company/[cik]/hooks/use-company-api";
 import type { TimelineFiling } from "@/routes/company/[cik]/features/filings/types";
 
 function resolveFredDateRange(timeline: TimelineFiling[]): { from: string; to: string } {
@@ -27,61 +28,25 @@ export function useFredTimeline({
   timeline: TimelineFiling[];
   enabled: boolean;
 }) {
-  const [events, setEvents] = useState<FredTimelineEvent[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [seriesCount, setSeriesCount] = useState(0);
-  const [reloadToken, setReloadToken] = useState(0);
-
   const range = useMemo(() => resolveFredDateRange(timeline), [timeline]);
+  const timelineUrl = enabled
+    ? `/api/fred/timeline?from=${range.from}&to=${range.to}`
+    : null;
+
+  const { data, loading, error, refetch } = useCompanyApi<FredTimelineResponse>(
+    timelineUrl,
+    enabled,
+  );
 
   const reload = useCallback(() => {
-    setReloadToken((current) => current + 1);
-  }, []);
-
-  useEffect(() => {
-    if (!enabled) return;
-
-    const controller = new AbortController();
-
-    async function load() {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const response = await fetch(
-          `/api/fred/timeline?from=${range.from}&to=${range.to}`,
-          { signal: controller.signal },
-        );
-        const payload = (await response.json()) as FredTimelineResponse & { error?: string };
-
-        if (!response.ok) {
-          throw new Error(payload.error ?? "Failed to load macro indicators");
-        }
-
-        setEvents(payload.events);
-        setSeriesCount(payload.seriesCount);
-      } catch (err) {
-        if (controller.signal.aborted) return;
-        setEvents([]);
-        setSeriesCount(0);
-        setError(err instanceof Error ? err.message : "Failed to load macro indicators");
-      } finally {
-        if (!controller.signal.aborted) {
-          setLoading(false);
-        }
-      }
-    }
-
-    void load();
-    return () => controller.abort();
-  }, [enabled, range.from, range.to, reloadToken]);
+    void refetch();
+  }, [refetch]);
 
   return {
-    events,
+    events: data?.events ?? [],
     loading,
     error,
-    seriesCount,
+    seriesCount: data?.seriesCount ?? 0,
     range,
     reload,
   };

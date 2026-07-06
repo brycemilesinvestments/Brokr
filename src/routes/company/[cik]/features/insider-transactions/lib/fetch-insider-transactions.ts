@@ -3,8 +3,8 @@ import {
   DEFAULT_INSIDER_COUNT,
   formatCik,
   issuerInsiderDispUrl,
-  SEC_USER_AGENT,
 } from "@/lib/edgar/constants";
+import { fetchSec } from "@/lib/edgar";
 import type {
   InsiderTransaction,
   InsiderTransactionsPage,
@@ -136,8 +136,7 @@ function enrichTransactionsWithOwnerType(
 
 async function fetchInsiderPage(cik: string, start: number): Promise<string> {
   const url = issuerInsiderDispUrl(cik, start);
-  const response = await fetch(url, {
-    headers: { "User-Agent": SEC_USER_AGENT },
+  const response = await fetchSec(url, {
     next: { revalidate: 300 },
   });
 

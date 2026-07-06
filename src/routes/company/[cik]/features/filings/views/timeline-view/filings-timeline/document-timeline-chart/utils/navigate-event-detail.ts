@@ -1,11 +1,11 @@
 import { resolveFilingPagePath } from "@/lib/edgar/constants";
 import type { TimelineEvent } from "../types";
 
-export function fredTabHash(seriesId?: string): string {
+function fredTabHash(seriesId?: string): string {
   return seriesId ? `#fred/${encodeURIComponent(seriesId)}` : "#fred";
 }
 
-export function navigateToFredTab(seriesId?: string): void {
+function navigateToFredTab(seriesId?: string): void {
   const hash = fredTabHash(seriesId);
   if (window.location.hash !== hash) {
     window.history.replaceState(null, "", `${window.location.pathname}${hash}`);

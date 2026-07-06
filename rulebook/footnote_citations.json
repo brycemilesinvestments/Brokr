@@ -1,0 +1,66 @@
+[
+  {
+    "pattern": "16b-3\\(e\\)",
+    "rule_ref": "Rule 16b-3(e)",
+    "classification": "routine_compensatory",
+    "requires_date_extraction": false,
+    "source_url": "https://www.sec.gov/files/form4.pdf"
+  },
+  {
+    "pattern": "16b-3\\(d\\)",
+    "rule_ref": "Rule 16b-3(d)",
+    "classification": "routine_compensatory",
+    "requires_date_extraction": false,
+    "source_url": "https://www.sec.gov/files/form4.pdf"
+  },
+  {
+    "pattern": "16b-3\\(f\\)",
+    "rule_ref": "Rule 16b-3(f)",
+    "classification": "routine_compensatory",
+    "requires_date_extraction": false,
+    "source_url": "https://www.sec.gov/files/form4.pdf"
+  },
+  {
+    "pattern": "16b-3(?!\\()",
+    "rule_ref": "Rule 16b-3 (unspecified subsection)",
+    "classification": "routine_compensatory",
+    "requires_date_extraction": false,
+    "source_url": "https://www.sec.gov/files/form4.pdf"
+  },
+  {
+    "pattern": "10b5-1",
+    "rule_ref": "Rule 10b5-1(c)",
+    "classification": "routine_prescheduled",
+    "requires_date_extraction": true,
+    "date_extraction_hint": "look for '...adopted...on <date>' or '...adopted by the Reporting Person on <date>'",
+    "source_url": "https://www.sec.gov/files/form4.pdf"
+  },
+  {
+    "pattern": "16a-6",
+    "rule_ref": "Rule 16a-6",
+    "classification": "routine_exempt_small",
+    "requires_date_extraction": false,
+    "source_url": "https://www.sec.gov/files/form4.pdf"
+  },
+  {
+    "pattern": "bona fide gift",
+    "rule_ref": null,
+    "classification": "routine_gift",
+    "requires_date_extraction": false,
+    "source_url": "https://www.sec.gov/edgar/searchedgar/ownershipformcodes.html"
+  },
+  {
+    "pattern": "descent and distribution|by will",
+    "rule_ref": null,
+    "classification": "routine_estate_transfer",
+    "requires_date_extraction": false,
+    "source_url": "https://www.sec.gov/edgar/searchedgar/ownershipformcodes.html"
+  },
+  {
+    "pattern": "voting trust",
+    "rule_ref": null,
+    "classification": "routine_administrative",
+    "requires_date_extraction": false,
+    "source_url": "https://www.sec.gov/edgar/searchedgar/ownershipformcodes.html"
+  }
+]

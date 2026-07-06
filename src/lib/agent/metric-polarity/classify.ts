@@ -39,6 +39,8 @@ function parseBatchResponse(
 
   const byKey = new Map<string, MetricPolarityClassification>();
 
+  const inputsByKey = new Map(inputs.map((item) => [item.metricKey, item] as const));
+
   for (const entry of metrics) {
     if (!entry || typeof entry !== "object") continue;
     const obj = entry as Record<string, unknown>;
@@ -50,7 +52,7 @@ function parseBatchResponse(
         ? (obj.polarity as MetricPolarity)
         : guessPolarityFromMetricKey(metricKey);
 
-    const input = inputs.find((item) => item.metricKey === metricKey);
+    const input = inputsByKey.get(metricKey);
     byKey.set(metricKey, {
       metricKey,
       displayName:

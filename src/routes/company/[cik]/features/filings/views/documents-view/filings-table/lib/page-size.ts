@@ -1,0 +1,1 @@
+export const FILINGS_TABLE_PAGE_SIZE = 100;

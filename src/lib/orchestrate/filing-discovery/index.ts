@@ -1,6 +1,5 @@
 export {
   analyzeFilingDiscovery,
-  parseFilingDiscoveryConfig,
 } from "@/lib/orchestrate/filing-discovery/analyze-filing";
 
 export { crossCheckSignals } from "@/lib/orchestrate/filing-discovery/cross-check";

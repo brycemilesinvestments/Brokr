@@ -13,8 +13,6 @@ import type {
   TimelineFiling,
 } from "@/routes/company/[cik]/features/filings/types";
 
-export type { FiscalPeriod, FiscalQuarter, FiscalYearGroup, TimelineFiling };
-
 const PERIOD_ENDED_RE =
   /(?:fiscal\s+year|quarterly\s+period|period)\s+ended\s+([A-Za-z]+\s+\d{1,2},?\s+\d{4})/i;
 
@@ -215,26 +213,6 @@ export function buildCoreFourTimeline(
   }
 
   return timeline.sort(compareTimelineFilings);
-}
-
-export function groupTimelineByFiscalYear(timeline: TimelineFiling[]): FiscalYearGroup[] {
-  const groups = new Map<number, TimelineFiling[]>();
-
-  for (const filing of timeline) {
-    const year = filing.fiscalPeriod?.fiscalYear ?? parseIsoDate(filing.timelineDate)?.getUTCFullYear();
-    if (year == null) continue;
-
-    const existing = groups.get(year) ?? [];
-    existing.push(filing);
-    groups.set(year, existing);
-  }
-
-  return [...groups.entries()]
-    .sort(([a], [b]) => b - a)
-    .map(([fiscalYear, filings]) => ({
-      fiscalYear,
-      filings: filings.sort(compareWithinFiscalYear),
-    }));
 }
 
 function partitionTimelineByCategory(

@@ -3,8 +3,14 @@ import {
   filingDocumentUrl,
   filingIndexUrl,
   formatCik,
+  type EdgarClient,
   type FilingRef,
 } from "@/lib/edgar";
+import {
+  ensureUnavailableDocument,
+  isUnavailableDocument,
+} from "@/lib/orchestrate/company-filings/ensure-unavailable-document";
+import { UNAVAILABLE_10K_NO_DOCUMENT_REASON } from "@/lib/orchestrate/company-filings/unavailable-filings";
 import { parseFilingIndexHtml } from "@/lib/orchestrate/form-8k/parse-filing-index";
 import { pick10kPrimaryDocument } from "@/lib/orchestrate/form-10k/parse-filing-index";
 import {
@@ -43,14 +49,13 @@ async function uploadToBucket(path: string, content: string): Promise<void> {
 }
 
 async function downloadFilingHtml(
+  client: EdgarClient,
   edgarId: string,
   accessionNumber: string,
   filename: string,
 ): Promise<string> {
-  const client = createEdgarClient({ supabaseClient: createAdminClient() ?? undefined });
   const url = filingDocumentUrl(edgarId, accessionNumber, filename);
   return client.fetchText(url, {
-    useCache: false,
     cik: edgarId,
     accession: accessionNumber,
     filename,
@@ -63,6 +68,10 @@ export async function fetchAndStore10k(
 ): Promise<Stored10kDocument> {
   const existing = await getDocumentByAccession(company.id, filing.accessionNumber);
   if (existing) {
+    if (isUnavailableDocument(existing)) {
+      return { document: existing, html: "", skipped: true };
+    }
+
     const supabase = createAdminClient();
     let html = "";
     if (supabase) {
@@ -75,7 +84,6 @@ export async function fetchAndStore10k(
   const edgarId = formatCik(company.edgar_id);
   const client = createEdgarClient({ supabaseClient: createAdminClient() ?? undefined });
   const indexHtml = await client.fetchText(filingIndexUrl(edgarId, filing.accessionNumber), {
-    useCache: false,
     cik: edgarId,
     accession: filing.accessionNumber,
     filename: `${filing.accessionNumber}-index.htm`,
@@ -84,12 +92,17 @@ export async function fetchAndStore10k(
   const primary = pick10kPrimaryDocument(parseFilingIndexHtml(indexHtml));
   const primaryFilename = primary?.name ?? filing.primaryDocument;
   if (!primaryFilename) {
-    throw new Error(`No 10-K document found in filing index for ${filing.accessionNumber}`);
+    const document = await ensureUnavailableDocument(
+      company,
+      filing,
+      UNAVAILABLE_10K_NO_DOCUMENT_REASON,
+    );
+    return { document, html: "", skipped: true };
   }
 
   const reportDate = form10kReportDate(filing);
   const storagePath = form10kStoragePath(company.id, reportDate);
-  const html = await downloadFilingHtml(edgarId, filing.accessionNumber, primaryFilename);
+  const html = await downloadFilingHtml(client, edgarId, filing.accessionNumber, primaryFilename);
   await uploadToBucket(storagePath, html);
 
   const document = await upsertDocument({
@@ -106,6 +119,10 @@ export async function fetchAndStore10k(
   });
 
   if (!document) {
+    const raced = await getDocumentByAccession(company.id, filing.accessionNumber);
+    if (raced) {
+      return { document: raced, html, skipped: true };
+    }
     throw new Error(`Failed to upsert company_documents for ${filing.accessionNumber}`);
   }
 

@@ -1,9 +1,13 @@
 "use client";
 
-import { Suspense, useCallback, useMemo, useState } from "react";
+import { Suspense, useCallback, useMemo, useRef, useState } from "react";
 import { EventImpactSidebar } from "./components/event-impact-sidebar";
-import { TimelinePriceChart } from "./components/timeline-price-chart";
+import {
+  TimelinePriceChart,
+  type TimelinePriceChartHandle,
+} from "./components/timeline-price-chart";
 import { useDocumentTimelineChart } from "./hooks/use-document-timeline-chart";
+import { EMPTY_FRED_TIMELINE_EVENTS } from "./constants";
 import {
   sortTimelineEvents,
   type TimelineEventSort,
@@ -20,28 +24,29 @@ function DocumentTimelineChartLoading() {
 
 function DocumentTimelineChartContent({
   cik,
-  companyName,
   filings,
-  fredEvents = [],
-  ticker,
-}: Pick<
-  DocumentTimelineChartProps,
-  "cik" | "companyName" | "filings" | "fredEvents" | "ticker"
->) {
+  fredEvents = EMPTY_FRED_TIMELINE_EVENTS,
+}: Pick<DocumentTimelineChartProps, "cik" | "filings" | "fredEvents">) {
   const { chartData, chartMarkers, rankedEvents, hasChartData } = useDocumentTimelineChart({
     cik,
     filings,
     fredEvents,
   });
+  const chartRef = useRef<TimelinePriceChartHandle>(null);
   const [eventSort, setEventSort] = useState<TimelineEventSort>("chronological");
   const [eventsSidebarOpen, setEventsSidebarOpen] = useState(false);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [hoveredEventId, setHoveredEventId] = useState<string | null>(null);
   const handleSelectEvent = useCallback((eventId: string) => {
     setSelectedEventId(eventId);
+    chartRef.current?.zoomToEvent(eventId);
   }, []);
   const handleToggleEvent = useCallback((eventId: string) => {
-    setSelectedEventId((current) => (current === eventId ? null : eventId));
+    setSelectedEventId((current) => {
+      const next = current === eventId ? null : eventId;
+      chartRef.current?.zoomToEvent(next);
+      return next;
+    });
   }, []);
   const activeEventId = hoveredEventId ?? selectedEventId;
   const sortedEvents = useMemo(
@@ -75,44 +80,10 @@ function DocumentTimelineChartContent({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex shrink-0 items-center justify-between gap-3 border-b border-zinc-100 px-5 pb-3 pt-4">
-        <div className="flex items-center gap-2.5">
-          <span className="text-base font-semibold text-zinc-900">{companyName}</span>
-          {ticker ? (
-            <span className="font-mono text-sm font-medium text-zinc-500">{ticker}</span>
-          ) : null}
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="hidden text-[11px] text-zinc-400 sm:inline">
-            2-month price impact after each event
-          </span>
-          <button
-            type="button"
-            onClick={() => setEventsSidebarOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-2.5 py-1.5 text-[11px] font-medium text-zinc-600 transition-colors hover:bg-zinc-50 hover:text-zinc-900 lg:hidden"
-          >
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 14 14"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.4"
-              aria-hidden
-            >
-              <rect x="7.5" y="2" width="4.5" height="10" rx="1" />
-              <line x1="2" y1="4.5" x2="5.5" y2="4.5" />
-              <line x1="2" y1="7" x2="5.5" y2="7" />
-              <line x1="2" y1="9.5" x2="5.5" y2="9.5" />
-            </svg>
-            Events
-          </button>
-        </div>
-      </div>
-
       <div className="flex min-h-0 flex-1">
         <div className="relative min-h-0 min-w-0 flex-1 overflow-hidden px-2 pb-1 pl-2 pt-1.5 lg:border-r lg:border-zinc-100">
           <TimelinePriceChart
+            ref={chartRef}
             chartData={chartData}
             chartMarkers={impactChartMarkers}
             activeEventId={activeEventId}
@@ -144,7 +115,7 @@ export function DocumentTimelineChart({
   cik,
   companyName,
   filings,
-  fredEvents = [],
+  fredEvents = EMPTY_FRED_TIMELINE_EVENTS,
   ticker,
   enabled,
 }: DocumentTimelineChartProps) {
@@ -167,10 +138,8 @@ export function DocumentTimelineChart({
       <Suspense fallback={<DocumentTimelineChartLoading />}>
         <DocumentTimelineChartContent
           cik={cik}
-          companyName={companyName}
           filings={filings}
           fredEvents={fredEvents}
-          ticker={ticker}
         />
       </Suspense>
     </section>

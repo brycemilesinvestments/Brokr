@@ -5,15 +5,22 @@ import type { AnalyzeCompanyDeps } from "@/lib/orchestrate/analyze-company";
 import { parseMasterConfigFromEnv } from "@/lib/orchestrate/types";
 import { createMarketClient } from "@/lib/market";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { fetchStoredInsiderTransactions } from "@/routes/company/[cik]/features/insider-transactions/lib/fetch-stored-insider-transactions";
 import { fetchInsiderTransactions } from "@/routes/company/[cik]/features/insider-transactions/lib/fetch-insider-transactions";
 
 async function loadEventStudyTransactions(cik: string) {
   const edgar = createEdgarClient({ supabaseClient: createAdminClient() ?? undefined });
 
-  const [page, submissions] = await Promise.all([
+  const [stored, scraped, submissions] = await Promise.all([
+    fetchStoredInsiderTransactions(cik).catch(() => null),
     fetchInsiderTransactions(cik).catch(() => null),
     edgar.getSubmissions(cik).catch(() => null),
   ]);
+
+  const page =
+    stored && stored.transactions.length > 0
+      ? stored
+      : scraped;
 
   if (!page) return [];
 

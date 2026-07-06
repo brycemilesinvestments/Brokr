@@ -7,6 +7,39 @@ import { SortButton } from "./components/sort-button";
 import type { ColumnFilterProps } from "./types";
 import { compareValues } from "./utils/compare-values";
 
+function FilterOptionList({
+  label,
+  options,
+  selected,
+  onToggle,
+}: {
+  label: string;
+  options: readonly string[];
+  selected: Set<string>;
+  onToggle: (option: string) => void;
+}) {
+  return (
+    <ul aria-label={`${label} filter options`} className="max-h-56 overflow-y-auto py-1">
+      {options.map((option) => {
+        const checked = selected.has(option);
+        return (
+          <li key={option}>
+            <label className="flex cursor-pointer items-start gap-2 px-3 py-1.5 text-xs text-zinc-700 hover:bg-zinc-50">
+              <input
+                type="checkbox"
+                checked={checked}
+                onChange={() => onToggle(option)}
+                className="mt-0.5 rounded border-zinc-300 text-emerald-600 focus:ring-emerald-500/20"
+              />
+              <span className="min-w-0 break-words">{option}</span>
+            </label>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 export function ColumnFilter({
   label,
   options,
@@ -16,6 +49,7 @@ export function ColumnFilter({
   onSortOrderChange,
   sortMode = "text",
   isActiveSort = false,
+  secondaryFilter,
 }: ColumnFilterProps) {
   const filterOptions = useMemo(() => {
     const copy = [...options];
@@ -29,7 +63,11 @@ export function ColumnFilter({
       : { asc: "A → Z", desc: "Z → A" };
 
   const allSelected = options.length > 0 && options.every((option) => selected.has(option));
-  const isFiltered = !allSelected;
+  const secondaryAllSelected =
+    !secondaryFilter ||
+    (secondaryFilter.options.length > 0 &&
+      secondaryFilter.options.every((option) => secondaryFilter.selected.has(option)));
+  const isFiltered = !allSelected || !secondaryAllSelected;
 
   function toggleOption(option: string) {
     const next = new Set(selected);
@@ -47,6 +85,18 @@ export function ColumnFilter({
     } else {
       onSelectedChange(new Set(options));
     }
+  }
+
+  function toggleSecondaryOption(option: string) {
+    if (!secondaryFilter) return;
+
+    const next = new Set(secondaryFilter.selected);
+    if (next.has(option)) {
+      next.delete(option);
+    } else {
+      next.add(option);
+    }
+    secondaryFilter.onSelectedChange(next);
   }
 
   return (
@@ -107,27 +157,26 @@ export function ColumnFilter({
               </button>
             </div>
 
-            <ul
-              aria-label={`${label} filter options`}
-              className="max-h-56 overflow-y-auto py-1"
-            >
-              {filterOptions.map((option) => {
-                const checked = selected.has(option);
-                return (
-                  <li key={option}>
-                    <label className="flex cursor-pointer items-start gap-2 px-3 py-1.5 text-xs text-zinc-700 hover:bg-zinc-50">
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        onChange={() => toggleOption(option)}
-                        className="mt-0.5 rounded border-zinc-300 text-emerald-600 focus:ring-emerald-500/20"
-                      />
-                      <span className="min-w-0 break-words">{option}</span>
-                    </label>
-                  </li>
-                );
-              })}
-            </ul>
+            {secondaryFilter ? (
+              <div className="border-b border-zinc-100">
+                <p className="px-3 pt-2 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">
+                  {secondaryFilter.label}
+                </p>
+                <FilterOptionList
+                  label={secondaryFilter.label}
+                  options={secondaryFilter.options}
+                  selected={secondaryFilter.selected}
+                  onToggle={toggleSecondaryOption}
+                />
+              </div>
+            ) : null}
+
+            <FilterOptionList
+              label={label}
+              options={filterOptions}
+              selected={selected}
+              onToggle={toggleOption}
+            />
           </Popover.Popup>
         </Popover.Positioner>
       </Popover.Portal>

@@ -5,7 +5,6 @@ export {
   MarketCache,
   cacheKey,
   isCacheValid,
-  DEFAULT_TTL_MS,
 } from "@/lib/market/cache";
 
 export {

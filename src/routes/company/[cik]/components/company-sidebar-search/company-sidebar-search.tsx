@@ -3,16 +3,18 @@
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
+import { navigateToCompanyAnalysis } from "@/routes/company/[cik]/lib/navigate-to-company-analysis";
 
 type CompanySidebarSearchProps = {
+  currentCik: string;
   className?: string;
 };
 
-export function CompanySidebarSearch({ className }: CompanySidebarSearchProps) {
+export function CompanySidebarSearch({ currentCik, className }: CompanySidebarSearchProps) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
+  const submittingRef = useRef(false);
   const [query, setQuery] = useState("");
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -29,16 +31,17 @@ export function CompanySidebarSearch({ className }: CompanySidebarSearchProps) {
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     const trimmed = query.trim();
-    if (!trimmed || loading) return;
+    if (!trimmed || submittingRef.current) return;
 
-    setLoading(true);
+    submittingRef.current = true;
     try {
       const response = await fetch(`/api/search?q=${encodeURIComponent(trimmed)}`);
       const data = await response.json();
       if (!response.ok) return;
 
       if (data.kind === "single") {
-        router.push(`/company/${data.company.cik}#analysis`);
+        setQuery("");
+        navigateToCompanyAnalysis(data.company.cik, { router, currentCik });
         return;
       }
 
@@ -46,7 +49,7 @@ export function CompanySidebarSearch({ className }: CompanySidebarSearchProps) {
         router.push(`/search?q=${encodeURIComponent(trimmed)}`);
       }
     } finally {
-      setLoading(false);
+      submittingRef.current = false;
     }
   }
 

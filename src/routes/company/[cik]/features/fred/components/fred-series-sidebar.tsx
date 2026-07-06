@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useId, useState } from "react";
 import type { FredCategory } from "@/lib/fred/constants";
 import type { FredSeriesRow } from "@/lib/fred/types";
 import { cn } from "@/lib/utils";
@@ -26,6 +26,7 @@ export function FredSeriesSidebar({
   onSelectSeries,
 }: FredSeriesSidebarProps) {
   const [query, setQuery] = useState("");
+  const searchInputId = useId();
 
   const grouped = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -82,7 +83,7 @@ export function FredSeriesSidebar({
           <div className="mt-0.5 text-[11px] text-zinc-400 lg:mt-0.5">
           {series.length} U.S. economic indicator{series.length === 1 ? "" : "s"}
         </div>
-        <label className="relative mt-2.5 flex h-[30px] items-center gap-1.5 rounded-[9px] border border-zinc-200 bg-zinc-50 px-2.5">
+        <label htmlFor={searchInputId} className="relative mt-2.5 flex h-[30px] items-center gap-1.5 rounded-[9px] border border-zinc-200 bg-zinc-50 px-2.5">
           <svg
             width="12"
             height="12"
@@ -97,10 +98,12 @@ export function FredSeriesSidebar({
             <line x1="9.3" y1="9.3" x2="12" y2="12" />
           </svg>
           <input
+            id={searchInputId}
             type="search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Filter series…"
+            aria-label="Filter series"
             className="min-w-0 flex-1 bg-transparent text-[11.5px] text-zinc-700 outline-none placeholder:text-zinc-400"
           />
           </label>

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import type { CompanyNavTab } from "@/routes/company/[cik]/components/company-nav/constants";
+import { companyTabPath } from "@/routes/company/[cik]/lib/company-tab-paths";
 import { CompanySidebarSearch } from "@/routes/company/[cik]/components/company-sidebar-search/company-sidebar-search";
 import { companyInitials } from "@/routes/company/[cik]/features/company-info/utils/format-company-header";
 import { cn } from "@/lib/utils";
@@ -26,16 +27,18 @@ import {
 } from "./company-sidebar-icons";
 
 type CompanySidebarProps = {
+  cik: string;
   companyName: string;
   ticker?: string;
   activeTab: CompanyNavTab;
   showInsider: boolean;
   open?: boolean;
   onClose?: () => void;
-  onNavigate: (tab: CompanyNavTab) => void;
+  onNavigate?: () => void;
 };
 
 export function CompanySidebar({
+  cik,
   companyName,
   ticker,
   activeTab,
@@ -96,14 +99,15 @@ export function CompanySidebar({
         <NavIconChevronRight className="shrink-0 text-zinc-400" />
       </Link>
 
-      <CompanySidebarSearch />
+      <CompanySidebarSearch currentCik={cik} />
 
       <div className="min-h-0 flex-1 overflow-y-auto px-2.5 pb-3 pt-0.5">
         <CompanySidebarNavItem
           label="Analysis"
           icon={<NavIconGrid />}
           active={activeTab === "analysis"}
-          onClick={() => onNavigate("analysis")}
+          href={companyTabPath(cik, "analysis")}
+          onNavigate={onNavigate}
         />
 
         <CompanySidebarSectionLabel>Market</CompanySidebarSectionLabel>
@@ -111,27 +115,31 @@ export function CompanySidebar({
           label="Peers"
           icon={<NavIconPeers />}
           active={activeTab === "peers"}
-          onClick={() => onNavigate("peers")}
+          href={companyTabPath(cik, "peers")}
+          onNavigate={onNavigate}
         />
         <CompanySidebarNavItem
           label="Outstanding shares"
           icon={<NavIconShares />}
           active={activeTab === "shares"}
-          onClick={() => onNavigate("shares")}
+          href={companyTabPath(cik, "shares")}
+          onNavigate={onNavigate}
         />
         {showInsider ? (
           <CompanySidebarNavItem
             label="Insider transactions"
             icon={<NavIconInsider />}
             active={activeTab === "insider"}
-            onClick={() => onNavigate("insider")}
+            href={companyTabPath(cik, "insider")}
+            onNavigate={onNavigate}
           />
         ) : null}
         <CompanySidebarNavItem
           label="FRED analytics"
           icon={<NavIconFred />}
           active={activeTab === "fred"}
-          onClick={() => onNavigate("fred")}
+          href={companyTabPath(cik, "fred")}
+          onNavigate={onNavigate}
         />
 
         <CompanySidebarSectionLabel badge={<CompanySidebarAiBadge />}>AI analysis</CompanySidebarSectionLabel>
@@ -139,25 +147,29 @@ export function CompanySidebar({
           label="Health"
           icon={<NavIconHealth />}
           active={activeTab === "health"}
-          onClick={() => onNavigate("health")}
+          href={companyTabPath(cik, "health")}
+          onNavigate={onNavigate}
         />
         <CompanySidebarNavItem
           label="Patterns"
           icon={<NavIconPatterns />}
           active={activeTab === "patterns"}
-          onClick={() => onNavigate("patterns")}
+          href={companyTabPath(cik, "patterns")}
+          onNavigate={onNavigate}
         />
         <CompanySidebarNavItem
           label="Guidance"
           icon={<NavIconGuidance />}
           active={activeTab === "guidance"}
-          onClick={() => onNavigate("guidance")}
+          href={companyTabPath(cik, "guidance")}
+          onNavigate={onNavigate}
         />
         <CompanySidebarNavItem
           label="SEC trends"
           icon={<NavIconTrends />}
           active={activeTab === "trends"}
-          onClick={() => onNavigate("trends")}
+          href={companyTabPath(cik, "trends")}
+          onNavigate={onNavigate}
         />
         <p className="px-2.5 pt-0.5 text-[9.5px] leading-snug text-zinc-300">
           Model-generated · review before use
@@ -169,7 +181,8 @@ export function CompanySidebar({
           description="List & timeline"
           icon={<NavIconDocuments />}
           active={activeTab === "documents"}
-          onClick={() => onNavigate("documents")}
+          href={companyTabPath(cik, "documents")}
+          onNavigate={onNavigate}
         />
       </div>
       </nav>

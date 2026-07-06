@@ -53,4 +53,3 @@ export class MarketCache {
   }
 }
 
-export { DEFAULT_TTL_MS };

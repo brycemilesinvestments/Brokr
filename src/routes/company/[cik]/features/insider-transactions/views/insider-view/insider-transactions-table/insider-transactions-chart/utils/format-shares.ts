@@ -10,7 +10,3 @@ export function formatSharesHeader(value: number): string {
   if (value >= 1_000) return `${Math.round(value / 1_000)}K`;
   return value.toLocaleString("en-US");
 }
-
-export function formatSharesFull(value: number): string {
-  return value.toLocaleString("en-US");
-}

@@ -16,11 +16,16 @@
     "reset-8k": "npx tsx scripts/reset-8k-pipeline.ts",
     "setup-fred-schema": "npx tsx scripts/setup-fred-schema.ts",
     "ingest-fred": "npx tsx scripts/ingest-fred.ts",
+    "ingest-form345": "npx tsx scripts/ingest-form345.ts",
     "verify-fred-api": "npx tsx scripts/verify-fred-api.ts",
+    "verify-expanded-metric-panel": "npx tsx scripts/verify-expanded-metric-panel.ts",
     "apply-fred-migration": "npx tsx scripts/apply-fred-migration.ts",
     "fred:all": "npx tsx scripts/apply-fred-migration.ts && npx tsx scripts/ingest-fred.ts",
     "bones:build": "npx boneyard-js build http://localhost:3000/dev/bones --out src/bones --force",
-    "doctor": "npx react-doctor@latest"
+    "doctor": "npx react-doctor@latest",
+    "doctor:loop": "bash scripts/react-doctor-loop.sh",
+    "doctor:validate": "bash scripts/react-doctor-loop.sh --validate",
+    "knip": "knip"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
@@ -30,6 +35,7 @@
     "cheerio": "^1.2.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "domhandler": "^6.0.1",
     "lightweight-charts": "^5.2.0",
     "motion": "^12.42.2",
     "next": "16.2.9",
@@ -51,6 +57,7 @@
     "eslint-config-next": "16.2.9",
     "eslint-plugin-project-structure": "^3.14.3",
     "happy-dom": "^20.10.6",
+    "knip": "^6.24.0",
     "pg": "^8.16.3",
     "react-doctor": "^0.5.8",
     "tailwindcss": "^4",

@@ -92,4 +92,3 @@ export function formatMetricForContext(metric: StructuredMetric): string {
   return `${metric.displayName} (${metric.fp ?? "period"} ended ${metric.periodEnd}): ${formatValue(metric.value, metric.unit)} [structured:${metric.metricName}]`;
 }
 
-export { formatValue };

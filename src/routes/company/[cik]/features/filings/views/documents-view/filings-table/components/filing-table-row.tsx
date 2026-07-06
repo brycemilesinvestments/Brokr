@@ -1,36 +1,50 @@
 "use client";
 
+import { useMemo } from "react";
 import { Skeleton } from "boneyard-js/react";
 import { BONE_NAMES } from "@/components/bones/skeleton-names";
-import type { FilingAnalysisStatus } from "@/routes/company/[cik]/hooks/use-filing-analysis-queue";
+import { isForm345Filing } from "@/routes/company/[cik]/features/filings/views/documents-view/filings-table/lib/is-form345-filing";
+import type { FilingWorkStatus } from "@/routes/company/[cik]/hooks/use-filing-pipeline";
 import type { Filing } from "@/routes/company/[cik]/types";
-import { FILING_ROW_FIXTURE, FilingRowContent } from "./filing-row-content";
+import { FILING_ROW_FIXTURE } from "./filing-row-fixture";
+import { FilingRowContent } from "./filing-row-content";
 
 type FilingTableRowProps = {
   cik: string;
   filing: Filing;
-  analysisStatus: FilingAnalysisStatus;
+  analysisStatus: FilingWorkStatus;
   analysisError: string | null;
+  analysisLabelFormType?: string;
 };
 
-function analysisLabel(status: FilingAnalysisStatus, error: string | null): string | null {
-  if (status === "loading") return "Analyzing…";
-  if (status === "queued") return "Queued for analysis…";
-  if (status === "complete") return "Analyzed";
-  if (status === "error") return error ?? "Analysis failed";
+function analysisLabel(
+  status: FilingWorkStatus,
+  error: string | null,
+  formType?: string,
+): string | null {
+  const form345 = formType ? isForm345Filing(formType) : false;
+  if (status === "storing") return form345 ? "Ingesting…" : "Downloading…";
+  if (status === "analyzing") return "Analyzing…";
+  if (status === "queued-store") return form345 ? "Queued for ingest…" : "Queued for download…";
+  if (status === "queued-analyze") return "Queued for analysis…";
+  if (status === "complete") return form345 ? "Ingested" : "Analyzed";
+  if (status === "unavailable") return "Document unavailable on SEC";
+  if (status === "error") return error ?? "Processing failed";
   return null;
 }
 
-function skeletonConfig(status: FilingAnalysisStatus) {
+function skeletonConfig(status: FilingWorkStatus) {
   switch (status) {
-    case "loading":
+    case "storing":
+    case "analyzing":
       return {
         name: BONE_NAMES.filingRowAnalyzing,
         loading: true,
         animate: "shimmer" as const,
         color: undefined,
       };
-    case "queued":
+    case "queued-store":
+    case "queued-analyze":
       return {
         name: BONE_NAMES.filingRowQueued,
         loading: true,
@@ -47,11 +61,39 @@ export function FilingTableRow({
   filing,
   analysisStatus,
   analysisError,
+  analysisLabelFormType,
 }: FilingTableRowProps) {
-  const label = analysisLabel(analysisStatus, analysisError);
+  const label = analysisLabel(analysisStatus, analysisError, analysisLabelFormType ?? filing.type);
   const skeleton = skeletonConfig(analysisStatus);
+  const skeletonFixture = useMemo(
+    () => (
+      <FilingRowContent
+        cik="0000789019"
+        filing={FILING_ROW_FIXTURE}
+        analysisLabel={
+          analysisStatus === "queued-store"
+            ? "Queued for download…"
+            : analysisStatus === "queued-analyze"
+              ? "Queued for analysis…"
+              : "Analyzing…"
+        }
+      />
+    ),
+    [analysisStatus],
+  );
   const rowContent = (
-    <FilingRowContent cik={cik} filing={filing} analysisLabel={label} />
+    <FilingRowContent
+      cik={cik}
+      filing={filing}
+      analysisLabel={label}
+      analysisLabelTone={
+        analysisStatus === "error"
+          ? "error"
+          : analysisStatus === "unavailable"
+            ? "muted"
+            : "default"
+      }
+    />
   );
 
   return (
@@ -65,13 +107,7 @@ export function FilingTableRow({
             animate={skeleton.animate}
             color={skeleton.color}
             className="w-full"
-            fixture={
-              <FilingRowContent
-                cik="0000789019"
-                filing={FILING_ROW_FIXTURE}
-                analysisLabel={analysisStatus === "queued" ? "Queued for analysis…" : "Analyzing…"}
-              />
-            }
+            fixture={skeletonFixture}
             fallback={
               <div className="px-6 py-4">
                 <div className="h-4 w-full animate-pulse rounded bg-zinc-100" />

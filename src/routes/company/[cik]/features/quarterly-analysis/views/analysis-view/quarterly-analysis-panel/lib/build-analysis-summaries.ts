@@ -36,7 +36,7 @@ function strengthClass(strength: PillarStrength): string {
   return "bg-red-50 text-red-700";
 }
 
-export { strengthClass, STRENGTH_LABELS };
+export { strengthClass };
 
 function classifyGrowth(yoy: number | undefined): PillarStrength {
   if (yoy === undefined) return "moderate";
