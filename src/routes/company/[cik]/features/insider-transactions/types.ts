@@ -17,6 +17,8 @@ export type InsiderTransaction = {
   ownerType?: string;
   form?: string;
   transactionType?: string;
+  /** Footnote/rulebook classification from the Form 3/4/5 ingest pipeline. */
+  footnoteClassification?: string;
   directOrIndirect?: string;
   sharesTransacted?: number;
   sharesOwnedFollowing?: number;

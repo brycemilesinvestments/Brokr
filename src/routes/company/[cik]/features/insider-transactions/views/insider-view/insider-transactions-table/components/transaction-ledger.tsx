@@ -26,7 +26,7 @@ export function TransactionLedger({ transactions, ticker, secUrl }: TransactionL
     isFiltered: isColumnFiltered,
   } = useInsiderTableFilters(transactions);
 
-  const { adFilter, setAdFilter, filteredTransactions } = useTransactionLedger(
+  const { adFilter, setAdFilter, classificationFilter, setClassificationFilter, classificationFilters, filteredTransactions } = useTransactionLedger(
     transactions,
     columnFilteredTransactions,
   );
@@ -34,8 +34,8 @@ export function TransactionLedger({ transactions, ticker, secUrl }: TransactionL
   const shareVolumeMax = maxShareVolume(filteredTransactions);
 
   const isFiltered = useMemo(
-    () => isColumnFiltered || adFilter !== "all",
-    [isColumnFiltered, adFilter],
+    () => isColumnFiltered || adFilter !== "all" || classificationFilter !== "all",
+    [isColumnFiltered, adFilter, classificationFilter],
   );
 
   return (
@@ -60,32 +60,56 @@ export function TransactionLedger({ transactions, ticker, secUrl }: TransactionL
           ) : null}
         </div>
 
-        <div className="flex shrink-0 flex-wrap items-center gap-1.5">
-          {LEDGER_AD_FILTERS.map((filter) => {
-            const isActive = adFilter === filter.value;
-            return (
-              <button
-                key={filter.value}
-                type="button"
-                onClick={() => setAdFilter(filter.value)}
-                className={`rounded-lg px-3 py-1 text-[11.5px] font-semibold transition ${
-                  isActive
-                    ? "bg-zinc-900 text-white"
-                    : "border border-zinc-200 text-zinc-600 hover:bg-zinc-50"
-                }`}
-              >
-                {filter.label}
-              </button>
-            );
-          })}
-          <a
-            href={secUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="ml-1 rounded-lg border border-zinc-200 px-3 py-1 text-[11.5px] font-semibold text-zinc-600 transition hover:bg-zinc-50"
-          >
-            SEC.gov
-          </a>
+        <div className="flex shrink-0 flex-col items-end gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-1.5">
+            {LEDGER_AD_FILTERS.map((filter) => {
+              const isActive = adFilter === filter.value;
+              return (
+                <button
+                  key={filter.value}
+                  type="button"
+                  onClick={() => setAdFilter(filter.value)}
+                  className={`rounded-lg px-3 py-1 text-[11.5px] font-semibold transition ${
+                    isActive
+                      ? "bg-zinc-900 text-white"
+                      : "border border-zinc-200 text-zinc-600 hover:bg-zinc-50"
+                  }`}
+                >
+                  {filter.label}
+                </button>
+              );
+            })}
+            <a
+              href={secUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ml-1 rounded-lg border border-zinc-200 px-3 py-1 text-[11.5px] font-semibold text-zinc-600 transition hover:bg-zinc-50"
+            >
+              SEC.gov
+            </a>
+          </div>
+
+          {classificationFilters.length > 1 ? (
+            <div className="flex max-w-[min(100%,42rem)] flex-wrap items-center justify-end gap-1.5">
+              {classificationFilters.map((filter) => {
+                const isActive = classificationFilter === filter.value;
+                return (
+                  <button
+                    key={filter.value}
+                    type="button"
+                    onClick={() => setClassificationFilter(filter.value)}
+                    className={`rounded-lg px-2.5 py-1 text-[11px] font-semibold transition ${
+                      isActive
+                        ? "bg-sky-900 text-white"
+                        : "border border-sky-200 text-sky-800 hover:bg-sky-50"
+                    }`}
+                  >
+                    {filter.label}
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
         </div>
       </div>
 

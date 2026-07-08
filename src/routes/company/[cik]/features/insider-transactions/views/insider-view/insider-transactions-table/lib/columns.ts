@@ -1,3 +1,4 @@
+import { classificationFilterValue } from "./footnote-classification";
 import type { ColumnConfig } from "../types";
 
 export const COLUMNS: ColumnConfig[] = [
@@ -21,6 +22,11 @@ export const COLUMNS: ColumnConfig[] = [
     key: "transactionType",
     label: "Type",
     getValue: (transaction) => transaction.transactionType ?? "—",
+  },
+  {
+    key: "footnoteClassification",
+    label: "Classification",
+    getValue: classificationFilterValue,
   },
   {
     key: "acquiredOrDisposed",

@@ -24,6 +24,9 @@ function resolveOwnerType(row: Form345TransactionRow): string | undefined {
 }
 
 function mapTransaction(row: Form345TransactionRow, cik: string): InsiderTransaction | null {
+  // Form 4 also includes holding snapshots (nonDerivativeHolding) with no transaction code.
+  if (!row.transaction_code) return null;
+
   const transactionDate = formatDisplayDate(row.transaction_date ?? row.filed_date);
   if (!transactionDate) return null;
 
@@ -39,6 +42,7 @@ function mapTransaction(row: Form345TransactionRow, cik: string): InsiderTransac
     ownerType: resolveOwnerType(row),
     form: row.transaction_code ? "4" : undefined,
     transactionType: row.transaction_code ?? undefined,
+    footnoteClassification: row.footnote_classification ?? undefined,
     directOrIndirect: row.ownership_form ?? undefined,
     sharesTransacted: row.shares_amount ?? undefined,
     sharesOwnedFollowing: row.shares_owned_following ?? undefined,

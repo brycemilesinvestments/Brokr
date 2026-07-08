@@ -33,30 +33,90 @@ export type DivergingChartGeometry = {
   zeroY: number;
 };
 
-const MIN_LOG_VALUE = 10_000;
-const MAX_LOG_VALUE = 1_000_000;
+const DEFAULT_MIN_LOG_VALUE = 10_000;
+const DEFAULT_MAX_LOG_VALUE = 1_000_000;
 
-function logHeight(value: number, plotHeight: number): number {
+type LogScale = {
+  min: number;
+  max: number;
+  ticks: number[];
+};
+
+function collectPositiveValues(buckets: MonthlyVolumeBucket[]): number[] {
+  const values: number[] = [];
+  for (const bucket of buckets) {
+    if (bucket.acquired > 0) values.push(bucket.acquired);
+    if (bucket.disposed > 0) values.push(bucket.disposed);
+  }
+  return values;
+}
+
+function roundToNiceTick(value: number): number {
+  if (value <= 0) return 1;
+
+  const exponent = Math.floor(Math.log10(value));
+  const base = 10 ** exponent;
+  const normalized = value / base;
+
+  if (normalized < 2) return base;
+  if (normalized < 5) return 2 * base;
+  if (normalized < 10) return 5 * base;
+  return 10 * base;
+}
+
+function computeLogScale(buckets: MonthlyVolumeBucket[]): LogScale {
+  const values = collectPositiveValues(buckets);
+  if (values.length === 0) {
+    return {
+      min: DEFAULT_MIN_LOG_VALUE,
+      max: DEFAULT_MAX_LOG_VALUE,
+      ticks: [DEFAULT_MIN_LOG_VALUE, 100_000, DEFAULT_MAX_LOG_VALUE],
+    };
+  }
+
+  const dataMin = Math.min(...values);
+  const dataMax = Math.max(...values);
+  let min = 10 ** Math.floor(Math.log10(Math.max(dataMin, 1)));
+  let max = 10 ** Math.ceil(Math.log10(Math.max(dataMax, 1)));
+
+  if (max <= min) {
+    max = min * 10;
+  }
+
+  const mid = roundToNiceTick(10 ** ((Math.log10(min) + Math.log10(max)) / 2));
+  const ticks = [...new Set([min, mid, max])].toSorted((a, b) => a - b);
+
+  return { min, max, ticks };
+}
+
+function logHeight(
+  value: number,
+  plotHeight: number,
+  scale: LogScale,
+): number {
   if (value <= 0) return 0;
 
-  const minLog = Math.log10(MIN_LOG_VALUE);
-  const maxLog = Math.log10(MAX_LOG_VALUE);
-  const logValue = Math.log10(Math.max(value, MIN_LOG_VALUE));
+  const minLog = Math.log10(scale.min);
+  const maxLog = Math.log10(scale.max);
+  const logValue = Math.log10(Math.max(value, scale.min));
   const clamped = Math.min(maxLog, Math.max(minLog, logValue));
 
   return ((clamped - minLog) / (maxLog - minLog)) * plotHeight;
 }
 
-function tickPositions(plotHeight: number): Array<{ y: number; label: string }> {
-  const minLog = Math.log10(MIN_LOG_VALUE);
-  const maxLog = Math.log10(MAX_LOG_VALUE);
-  const ticks = [MIN_LOG_VALUE, 100_000, MAX_LOG_VALUE];
+function tickPositions(
+  plotHeight: number,
+  scale: LogScale,
+  direction: "up" | "down",
+): Array<{ y: number; label: string }> {
+  const minLog = Math.log10(scale.min);
+  const maxLog = Math.log10(scale.max);
 
-  return ticks.map((value) => {
+  return scale.ticks.map((value) => {
     const logValue = Math.log10(value);
     const offset = ((logValue - minLog) / (maxLog - minLog)) * plotHeight;
     return {
-      y: DIVERGING_ZERO_Y - offset,
+      y: direction === "up" ? DIVERGING_ZERO_Y - offset : DIVERGING_ZERO_Y + offset,
       label: value >= 1_000_000 ? "1.00M" : formatTickLabel(value),
     };
   });
@@ -71,6 +131,7 @@ function formatTickLabel(value: number): string {
 export function buildDivergingGeometry(
   buckets: MonthlyVolumeBucket[],
 ): DivergingChartGeometry {
+  const scale = computeLogScale(buckets);
   const plotLeft = DIVERGING_PADDING.left;
   const plotRight = DIVERGING_CHART_WIDTH - DIVERGING_PADDING.right;
   const plotTop = DIVERGING_PADDING.top;
@@ -89,8 +150,8 @@ export function buildDivergingGeometry(
   const bars = buckets.map((bucket, index) => {
     const centerX = plotLeft + (index + 0.5) * slotWidth;
     const barX = centerX - barWidth / 2;
-    const acquiredHeight = logHeight(bucket.acquired, topPlotHeight);
-    const disposedHeight = logHeight(bucket.disposed, bottomPlotHeight);
+    const acquiredHeight = logHeight(bucket.acquired, topPlotHeight, scale);
+    const disposedHeight = logHeight(bucket.disposed, bottomPlotHeight, scale);
 
     return {
       monthKey: bucket.monthKey,
@@ -123,17 +184,8 @@ export function buildDivergingGeometry(
     };
   });
 
-  const acquiredTicks = tickPositions(topPlotHeight);
-  const disposedTicks = [MIN_LOG_VALUE, 100_000, MAX_LOG_VALUE].map((value) => {
-    const minLog = Math.log10(MIN_LOG_VALUE);
-    const maxLog = Math.log10(MAX_LOG_VALUE);
-    const logValue = Math.log10(value);
-    const offset = ((logValue - minLog) / (maxLog - minLog)) * bottomPlotHeight;
-    return {
-      y: DIVERGING_ZERO_Y + offset,
-      label: value >= 1_000_000 ? "1.00M" : formatTickLabel(value),
-    };
-  });
+  const acquiredTicks = tickPositions(topPlotHeight, scale, "up");
+  const disposedTicks = tickPositions(bottomPlotHeight, scale, "down");
 
   return {
     bars,

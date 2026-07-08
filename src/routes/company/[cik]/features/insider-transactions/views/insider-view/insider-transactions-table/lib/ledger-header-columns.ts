@@ -24,7 +24,8 @@ export const LEDGER_HEADER_COLUMNS: LedgerHeaderColumn[] = [
   {
     label: "Transaction",
     filters: [
-      { key: "transactionType", label: "Type" },
+      { key: "transactionType", label: "Code" },
+      { key: "footnoteClassification", label: "Classification" },
       { key: "acquiredOrDisposed", label: "A/D" },
     ],
   },

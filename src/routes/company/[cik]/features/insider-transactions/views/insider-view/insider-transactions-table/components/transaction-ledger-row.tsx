@@ -1,6 +1,7 @@
 import type { InsiderTransaction } from "@/routes/company/[cik]/features/insider-transactions/types";
 import { MOVEMENT_COLORS } from "../constants";
 import { computeShareBarWidth } from "../lib/compute-share-bar-width";
+import { formatClassificationLabel } from "../lib/footnote-classification";
 import { getTransactionTypeStyle } from "../lib/transaction-type-style";
 import { LEDGER_GRID_CLASS } from "../constants";
 import { formatLedgerDate } from "../utils/format-ledger-date";
@@ -17,13 +18,14 @@ export function TransactionLedgerRow({
   transaction,
   maxShareVolume,
 }: TransactionLedgerRowProps) {
-  const shares = transaction.sharesTransacted ?? 0;
+  const shares = transaction.sharesTransacted;
   const isAcquired = transaction.acquiredOrDisposed === "A";
   const movementColor = isAcquired
     ? MOVEMENT_COLORS.acquired
     : MOVEMENT_COLORS.disposed;
   const typeStyle = getTransactionTypeStyle(transaction.transactionType);
-  const barWidth = computeShareBarWidth(shares, maxShareVolume);
+  const classificationLabel = formatClassificationLabel(transaction.footnoteClassification);
+  const barWidth = computeShareBarWidth(shares ?? 0, maxShareVolume);
 
   return (
     <div className={`${LEDGER_GRID_CLASS} border-b border-zinc-100 px-[26px] py-3`}>
@@ -55,7 +57,9 @@ export function TransactionLedgerRow({
           />
           {typeStyle.badgeLabel}
         </span>
-        <div className="mt-1 truncate text-[10.5px] text-zinc-400">{typeStyle.subtitle}</div>
+        <div className="mt-1 truncate text-[10.5px] text-zinc-400">
+          {transaction.footnoteClassification ? classificationLabel : typeStyle.subtitle}
+        </div>
       </div>
 
       <div className="min-w-0">

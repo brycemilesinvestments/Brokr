@@ -20,6 +20,24 @@ function extractBlocks(xml: string, tag: string): string[] {
 }
 
 function extractValue(block: string, tag: string): string | null {
+  const tagBlock = extractBlocks(block, tag)[0];
+  if (tagBlock) {
+    const valueMatch = tagBlock.match(/<value\b[^>]*>([\s\S]*?)<\/value>/i);
+    if (valueMatch) {
+      return decodeXmlEntities(valueMatch[1].trim());
+    }
+
+    const innerMatch = tagBlock.match(
+      new RegExp(`<${tag}\\b[^>]*>([\\s\\S]*?)<\\/${tag}>`, "i"),
+    );
+    if (innerMatch) {
+      const inner = innerMatch[1].trim();
+      if (inner && !inner.startsWith("<")) {
+        return decodeXmlEntities(inner);
+      }
+    }
+  }
+
   const wrapped = new RegExp(
     `<${tag}\\b[^>]*>\\s*<value>([\\s\\S]*?)<\\/value>\\s*<\\/${tag}>`,
     "i",

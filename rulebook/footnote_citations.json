@@ -43,14 +43,14 @@
     "source_url": "https://www.sec.gov/files/form4.pdf"
   },
   {
-    "pattern": "bona fide gift",
+    "pattern": "\\bbona fide gift\\b|\\bgift(?:ed|s)?\\b",
     "rule_ref": null,
     "classification": "routine_gift",
     "requires_date_extraction": false,
     "source_url": "https://www.sec.gov/edgar/searchedgar/ownershipformcodes.html"
   },
   {
-    "pattern": "descent and distribution|by will",
+    "pattern": "descent and distribution|by will|estate planning",
     "rule_ref": null,
     "classification": "routine_estate_transfer",
     "requires_date_extraction": false,

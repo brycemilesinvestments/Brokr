@@ -13,6 +13,7 @@ export type ColumnKey =
   | "reportingOwner"
   | "ownerType"
   | "transactionType"
+  | "footnoteClassification"
   | "acquiredOrDisposed"
   | "sharesTransacted"
   | "sharesOwnedFollowing"

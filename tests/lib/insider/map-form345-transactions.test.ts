@@ -50,4 +50,24 @@ describe("mapForm345RowsToInsiderPage", () => {
     expect(page.transactions[0]?.accessionNumber).toBe("0001140361-26-025620");
     expect(page.reportingOwners[0]?.ownerName).toBe("Borders Ben");
   });
+
+  it("excludes Form 4 holding snapshots without a transaction code", () => {
+    const holdingRow: Form345TransactionRow = {
+      ...sampleRow,
+      id: 2,
+      line_index: 1,
+      transaction_code: null,
+      transaction_date: null,
+      shares_amount: null,
+      acquired_or_disposed: null,
+      footnote_raw_text: null,
+      footnote_classification: null,
+      filed_date: "2026-05-14",
+    };
+
+    const page = mapForm345RowsToInsiderPage("2023554", [sampleRow, holdingRow]);
+
+    expect(page.transactions).toHaveLength(1);
+    expect(page.transactions[0]?.transactionType).toBe("S");
+  });
 });
