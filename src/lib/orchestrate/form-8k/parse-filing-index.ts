@@ -16,7 +16,7 @@ export type FilingIndexDocuments = {
   exhibit991: FilingIndexItem | null;
 };
 
-function normalizeIndexItems(raw: unknown): FilingIndexItem[] {
+export function normalizeIndexItems(raw: unknown): FilingIndexItem[] {
   if (!raw || typeof raw !== "object") return [];
   const directory = (raw as Record<string, unknown>).directory;
   if (!directory || typeof directory !== "object") return [];
