@@ -36,7 +36,7 @@ export function useCompanyAnalysis(
         setMissing(true);
         setError(
           payload.message ??
-            "No compiled analysis yet. Ingest filings on the Documents tab first.",
+            "No compiled analysis yet. Important filings are still being processed.",
         );
         return;
       }

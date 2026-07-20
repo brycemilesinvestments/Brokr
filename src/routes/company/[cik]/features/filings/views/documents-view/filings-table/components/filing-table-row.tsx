@@ -23,6 +23,7 @@ function analysisLabel(
   formType?: string,
 ): string | null {
   const form345 = formType ? isForm345Filing(formType) : false;
+  if (form345 && status === "idle") return "Open Insider tab";
   if (status === "storing") return form345 ? "Ingesting…" : "Downloading…";
   if (status === "analyzing") return "Analyzing…";
   if (status === "queued-store") return form345 ? "Queued for ingest…" : "Queued for download…";
