@@ -78,6 +78,7 @@ export const PROSE_TEXT_BLOCK_CONCEPTS: Record<
   ],
   form_8k_body: [],
   exhibit_99_1: [],
+  earnings_call_transcript: [],
 };
 
 /** XBRL concepts for auditor name extraction (K11). */

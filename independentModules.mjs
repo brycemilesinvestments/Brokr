@@ -71,6 +71,7 @@ export const independentModulesConfig = createIndependentModules({
         "src/lib/valuation/**",
         "src/lib/insider/**",
         "src/lib/peers/**",
+        "src/lib/earnings-calls/**",
         "src/lib/supabase/**",
       ],
     },
@@ -145,6 +146,18 @@ export const independentModulesConfig = createIndependentModules({
       allowImportsFrom: [
         "src/lib/guidance/**",
         "src/lib/edgar/**",
+        "src/lib/ai/**",
+      ],
+    },
+    {
+      name: "Earnings calls chunk",
+      pattern: "src/lib/earnings-calls/**",
+      allowImportsFrom: [
+        "src/lib/earnings-calls/**",
+        "src/lib/edgar/**",
+        "src/lib/guidance/**",
+        "src/lib/rag/**",
+        "src/lib/supabase/**",
         "src/lib/ai/**",
       ],
     },

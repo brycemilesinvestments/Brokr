@@ -135,6 +135,7 @@ export function locateForm10kSections(
     revenue_concentration: locateIxbrlSection(ixbrlFacts, "revenue_concentration"),
     form_8k_body: null,
     exhibit_99_1: null,
+    earnings_call_transcript: null,
   };
 }
 

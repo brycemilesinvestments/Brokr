@@ -79,7 +79,8 @@ export type ProseSectionKey =
   | Form10kSectionKey
   | "revenue_concentration"
   | "form_8k_body"
-  | "exhibit_99_1";
+  | "exhibit_99_1"
+  | "earnings_call_transcript";
 
 /** How a prose section was extracted (K1 two-path contract). */
 export type ProseSectionSource = "ixbrl_textblock" | "html_heading_fallback";

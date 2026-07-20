@@ -27,6 +27,7 @@ const SECTION_PROMPTS: Record<ProseSectionKey, SectionPromptConfig> = {
   revenue_concentration: { customers: true },
   form_8k_body: {},
   exhibit_99_1: {},
+  earnings_call_transcript: { guidance: true, outlook: true },
 };
 
 function buildUserPrompt(section: ProseSection, config: SectionPromptConfig): string {

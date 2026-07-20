@@ -15,5 +15,6 @@ export function emptyProseSections(): ProseSections {
     revenue_concentration: null,
     form_8k_body: null,
     exhibit_99_1: null,
+    earnings_call_transcript: null,
   };
 }
