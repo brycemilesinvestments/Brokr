@@ -1,6 +1,6 @@
 "use client";
 
-import { FilingsAnalysisProgress, Form345FilingsProgress } from "@/components/bones/filings-analysis-progress";
+import { FilingsAnalysisProgress } from "@/components/bones/filings-analysis-progress";
 import { ColumnFilter } from "@/routes/company/[cik]/components/column-filter";
 import { FilingTableRow } from "./components/filing-table-row";
 import { FilingsTablePagination } from "./components/filings-table-pagination";
@@ -20,7 +20,6 @@ export function FilingsTable({
   getAnalysisStatus,
   getAnalysisError,
   pipelineProgress,
-  form345Progress,
 }: FilingsTableProps) {
   const {
     selectedByColumn,
@@ -71,9 +70,6 @@ export function FilingsTable({
                 : undefined
             }
           />
-        ) : null}
-        {form345Progress && (form345Progress.active || form345Progress.error > 0) ? (
-          <Form345FilingsProgress progress={form345Progress} />
         ) : null}
       </div>
 

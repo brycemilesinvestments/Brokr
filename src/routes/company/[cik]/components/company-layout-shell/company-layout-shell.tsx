@@ -11,6 +11,7 @@ import {
   type ReactNode,
 } from "react";
 import { AskFilingsOverlay } from "@/routes/company/[cik]/features/rag-chat";
+import { CompanyFilingPipelineProvider } from "@/routes/company/[cik]/components/company-filing-pipeline";
 import {
   parseLocationHash,
   type CompanyNavTab,
@@ -32,6 +33,8 @@ type CompanyLayoutShellProps = {
   companyName: string;
   ticker?: string;
   filings: Filing[];
+  totalShown: number;
+  hasMoreFilings: boolean;
   showInsider: boolean;
   children: ReactNode;
 };
@@ -79,6 +82,8 @@ export function CompanyLayoutShell({
   companyName,
   ticker,
   filings,
+  totalShown,
+  hasMoreFilings,
   showInsider,
   children,
 }: CompanyLayoutShellProps) {
@@ -146,29 +151,37 @@ export function CompanyLayoutShell({
 
   return (
     <CompanyLayoutShellContext value={contextValue}>
-      <div className="flex h-dvh overflow-hidden bg-zinc-50">
-        <CompanySidebar
-          cik={cik}
-          companyName={companyName}
-          ticker={ticker}
-          activeTab={activeTab}
-          showInsider={showInsider}
-          open={companySidebarOpen}
-          onClose={() => setCompanySidebarOpen(false)}
-          onNavigate={closeMobileSidebar}
-        />
+      <CompanyFilingPipelineProvider
+        cik={cik}
+        ticker={ticker}
+        initialFilings={filings}
+        initialTotalShown={totalShown}
+        initialHasMoreFilings={hasMoreFilings}
+      >
+        <div className="flex h-dvh overflow-hidden bg-zinc-50">
+          <CompanySidebar
+            cik={cik}
+            companyName={companyName}
+            ticker={ticker}
+            activeTab={activeTab}
+            showInsider={showInsider}
+            open={companySidebarOpen}
+            onClose={() => setCompanySidebarOpen(false)}
+            onNavigate={closeMobileSidebar}
+          />
 
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">{children}</div>
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">{children}</div>
 
-        <AskFilingsOverlay
-          cik={cik}
-          companyName={companyName}
-          ticker={ticker}
-          filings={filings}
-          open={chatOpen}
-          onOpenChange={setChatOpen}
-        />
-      </div>
+          <AskFilingsOverlay
+            cik={cik}
+            companyName={companyName}
+            ticker={ticker}
+            filings={filings}
+            open={chatOpen}
+            onOpenChange={setChatOpen}
+          />
+        </div>
+      </CompanyFilingPipelineProvider>
     </CompanyLayoutShellContext>
   );
 }

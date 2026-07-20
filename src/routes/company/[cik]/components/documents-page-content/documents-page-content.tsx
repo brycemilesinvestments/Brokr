@@ -11,9 +11,6 @@ type DocumentsPageContentProps = DocumentsPageData & {
 export function DocumentsPageContent({
   view,
   companyName,
-  filings,
-  totalShown,
-  hasMoreFilings,
   timeline,
   fiscalYearEnd,
 }: DocumentsPageContentProps) {
@@ -24,9 +21,6 @@ export function DocumentsPageContent({
       cik={cik}
       companyName={companyName}
       ticker={ticker}
-      filings={filings}
-      totalShown={totalShown}
-      hasMoreFilings={hasMoreFilings}
       timeline={timeline}
       fiscalYearEnd={fiscalYearEnd}
       view={view}

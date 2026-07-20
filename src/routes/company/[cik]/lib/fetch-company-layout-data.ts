@@ -10,6 +10,8 @@ export type CompanyLayoutData = {
   companyName: string;
   ticker?: string;
   filings: Filing[];
+  totalShown: number;
+  hasMoreFilings: boolean;
   showInsider: boolean;
 };
 
@@ -30,6 +32,8 @@ export async function fetchCompanyLayoutData(cik: string): Promise<CompanyLayout
     companyName: page.info.name,
     ticker: companyMeta?.ticker || undefined,
     filings: page.filings,
+    totalShown: page.totalShown,
+    hasMoreFilings: page.hasMoreFilings,
     showInsider: storedCount > 0 || form345Sample.length > 0,
   };
 }

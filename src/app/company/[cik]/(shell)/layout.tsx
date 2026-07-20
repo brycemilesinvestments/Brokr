@@ -19,6 +19,8 @@ export default async function CompanyShellLayout({ children, params }: LayoutPro
       companyName={layoutData.companyName}
       ticker={layoutData.ticker}
       filings={layoutData.filings}
+      totalShown={layoutData.totalShown}
+      hasMoreFilings={layoutData.hasMoreFilings}
       showInsider={layoutData.showInsider}
     >
       {children}
