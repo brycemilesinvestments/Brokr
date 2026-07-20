@@ -1,15 +1,51 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   extractTranscriptLinksFromHtml,
   isValidTranscriptText,
   parseTranscriptHtml,
   pickTranscriptDocumentsFromItems,
+  runEarningsCallScrape,
 } from "@/lib/earnings-calls";
-import { buildSyntheticAccession } from "@/lib/earnings-calls/scrape-transcript";
+import { buildSyntheticAccession, scrapeTranscript } from "@/lib/earnings-calls/scrape-transcript";
+import { MemoryChunkStore } from "@/lib/rag/store/chunk-store";
+import { MemoryEarningsCallTranscriptStore } from "@/lib/supabase/earnings-calls";
+import type { CompanyRow } from "@/lib/supabase/companies";
 
 const fixtureDir = join(process.cwd(), "tests/fixtures/earnings-calls");
+
+const company: CompanyRow = {
+  id: 42,
+  edgar_id: "0000320193",
+  name: "Example Corp",
+  ticker: "EXMP",
+  sic: null,
+  sic_description: null,
+  state: null,
+  last_viewed_at: "2026-01-01T00:00:00.000Z",
+  created_at: "2026-01-01T00:00:00.000Z",
+  updated_at: "2026-01-01T00:00:00.000Z",
+};
+
+const candidate = {
+  sourceUrl: "https://investor.example.com/q1-2025-earnings-call-transcript.html",
+  sourceType: "ir_site" as const,
+  title: "Q1 2025 Earnings Call Transcript",
+  eventDate: "2025-04-30",
+  score: 4,
+  reasons: ["test"],
+};
+
+vi.mock("@/lib/earnings-calls/scrape-transcript", async () => {
+  const actual = await vi.importActual<typeof import("@/lib/earnings-calls/scrape-transcript")>(
+    "@/lib/earnings-calls/scrape-transcript",
+  );
+  return {
+    ...actual,
+    scrapeTranscript: vi.fn(actual.scrapeTranscript),
+  };
+});
 
 describe("earnings call scraper", () => {
   it("extracts transcript links from investor relations HTML", () => {
@@ -51,5 +87,57 @@ describe("earnings call scraper", () => {
     expect(first).toBe(second);
     expect(first.startsWith("ec-")).toBe(true);
     expect(other).not.toBe(first);
+  });
+
+  it("scrapes and embeds once, then skips network scrape on second run", async () => {
+    const html = readFileSync(join(fixtureDir, "sample-transcript.html"), "utf8");
+    const parsed = parseTranscriptHtml(html);
+    const scrapeMock = vi.mocked(scrapeTranscript);
+    scrapeMock.mockResolvedValue({
+      sourceUrl: candidate.sourceUrl,
+      title: candidate.title,
+      plainText: parsed.plainText,
+      charCount: parsed.charCount,
+      html,
+    });
+
+    const transcriptStore = new MemoryEarningsCallTranscriptStore();
+    const chunkStore = new MemoryChunkStore();
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => {
+        throw new Error("Network fetch should not run on cached transcript");
+      }),
+    );
+
+    const first = await runEarningsCallScrape(company, {
+      filings: [],
+      candidates: [candidate],
+      store: transcriptStore,
+      chunkStore,
+    });
+
+    expect(first.scraped).toBe(1);
+    expect(first.embedded).toBe(1);
+    expect(scrapeMock).toHaveBeenCalledTimes(1);
+
+    const second = await runEarningsCallScrape(company, {
+      filings: [],
+      candidates: [candidate],
+      store: transcriptStore,
+      chunkStore,
+    });
+
+    expect(second.scraped).toBe(0);
+    expect(second.skipped).toBe(1);
+    expect(second.embedded).toBe(0);
+    expect(scrapeMock).toHaveBeenCalledTimes(1);
+
+    const syntheticAccession = buildSyntheticAccession(candidate.sourceUrl);
+    const status = await chunkStore.getIngestStatus(company.edgar_id, syntheticAccession);
+    expect(status?.embeddedDone).toBe(true);
+
+    vi.unstubAllGlobals();
   });
 });
